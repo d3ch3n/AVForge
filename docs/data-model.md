@@ -10,9 +10,15 @@ O `id` do equipamento é obrigatório. Cada porta física conectável deve ter s
 
 IDs usados em `functional_behavior` são referências a signals/capabilities ou entidades locais do mesmo equipamento. `interface_id` em `connection_points` e `poe_supplied` referencia uma interface local. `target_equipment_id` e `remote_interface_id` em relações apontam para entidades de outro cadastro quando esse cadastro existir. O formato do ID é validado, mas sua unicidade global e a existência do alvo não são garantidas pelo JSON Schema.
 
-## Interfaces não são apenas conectores
+## Interfaces, conectores e pontos físicos
 
-Cada interface possui um `connector` físico e uma lista independente de `signals`. Essa separação é necessária porque o mesmo conector pode transportar tecnologias incompatíveis. Uma interface RJ45, por exemplo, pode representar LAN, HDBaseT ou um protocolo proprietário.
+Uma `physical_connector` é o objeto físico real no painel/equipamento. Um `connection_point` é um pino, terminal, contato ou posição individual dentro desse conector. Uma `interface` é a função conectável usada pela engenharia. Portanto, interface e conector não são a mesma entidade.
+
+`physical_connectors` é opcional. Um conector simples, como RJ45 ou USB, pode continuar descrito somente em `interfaces[].connector`. Quando um conector compartilhado tiver valor de engenharia, a interface pode declarar `physical_connection.connector_id` e um ou mais `connection_point_ids`. Várias interfaces podem referenciar pontos diferentes do mesmo conector físico; um ponto não deve ser duplicado em interfaces diferentes.
+
+Exemplo simples: uma interface `lan-a` pode usar `connector: "RJ45"` sem detalhar seus contatos. Exemplo compartilhado: um borne físico `gpio-terminal-block` contém pontos `gpio-in-1`, `gpio-in-2`, `common` e `+12v`, enquanto interfaces funcionais separadas referenciam os pontos que utilizam. Uma interface RS-232 pode referenciar `tx`, `rx` e `ground` do seu conector.
+
+Uma interface continua possuindo `connector` e uma lista independente de `signals`. Essa separação é necessária porque o mesmo conector pode transportar tecnologias incompatíveis. Uma interface RJ45, por exemplo, pode representar LAN, HDBaseT ou um protocolo proprietário.
 
 `signal_type` é uma categoria ampla, como `audio`, `video`, `network`, `control` ou `data`. `signal_family` identifica uma família técnica, como `analog-audio`, `AES3`, `Ethernet` ou `HDBaseT`; `signal_format` descreve um formato quando aplicável; `protocol_family` identifica o protocolo ou ecossistema específico. `connector` não deve receber valores de sinal ou protocolo.
 
@@ -34,7 +40,9 @@ Cada `known_compatibilities` possui ID, `relation`, alvo de equipamento ou famí
 
 ## Capacidades de comunicação
 
-`communication_capabilities` descreve uma capacidade funcional de comunicação, não uma porta. Ela exige ID local, `type`, `protocol_family`, direção funcional e `interface_assignment`. `media_type` é opcional quando aplicável.
+`communication_capabilities` descreve uma capacidade funcional de comunicação, não uma porta. Ela exige ID local, `type`, direção funcional e `interface_assignment`. `media_type` e `protocol_family` são opcionais quando aplicáveis.
+
+`protocol_family` deve ser preenchido quando a capability representa um protocolo ou família tecnicamente identificável, como Dante, AES67 ou Q-LAN. Sua ausência não significa ausência de comunicação, apenas que nenhuma família de protocolo foi identificada ou documentada para aquela capability. Não se deve inventar valores como `unknown`, `proprietary`, `qsys` ou `management` apenas para satisfazer o schema.
 
 `interface_assignment.allowed_interface_ids` referencia as interfaces físicas locais sem copiar sua definição. O `mode` declara o comportamento permitido pelo produto:
 
@@ -48,9 +56,69 @@ Uma porta Ethernet não recebe automaticamente capacidades de rede. LAN A, LAN B
 
 ## Capacidade e recursos compartilhados
 
-`communication_capabilities.capacity` usa valores numéricos para canais, flows, streams, sessões, endpoints e largura de banda. `other_limits` permite limites adicionais identificados sem recorrer a strings como `"8 channels"`.
+`communication_capabilities.capacity` representa somente um limite próprio, local e específico daquela capability. Usa valores numéricos para canais, flows, streams, sessões, endpoints e largura de banda. `other_limits` permite limites adicionais identificados sem recorrer a strings como `"8 channels"`.
 
-Quando capabilities compartilham um recurso interno, elas referenciam o mesmo `resource_pool_id`. O pool declara a capacidade total compartilhada; capabilities que o referenciam não devem ser somadas como recursos independentes. A soma e a verificação de limites serão responsabilidade de um semantic validator futuro.
+Quando capabilities compartilham um recurso interno, elas referenciam o mesmo `resource_pool_id`. O pool declara a capacidade total compartilhada. Uma capability pode ter somente `capacity`, somente `resource_pool_id` ou ambos. Por exemplo, Dante pode ter capacidade própria de 8 x 8 e também consumir o pool geral de áudio de rede de 64 x 64; Q-LAN e AES67 podem somente referenciar esse pool quando não houver limite próprio independente documentado.
+
+Capacities próprias e pools não são aditivos automaticamente. Uma licença que altera a capacidade própria de Dante não altera automaticamente o pool; uma licença que altera o pool não duplica esse limite nas capabilities que o referenciam. O schema registra essas declarações, mas não calcula capacidade efetiva nem valida consumo; isso pertence a um semantic validator futuro.
+
+### Exemplos v3.1
+
+Conector simples, sem detalhamento de pinos:
+
+```json
+{
+  "id": "lan-a",
+  "connector": "RJ45",
+  "signals": [{ "id": "ethernet", "name": "Ethernet", "signal_type": "network" }]
+}
+```
+
+Conector compartilhado com GPIO:
+
+```json
+{
+  "id": "gpio-terminal-block",
+  "label": "GPIO terminal block",
+  "connector_type": "10-pin Euroblock",
+  "connection_points": [
+    { "id": "gpio-in-1", "label": "GPIO input 1", "role": "signal" },
+    { "id": "gpio-common", "label": "Common", "role": "common" }
+  ]
+}
+```
+
+Interface funcional usando vários pontos físicos:
+
+```json
+{
+  "id": "rs232-1",
+  "connector": "3-position 3.5 mm connector",
+  "physical_connection": {
+    "connector_id": "rs232-com-1",
+    "connection_point_ids": ["tx", "rx", "ground"]
+  }
+}
+```
+
+Capability com capacidade própria e pool compartilhado:
+
+```json
+{
+  "id": "dante-network-audio",
+  "capacity": { "rx_channels": 8, "tx_channels": 8 },
+  "resource_pool_id": "network-audio-pool"
+}
+```
+
+Capability somente com pool compartilhado:
+
+```json
+{
+  "id": "q-lan-network-audio",
+  "resource_pool_id": "network-audio-pool"
+}
+```
 
 ## Modificadores e capacidade efetiva
 
@@ -74,13 +142,13 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 ## Extensibilidade e evolução
 
-O modelo reserva estruturas para requisitos de infraestrutura, fluxo funcional, compatibilidades validadas e representação gráfica. Cada `connection_point` possui ID próprio e exatamente um `interface_id`; `position` e `metadata` ficam disponíveis para evolução gráfica. A associação por ID não depende do label, embora a existência e unicidade da interface referenciada precisem ser verificadas fora do JSON Schema.
+O modelo reserva estruturas para requisitos de infraestrutura, fluxo funcional, compatibilidades validadas e representação gráfica. `physical_connectors[].connection_points[]` possui ID próprio e representa pontos físicos; `graphic_representation.connection_points[]` continua sendo uma estrutura independente para pontos gráficos associados a interfaces. `position` fica disponível no ponto físico para uso quando a fonte comprovar posição ou quando a representação gráfica justificar. A associação por ID não depende do label, embora a existência e unicidade dos connectors, points e interfaces referenciados precisem ser verificadas fora do JSON Schema.
 
 As estruturas de comunicação e modularidade são universais: não distinguem DSP, switch, amplificador, câmera, display, extensor, codec ou microfone por campos específicos. O conteúdo especializado pode ser adicionado por capabilities e extensões, mas protocolos de rede não devem ser confundidos com áudio, e slots não devem ser acoplados a um fabricante.
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.0.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, compatibilidade entre interfaces, capacidade total de pools ou consistência de unidades. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.1.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, capacidade total de pools ou consistência de unidades. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 

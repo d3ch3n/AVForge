@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v2",
+  "title": "AVForge Equipment v3.1",
   "description": "Universal structured model for audiovisual equipment.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -20,6 +20,11 @@
     "interfaces": {
       "type": "array",
       "items": { "$ref": "#/$defs/interface" },
+      "uniqueItems": true
+    },
+    "physical_connectors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/physicalConnector" },
       "uniqueItems": true
     },
     "capabilities": { "$ref": "#/$defs/capabilities" },
@@ -69,6 +74,50 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "minLength": 1
+    },
+    "physicalConnector": {
+      "type": "object",
+      "required": ["id", "label", "connector_type", "connection_points"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "label": { "type": "string", "minLength": 1 },
+        "connector_type": { "type": "string", "minLength": 1 },
+        "gender": { "enum": ["male", "female", "receptacle", "none", "not_applicable", "unknown"] },
+        "connection_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/physicalConnectionPoint" },
+          "uniqueItems": true
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "physicalConnectionPoint": {
+      "type": "object",
+      "required": ["id", "label", "role"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "label": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["signal", "positive", "negative", "ground", "shield", "power", "tx", "rx", "contact", "common", "normally_open", "normally_closed", "other"] },
+        "position": { "type": ["integer", "number", "string"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "physicalConnection": {
+      "type": "object",
+      "required": ["connector_id", "connection_point_ids"],
+      "properties": {
+        "connector_id": { "$ref": "#/$defs/stableId" },
+        "connection_point_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/stableId" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
     },
     "measurement": {
       "type": "object",
@@ -257,6 +306,7 @@
         "direction": { "enum": ["input", "output", "bidirectional"] },
         "connector": { "type": "string", "minLength": 1 },
         "connector_gender": { "enum": ["male", "female", "receptacle", "none", "not_applicable", "unknown"] },
+        "physical_connection": { "$ref": "#/$defs/physicalConnection" },
         "signals": {
           "type": "array",
           "items": { "$ref": "#/$defs/signalCapability" },
@@ -318,6 +368,7 @@
     },
     "capacity": {
       "type": "object",
+      "description": "An independent local limit owned by the capability. It is not a shared resource pool and is not automatically additive with one.",
       "properties": {
         "rx_channels": { "type": "integer", "minimum": 0 },
         "tx_channels": { "type": "integer", "minimum": 0 },
@@ -380,11 +431,11 @@
     },
     "communicationCapability": {
       "type": "object",
-      "required": ["id", "type", "protocol_family", "direction", "interface_assignment"],
+      "required": ["id", "type", "direction", "interface_assignment"],
       "properties": {
         "id": { "$ref": "#/$defs/stableId" },
         "type": { "enum": ["network_audio", "network_video", "control", "data", "discovery", "management", "other"] },
-        "protocol_family": { "type": "string", "minLength": 1 },
+        "protocol_family": { "type": "string", "minLength": 1, "description": "Optional technical protocol or protocol family. Its absence means no family was identified or documented, not that communication is absent." },
         "media_type": { "type": "string", "minLength": 1 },
         "direction": { "enum": ["input", "output", "bidirectional"] },
         "interface_assignment": { "$ref": "#/$defs/interfaceAssignment" },
@@ -397,6 +448,7 @@
     },
     "resourcePool": {
       "type": "object",
+      "description": "A limit shared by one or more capabilities. It is not automatically added to capability capacities.",
       "required": ["id", "resources"],
       "properties": {
         "id": { "$ref": "#/$defs/stableId" },
