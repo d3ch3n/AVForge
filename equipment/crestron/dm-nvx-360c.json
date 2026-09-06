@@ -1,0 +1,174 @@
+{
+  "id": "crestron.dm-nvx-360c",
+  "manufacturer": "Crestron",
+  "model": "DM-NVX-360C",
+  "product_name": "Crestron DM-NVX-360C",
+  "category": "av-over-ip-encoder-decoder-card",
+  "product_family": "DM-NVX-C",
+  "schema_version": "3.2.0",
+  "status": "draft",
+  "interfaces": [
+    {
+      "id": "hdmi-input",
+      "label": "HDMI INPUT",
+      "direction": "input",
+      "connector": "HDMI Type A",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "hdmi-input-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "HDMI", "protocol_family": "HDMI", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3" } }
+      ]
+    },
+    {
+      "id": "hdmi-output",
+      "label": "HDMI OUTPUT",
+      "direction": "output",
+      "connector": "HDMI Type A",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "hdmi-output-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "HDMI", "protocol_family": "HDMI", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3", "scaler": true } }
+      ]
+    },
+    {
+      "id": "ethernet-1",
+      "label": "Ethernet 1",
+      "direction": "bidirectional",
+      "connector": "8-pin RJ45",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "ethernet-1-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+      ]
+    },
+    {
+      "id": "ethernet-2",
+      "label": "Ethernet 2",
+      "direction": "bidirectional",
+      "connector": "8-pin RJ45",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "ethernet-2-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+      ]
+    },
+    {
+      "id": "ethernet-3",
+      "label": "Ethernet 3 (10/100)",
+      "direction": "bidirectional",
+      "connector": "8-pin RJ45",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "ethernet-3-network", "name": "100BASE-TX Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+      ]
+    },
+    {
+      "id": "ethernet-4-sfp",
+      "label": "Ethernet 4",
+      "direction": "bidirectional",
+      "connector": "SFP port",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "ethernet-4-network", "name": "Fiber Ethernet via SFP-1G Series transceiver", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+      ]
+    },
+    {
+      "id": "usb-device",
+      "label": "USB DEVICE",
+      "direction": "bidirectional",
+      "connector": "USB 2.0 Type-C",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "usb-device-extension", "name": "USB device signal extension", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB 2.0", "protocol_family": "USB 2.0" }
+      ]
+    },
+    {
+      "id": "usb-host",
+      "label": "USB HOST",
+      "direction": "bidirectional",
+      "connector": "USB 2.0 Type-A",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "usb-host-extension", "name": "USB host signal extension", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB 2.0", "protocol_family": "USB 2.0" }
+      ]
+    },
+    {
+      "id": "usb-hid",
+      "label": "USB HID",
+      "direction": "bidirectional",
+      "connector": "USB 2.0 Type-A",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "usb-hid-control", "name": "USB HID signal extension", "direction": "bidirectional", "signal_type": "control", "signal_family": "USB HID", "protocol_family": "USB 2.0" }
+      ]
+    },
+    {
+      "id": "audio-io",
+      "label": "AUDIO I/O",
+      "direction": "bidirectional",
+      "connector": "5-pin 3.5 mm detachable terminal block",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "analog-audio-io", "name": "Balanced/unbalanced stereo line-level audio", "direction": "bidirectional", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input or output, not both", "channels": 2, "input_impedance": { "value": 24000, "unit": "ohm" }, "output_impedance": { "value": 200, "unit": "ohm" }, "maximum_level": { "value": 4, "unit": "Vrms" }, "adc_dac": "24-bit 48 kHz" } }
+      ],
+      "notes": "The connector is a shared stereo audio I/O interface; no pinout is modeled."
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "dm-nvx-network-video",
+      "type": "network_video",
+      "protocol_family": "DM NVX",
+      "media_type": "video",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["ethernet-1", "ethernet-2", "ethernet-4-sfp"] },
+      "notes": "The card is configurable as an encoder or decoder. Ethernet ports 1, 2, or 4 can transport video over a Gigabit Ethernet network."
+    },
+    {
+      "id": "aes67-audio",
+      "type": "network_audio",
+      "protocol_family": "AES67",
+      "media_type": "audio",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet-3"] },
+      "capacity": { "rx_channels": 2, "tx_channels": 2 },
+      "notes": "The official documentation describes Ethernet 3 as a 100BASE-TX port for a dedicated audio network and documents 2-channel AES67 transmit/receive behavior."
+    },
+    {
+      "id": "usb-extension",
+      "type": "data",
+      "protocol_family": "USB 2.0",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["usb-device", "usb-host"] },
+      "notes": "The official documentation supports USB 2.0 Layer 2 or Layer 3 extension/routing and states that USB device or USB host operation is selected, not both."
+    },
+    {
+      "id": "device-control",
+      "type": "control",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "simultaneous", "allowed_interface_ids": ["hdmi-input", "hdmi-output", "ethernet-1", "ethernet-2", "ethernet-3", "ethernet-4-sfp"] },
+      "notes": "The sources document CEC over HDMI and web/control-system management over Ethernet; no single protocol assignment is asserted for the whole capability."
+    }
+  ],
+  "capabilities": [
+    { "id": "encoder-decoder", "name": "Configurable AV-over-IP encoder or decoder", "value": ["encoder", "decoder"] },
+    { "id": "video-scaling", "name": "4K60 4:4:4 video scaling and video wall processing", "value": { "maximum_displays": 64, "maximum_wall_layout": "8 wide x 8 high" } },
+    { "id": "analog-audio-embedding", "name": "Analog audio embedding or de-embedding", "value": "stereo" },
+    { "id": "hdmi-audio-transport", "name": "7.1 surround sound audio transport" },
+    { "id": "network-port-selection", "name": "Network port selection and traffic segregation" },
+    { "id": "cec-control", "name": "CEC device control" }
+  ],
+  "modularity": {
+    "role": "module",
+    "module_type": "dm-nvx-c-card",
+    "compatible_slot_types": ["dmf-ci-8-card-slot"],
+    "notes": "The official product page states that this card occupies one slot in a DMF-CI-8 card chassis. Interfaces and capabilities in this record belong to the card, not to the chassis."
+  },
+  "composition": {
+    "composable": true,
+    "capability_derivation": "none",
+    "interface_addressing_scheme": "chassis-instance/slot-id/installed-equipment-instance/interface-id",
+    "notes": "This is a module catalog record. Installation identity and slot assignment belong to a future instance/configuration layer."
+  },
+  "documentation": [
+    { "type": "product_page", "uri": "https://www.crestron.com/Products/Catalog/AV-Over-IP/DM-NVX-AV-Over-IP/Video-Endpoint/DM-NVX-360C", "title": "DM-NVX-360C", "language": "en" },
+    { "type": "datasheet", "uri": "https://www.crestron.com/getmedia/f1ce9c9f-64fc-413d-99e3-022b37db973b/ss_DM-NVX-360C", "title": "Spec Sheet: DM-NVX-360C", "language": "en" },
+    { "type": "other", "uri": "https://docs.crestron.com/en-us/9496/Content/Topics/Overview/Features-360C.htm", "title": "DM-NVX-360C DM NVX AV-over-IP Manual", "language": "en" }
+  ]
+}

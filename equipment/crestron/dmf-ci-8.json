@@ -1,0 +1,122 @@
+{
+  "id": "crestron.dmf-ci-8",
+  "manufacturer": "Crestron",
+  "model": "DMF-CI-8",
+  "product_name": "Crestron DMF-CI-8",
+  "category": "av-over-ip-card-chassis",
+  "product_family": "DM NVX",
+  "schema_version": "3.2.0",
+  "status": "draft",
+  "hardware": {
+    "form_factor": "2-space rack-mountable card chassis",
+    "rack_mountable": true,
+    "rack_units": 2
+  },
+  "power": {
+    "sources": [
+      {
+        "id": "ac-mains",
+        "method": "AC",
+        "connector": "IEC 60320 C14",
+        "voltage": { "min": 100, "max": 240, "unit": "V" },
+        "frequency": { "min": 50, "max": 60, "unit": "Hz" },
+        "current": { "value": 4.3, "unit": "A", "note": "Published input current is 4.3 A at 100 V and 1.8 A at 240 V." },
+        "power_consumption_max": { "value": 350, "unit": "W", "note": "Fully loaded chassis" }
+      }
+    ],
+    "heat_dissipation": { "value": 1195, "unit": "BTU/h", "note": "Fully loaded chassis" }
+  },
+  "interfaces": [
+    {
+      "id": "console-serial",
+      "label": "CONSOLE, SERIAL",
+      "direction": "bidirectional",
+      "connector": "8-pin RJ45",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "console-serial-rs232", "name": "RS-232 computer console", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "RS-232" }
+      ]
+    },
+    {
+      "id": "console-usb",
+      "label": "CONSOLE, USB",
+      "direction": "bidirectional",
+      "connector": "USB Type-B",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "console-usb-device", "name": "USB computer console", "direction": "bidirectional", "signal_type": "control", "signal_family": "USB console", "protocol_family": "USB" }
+      ]
+    },
+    {
+      "id": "usb-front",
+      "label": "USB",
+      "direction": "bidirectional",
+      "connector": "USB Type-A",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "usb-storage", "name": "USB mass storage device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB" }
+      ]
+    },
+    {
+      "id": "chassis-ground",
+      "label": "Chassis ground lug",
+      "direction": "input",
+      "connector": "6-32 screw",
+      "connector_gender": "none",
+      "signals": [
+        { "id": "protective-ground", "name": "Chassis ground", "direction": "input", "signal_type": "power", "signal_family": "protective ground" }
+      ]
+    },
+    {
+      "id": "ac-mains",
+      "label": "AC MAINS",
+      "direction": "input",
+      "connector": "IEC 60320 C14",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "AC power" }
+      ]
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "chassis-management",
+      "type": "management",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["console-serial", "console-usb"] },
+      "notes": "The chassis provides front-panel display/control and network setup for each installed card; this capability represents only the chassis console interfaces, not card capabilities. No technical management protocol was identified for the chassis itself."
+    }
+  ],
+  "modularity": {
+    "role": "chassis",
+    "slots": [
+      { "id": "slot-1", "label": "CARD SLOT ID 1", "slot_type": "dmf-ci-8-card-slot", "index": 1, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-2", "label": "CARD SLOT ID 2", "slot_type": "dmf-ci-8-card-slot", "index": 2, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-3", "label": "CARD SLOT ID 3", "slot_type": "dmf-ci-8-card-slot", "index": 3, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-4", "label": "CARD SLOT ID 4", "slot_type": "dmf-ci-8-card-slot", "index": 4, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-5", "label": "CARD SLOT ID 5", "slot_type": "dmf-ci-8-card-slot", "index": 5, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-6", "label": "CARD SLOT ID 6", "slot_type": "dmf-ci-8-card-slot", "index": 6, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-7", "label": "CARD SLOT ID 7", "slot_type": "dmf-ci-8-card-slot", "index": 7, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } },
+      { "id": "slot-8", "label": "CARD SLOT ID 8", "slot_type": "dmf-ci-8-card-slot", "index": 8, "accepts": { "manufacturers": ["Crestron"], "product_families": ["DM-NVX-C", "DMCF"], "module_types": ["dm-nvx-c-card"], "interface_mechanical": "Crestron plug-in card for DMF-CI-8" } }
+    ],
+    "notes": "Crestron documents eight card slots, with any DM-NVX-C or DMCF series card installable in any slot. The catalog contains no installed modules. Hot-swappable card serviceability is documented; slot-specific restrictions and per-slot power limits were not documented."
+  },
+  "composition": {
+    "composable": true,
+    "capability_derivation": "from_installed_modules",
+    "interface_addressing_scheme": "chassis-instance/slot-id/installed-equipment-instance/interface-id",
+    "notes": "Catalog data describes available slots and chassis-owned interfaces only. Installed cards belong to a future instance/configuration layer."
+  },
+  "known_compatibilities": [
+    {
+      "id": "dmf-ci-8-with-dm-nvx-360c",
+      "relation": "slot-compatible",
+      "target_equipment_id": "crestron.dm-nvx-360c",
+      "notes": "The official DM-NVX-360C product page states that the card occupies one slot in a DMF-CI-8 card chassis."
+    }
+  ],
+  "documentation": [
+    { "type": "product_page", "uri": "https://www.crestron.com/Products/Catalog/AV-Over-IP/DM-NVX-AV-Over-IP/Card-Chassis/DMF-CI-8", "title": "DMF-CI-8", "language": "en" },
+    { "type": "other", "uri": "https://www.crestron.com/getmedia/333b777d-d361-41f9-a874-acd0c38b27d8/mg_sg_dmf-ci-8", "title": "Supplemental Guide: DMF-CI-8", "language": "en" }
+  ]
+}

@@ -130,6 +130,26 @@ O cadastro de catálogo contém apenas a capacidade base e os modificadores poss
 
 `modularity.role` pode ser `standalone`, `chassis`, `module` ou `hybrid`. Chassis e hybrid declaram `slots` individuais com ID, label, `slot_type`, índice/posição e restrições explícitas em `accepts`. Modules declaram `module_type` e `compatible_slot_types`; compatibilidade não depende somente de fabricante/modelo e pode incluir interface mecânica e outras condições.
 
+`slot_type` é o tipo/identidade estrutural do slot. `module_type` é o tipo estrutural/funcional do módulo. `slot.accepts.module_types` declara quais tipos de módulo o slot aceita; `module.compatible_slot_types` declara em quais tipos de slot o módulo pode ser instalado. Essas declarações são complementares, não duplicação acidental: o slot declara o que aceita e o módulo declara onde pode entrar. Uma futura validação semântica poderá comparar os dois lados; o JSON Schema não faz essa comparação.
+
+`module_types` é opcional, contém strings reutilizáveis por qualquer fabricante e não é um catálogo global. Restrições existentes por `manufacturers`, `product_families` e `models` continuam disponíveis e podem coexistir com `module_types`. Nesta versão não há semântica genérica de AND/OR para combinar restrições; a interpretação conjunta fica adiada para um semantic validator futuro.
+
+Exemplo complementar:
+
+```json
+{
+  "slot_type": "dmf-ci-8-card-slot",
+  "accepts": { "module_types": ["dm-nvx-c-card"] }
+}
+```
+
+```json
+{
+  "module_type": "dm-nvx-c-card",
+  "compatible_slot_types": ["dmf-ci-8-card-slot"]
+}
+```
+
 O catálogo de um chassis descreve quais slots existem e quais módulos são aceitos. Não declara quais módulos estão instalados em uma unidade específica. A instalação real pertence a uma futura camada de instância/configuração. `composition` contém somente metadados para orientar essa futura composição, incluindo a possibilidade de derivar capacidades de módulos instalados.
 
 As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não devem ser copiadas para o chassis. Um compositor futuro poderá endereçar uma interface por caminho hierárquico, como `chassis-instance/slot-3/module-instance/hdmi-input-1`, combinando IDs de instância, slot, módulo e interface.
@@ -148,7 +168,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.1.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, capacidade total de pools ou consistência de unidades. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.2.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools ou consistência de unidades. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 
