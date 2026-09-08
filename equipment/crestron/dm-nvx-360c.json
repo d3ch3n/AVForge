@@ -5,7 +5,7 @@
   "product_name": "Crestron DM-NVX-360C",
   "category": "av-over-ip-encoder-decoder-card",
   "product_family": "DM-NVX-C",
-  "schema_version": "3.2.0",
+  "schema_version": "3.4.0",
   "status": "draft",
   "interfaces": [
     {
@@ -155,6 +155,11 @@
       "notes": "Generic web and control-system management over Ethernet; protocol-specific CEC is modeled separately."
     }
   ],
+  "catalog_coverage": {
+    "communication_protocols": {
+      "complete": true
+    }
+  },
   "capabilities": [
     { "id": "encoder-decoder", "name": "Configurable AV-over-IP encoder or decoder", "value": ["encoder", "decoder"] },
     { "id": "video-scaling", "name": "4K60 4:4:4 video scaling and video wall processing", "value": { "maximum_displays": 64, "maximum_wall_layout": "8 wide x 8 high" } },

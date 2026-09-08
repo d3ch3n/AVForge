@@ -365,16 +365,16 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = self.analyze({"signal_family": "ethernet"}, source=source, target=target)
         self.assertEqual(result["result"], "COMPATIBLE")
 
-    def test_real_nvx_complete_dante_is_incompatible(self):
+    def test_real_nvx_with_complete_coverage_dante_is_incompatible(self):
         core = load_record("equipment/qsys/core-8-flex.json")
         nvx = load_record("equipment/crestron/dm-nvx-360c.json")
-        nvx["catalog_coverage"] = {"communication_protocols": {"complete": True}}
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dante"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
         self.assertEqual(result["result"], "INCOMPATIBLE")
 
-    def test_real_nvx_without_coverage_dante_is_unknown(self):
+    def test_nvx_without_coverage_dante_is_unknown(self):
         core = load_record("equipment/qsys/core-8-flex.json")
         nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        nvx.pop("catalog_coverage", None)
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dante"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
 
