@@ -39,6 +39,27 @@ impossible direction, or an explicitly insufficient catalog capacity.
 The analyzer MUST NOT turn an incomplete catalog record into an incompatibility
 without such evidence.
 
+### 1.2 Catalog Coverage Exception
+
+The optional Schema v3.4 field
+`catalog_coverage.communication_protocols.complete` provides scoped negative
+catalog evidence. It applies only when the requested function contains
+`protocol_family` and only to the communication-protocol layer.
+
+If the requested protocol is absent and this domain is `complete: true`, the
+protocol is absent from the complete official catalog scope of that equipment
+record and the protocol layer is `INCOMPATIBLE`. This does not assert universal
+or permanent product non-support. It does not cover another model, variant,
+firmware state, installed module, or protocol outside the cataloged scope.
+
+If coverage is absent, `communication_protocols` is absent, or `complete` is
+`false`, an absent requested protocol remains `INSUFFICIENT_DATA`.
+
+When the requested protocol is explicitly present, the analyzer evaluates its
+capability, interface assignment, availability, and restrictions normally;
+coverage does not override that analysis. Coverage is not relevant when no
+`protocol_family` is requested and does not participate in any other layer.
+
 ## 2. Input Contract
 
 The conceptual input MUST contain:

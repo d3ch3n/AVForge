@@ -165,6 +165,14 @@ def _communication_capabilities(record: dict[str, Any], protocol: str, interface
     return matches, excluded
 
 
+def _protocol_coverage_complete(record: dict[str, Any]) -> bool:
+    coverage = record.get("catalog_coverage")
+    if not isinstance(coverage, dict):
+        return False
+    protocols = coverage.get("communication_protocols")
+    return isinstance(protocols, dict) and protocols.get("complete") is True
+
+
 def _protocol_support(side: dict[str, Any], protocol: str) -> tuple[str, list[str], list[dict[str, Any]]]:
     interface = side["interface"]
     record = side["equipment"]
@@ -180,6 +188,8 @@ def _protocol_support(side: dict[str, Any], protocol: str) -> tuple[str, list[st
     if not evidence:
         if explicit_other_protocol:
             return "INCOMPATIBLE", [f"Interface {interface['id']} explicitly declares a different protocol."] , []
+        if _protocol_coverage_complete(record):
+            return "INCOMPATIBLE", [f"Protocol {protocol} is absent from the complete catalog protocol coverage."] , []
         return "INSUFFICIENT_DATA", [f"Protocol {protocol} is not declared for interface {interface['id']}."] , []
     if any(capability.get("availability") == "unavailable" for capability in capabilities):
         return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly unavailable."] , evidence

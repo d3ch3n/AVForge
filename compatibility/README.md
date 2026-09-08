@@ -14,6 +14,15 @@ The analyzer uses open-world semantics: absence of a declared protocol or
 capability is not proof of non-support. Required missing evidence produces
 `INSUFFICIENT_DATA`; `INCOMPATIBLE` requires explicit contrary evidence.
 
+For Schema v3.4 records, `catalog_coverage.communication_protocols.complete`
+is an explicit exception scoped to the communication-protocol domain. When it
+is `true`, an absent requested protocol is absent from the complete official
+catalog scope and produces `INCOMPATIBLE`. Missing or false coverage preserves
+`INSUFFICIENT_DATA`. An explicitly present protocol is always analyzed through
+its capability, assignment, availability, and restrictions regardless of
+coverage. Coverage does not infer protocols from connectors or Ethernet and
+does not cover module capabilities installed in a chassis.
+
 The caller is expected to provide records that have already passed JSON Schema
 and Semantic Validator checks. The analyzer resolves equipment and interface
 IDs in the supplied set but does not implement a catalog service or duplicate
