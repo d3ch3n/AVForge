@@ -1,0 +1,19 @@
+{
+  "vocabulary": "protocol-families",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "ethernet", "label": "Ethernet", "description": "Ethernet networking protocol family. The current equipment records use Ethernet as a signal family, not as protocol_family." },
+    { "id": "aes67", "label": "AES67", "description": "AES67 networked audio interoperability protocol." },
+    { "id": "dante", "label": "Dante", "description": "Dante networked audio protocol and ecosystem." },
+    { "id": "q-lan", "label": "Q-LAN", "description": "Q-LAN networked audio protocol family.", "manufacturer": "Q-SYS" },
+    { "id": "dm-nvx", "label": "DM NVX", "description": "DM NVX audiovisual-over-IP protocol family.", "manufacturer": "Crestron" },
+    { "id": "hdmi", "label": "HDMI", "description": "HDMI audiovisual transport protocol family." },
+    { "id": "rs-232", "label": "RS-232", "description": "RS-232 serial communication protocol." },
+    { "id": "usb", "label": "USB", "description": "Universal Serial Bus protocol family." },
+    { "id": "usb-2-0", "label": "USB 2.0", "description": "USB 2.0 protocol generation." },
+    { "id": "usb-3-0", "label": "USB 3.0", "description": "USB 3.0 protocol generation." },
+    { "id": "usb-3-1", "label": "USB 3.1", "description": "USB 3.1 protocol generation." },
+    { "id": "q-sys-control", "label": "Q-SYS Control", "description": "Q-SYS control protocol family.", "manufacturer": "Q-SYS" },
+    { "id": "voip", "label": "VoIP", "description": "Voice-over-IP protocol family; no specific signaling protocol is asserted by the current record." }
+  ]
+}

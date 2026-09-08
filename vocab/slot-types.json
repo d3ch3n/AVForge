@@ -1,0 +1,7 @@
+{
+  "vocabulary": "slot-types",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "dmf-ci-8-card-slot", "label": "DMF-CI-8 card slot", "description": "Card slot type used by the Crestron DMF-CI-8 chassis.", "scope": "product-family-specific" }
+  ]
+}

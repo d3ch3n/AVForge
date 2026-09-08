@@ -1,0 +1,14 @@
+{
+  "vocabulary": "signal-families",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "analog-audio", "label": "Analog audio", "description": "Analog audio signal family." },
+    { "id": "ethernet", "label": "Ethernet", "description": "Ethernet network signal family." },
+    { "id": "gpio", "label": "GPIO", "description": "General-purpose input/output signal family." },
+    { "id": "hdmi", "label": "HDMI", "description": "HDMI audiovisual signal family." },
+    { "id": "ac-power", "label": "AC power", "description": "Alternating-current power signal family." },
+    { "id": "dc-power", "label": "DC power", "description": "Direct-current power signal family." },
+    { "id": "protective-ground", "label": "Protective ground", "description": "Protective grounding connection family." },
+    { "id": "serial-control", "label": "Serial control", "description": "Serial control signal family." }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "vocabulary": "interface-directions",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "input", "label": "Input", "description": "Interface or signal receives data or energy.", "aliases": ["in"] },
+    { "id": "output", "label": "Output", "description": "Interface or signal provides data or energy.", "aliases": ["out"] },
+    { "id": "bidirectional", "label": "Bidirectional", "description": "Interface or signal can both receive and provide data or energy.", "aliases": ["bi-directional"] }
+  ]
+}

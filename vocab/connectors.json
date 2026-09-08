@@ -1,0 +1,18 @@
+{
+  "vocabulary": "connectors",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "rj45-8p8c", "label": "RJ45 / 8P8C", "description": "Eight-position modular connector commonly used for balanced twisted-pair cabling.", "aliases": ["RJ45", "RJ-45", "8P8C", "8-pin RJ45"] },
+    { "id": "hdmi-type-a", "label": "HDMI Type A", "description": "Standard-size HDMI Type A physical connector." },
+    { "id": "usb-type-a", "label": "USB Type-A", "description": "USB Type-A physical connector; USB generation is a separate property.", "aliases": ["USB 2.0 Type-A"] },
+    { "id": "usb-type-b", "label": "USB Type-B", "description": "USB Type-B physical connector; USB generation is a separate property." },
+    { "id": "usb-type-c", "label": "USB Type-C", "description": "USB Type-C physical connector; USB generation is a separate property.", "aliases": ["USB 2.0 Type-C"] },
+    { "id": "euroblock-10-pin", "label": "10-pin Euroblock", "description": "Ten-position Euroblock terminal connector." },
+    { "id": "terminal-block-5-pin-3-5mm", "label": "5-pin 3.5 mm detachable terminal block", "description": "Five-position detachable terminal block with 3.5 mm pitch as documented for the interface." },
+    { "id": "connector-3-position-3-5mm", "label": "3-position 3.5 mm connector", "description": "Three-position connector with 3.5 mm pitch; the current record does not identify a more specific connector family." },
+    { "id": "pluggable-terminal-block", "label": "Pluggable terminal block", "description": "Pluggable terminal block whose pitch and other mechanical details are not specified." },
+    { "id": "screw-6-32", "label": "6-32 screw", "description": "6-32 screw connection used for chassis grounding." },
+    { "id": "iec-60320-c14", "label": "IEC 60320 C14", "description": "IEC 60320 C14 appliance inlet." },
+    { "id": "sfp-receptacle", "label": "SFP Receptacle", "description": "Physical receptacle for an SFP transceiver interface.", "aliases": ["SFP port"] }
+  ]
+}

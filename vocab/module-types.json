@@ -1,0 +1,7 @@
+{
+  "vocabulary": "module-types",
+  "version": "1.0.0",
+  "entries": [
+    { "id": "dm-nvx-c-card", "label": "DM-NVX-C card", "description": "Plug-in card type accepted by the Crestron DMF-CI-8 card chassis.", "scope": "product-family-specific" }
+  ]
+}
