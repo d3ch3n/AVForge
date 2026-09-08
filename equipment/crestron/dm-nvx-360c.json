@@ -139,11 +139,20 @@
       "notes": "The official documentation supports USB 2.0 Layer 2 or Layer 3 extension/routing and states that USB device or USB host operation is selected, not both."
     },
     {
+      "id": "cec-control",
+      "type": "control",
+      "protocol_family": "cec",
+      "media_type": "control",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "simultaneous", "allowed_interface_ids": ["hdmi-input", "hdmi-output"] },
+      "notes": "The official DM-NVX-360C documentation states that the card provides a gateway for controlling source and display devices via CEC over the HDMI connections; CEC over the HDMI output can also control display power without a control system."
+    },
+    {
       "id": "device-control",
       "type": "control",
       "direction": "bidirectional",
-      "interface_assignment": { "mode": "simultaneous", "allowed_interface_ids": ["hdmi-input", "hdmi-output", "ethernet-1", "ethernet-2", "ethernet-3", "ethernet-4-sfp"] },
-      "notes": "The sources document CEC over HDMI and web/control-system management over Ethernet; no single protocol assignment is asserted for the whole capability."
+      "interface_assignment": { "mode": "simultaneous", "allowed_interface_ids": ["ethernet-1", "ethernet-2", "ethernet-3", "ethernet-4-sfp"] },
+      "notes": "Generic web and control-system management over Ethernet; protocol-specific CEC is modeled separately."
     }
   ],
   "capabilities": [

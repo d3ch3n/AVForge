@@ -1,6 +1,6 @@
 # AVForge Vocabulary
 
-AVForge Vocabulary v1.1.0 defines canonical terms used by the equipment model. It is separate from `schemas/equipment.schema.json`: the schema defines structure, while this directory defines the controlled language used in that structure.
+AVForge Vocabulary v1.2.0 defines canonical terms used by the equipment model. It is separate from `schemas/equipment.schema.json`: the schema defines structure, while this directory defines the controlled language used in that structure.
 
 ## Scope
 
