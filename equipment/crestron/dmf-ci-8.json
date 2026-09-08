@@ -17,7 +17,7 @@
       {
         "id": "ac-mains",
         "method": "AC",
-        "connector": "IEC 60320 C14",
+        "connector": "iec-60320-c14",
         "voltage": { "min": 100, "max": 240, "unit": "V" },
         "frequency": { "min": 50, "max": 60, "unit": "Hz" },
         "current": { "value": 4.3, "unit": "A", "note": "Published input current is 4.3 A at 100 V and 1.8 A at 240 V." },
@@ -31,50 +31,50 @@
       "id": "console-serial",
       "label": "CONSOLE, SERIAL",
       "direction": "bidirectional",
-      "connector": "8-pin RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "console-serial-rs232", "name": "RS-232 computer console", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "RS-232" }
+        { "id": "console-serial-rs232", "name": "RS-232 computer console", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "rs-232" }
       ]
     },
     {
       "id": "console-usb",
       "label": "CONSOLE, USB",
       "direction": "bidirectional",
-      "connector": "USB Type-B",
+      "connector": "usb-type-b",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "console-usb-device", "name": "USB computer console", "direction": "bidirectional", "signal_type": "control", "signal_family": "USB console", "protocol_family": "USB" }
+        { "id": "console-usb-device", "name": "USB computer console", "direction": "bidirectional", "signal_type": "control", "protocol_family": "usb" }
       ]
     },
     {
       "id": "usb-front",
       "label": "USB",
       "direction": "bidirectional",
-      "connector": "USB Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-storage", "name": "USB mass storage device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB" }
+        { "id": "usb-storage", "name": "USB mass storage device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb" }
       ]
     },
     {
       "id": "chassis-ground",
       "label": "Chassis ground lug",
       "direction": "input",
-      "connector": "6-32 screw",
+      "connector": "screw-6-32",
       "connector_gender": "none",
       "signals": [
-        { "id": "protective-ground", "name": "Chassis ground", "direction": "input", "signal_type": "power", "signal_family": "protective ground" }
+        { "id": "protective-ground", "name": "Chassis ground", "direction": "input", "signal_type": "power", "signal_family": "protective-ground" }
       ]
     },
     {
       "id": "ac-mains",
       "label": "AC MAINS",
       "direction": "input",
-      "connector": "IEC 60320 C14",
+      "connector": "iec-60320-c14",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "AC power" }
+        { "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "ac-power" }
       ]
     }
   ],

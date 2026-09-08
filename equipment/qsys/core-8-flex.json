@@ -10,7 +10,7 @@
     {
       "id": "gpio-input-terminal-block",
       "label": "GPIO input terminal block",
-      "connector_type": "10-pin Euroblock",
+      "connector_type": "euroblock-10-pin",
       "gender": "receptacle",
       "connection_points": [
         { "id": "gpio-in-1", "label": "GPIO input 1", "role": "signal" },
@@ -28,7 +28,7 @@
     {
       "id": "gpio-output-terminal-block",
       "label": "GPIO output terminal block",
-      "connector_type": "10-pin Euroblock",
+      "connector_type": "euroblock-10-pin",
       "gender": "receptacle",
       "connection_points": [
         { "id": "gpio-out-1", "label": "GPIO output 1", "role": "signal" },
@@ -48,7 +48,7 @@
       "id": "flex-1",
       "label": "FLEX CHANNEL 1",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         {
@@ -88,7 +88,7 @@
       "id": "flex-2",
       "label": "FLEX CHANNEL 2",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-2-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -99,7 +99,7 @@
       "id": "flex-3",
       "label": "FLEX CHANNEL 3",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-3-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -110,7 +110,7 @@
       "id": "flex-4",
       "label": "FLEX CHANNEL 4",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-4-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -121,7 +121,7 @@
       "id": "flex-5",
       "label": "FLEX CHANNEL 5",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-5-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -132,7 +132,7 @@
       "id": "flex-6",
       "label": "FLEX CHANNEL 6",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-6-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -143,7 +143,7 @@
       "id": "flex-7",
       "label": "FLEX CHANNEL 7",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-7-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -154,7 +154,7 @@
       "id": "flex-8",
       "label": "FLEX CHANNEL 8",
       "direction": "bidirectional",
-      "connector": "pluggable terminal block",
+      "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "flex-8-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
@@ -165,10 +165,10 @@
       "id": "lan-a",
       "label": "LAN A",
       "direction": "bidirectional",
-      "connector": "RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "lan-a-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
+        { "id": "lan-a-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
       ],
       "notes": "Primary LAN; official manual lists Q-LAN, AES67, Dante, VoIP, WAN streaming and control as supported applications."
     },
@@ -176,10 +176,10 @@
       "id": "lan-b",
       "label": "LAN B",
       "direction": "bidirectional",
-      "connector": "RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "lan-b-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
+        { "id": "lan-b-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
       ],
       "notes": "Backup/secondary LAN; official manual lists Q-LAN, AES67, Dante, VoIP, WAN streaming and control as supported applications."
     },
@@ -187,10 +187,10 @@
       "id": "usb-c",
       "label": "USB C",
       "direction": "bidirectional",
-      "connector": "USB Type-C",
+      "connector": "usb-type-c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-c-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB AV", "protocol_family": "USB 3.1", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "host or device" } }
+        { "id": "usb-c-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-1", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "host or device" } }
       ],
       "notes": "Host port or device port. Device function is available when USB Type-B is not in use."
     },
@@ -198,237 +198,237 @@
       "id": "usb-b",
       "label": "USB B",
       "direction": "bidirectional",
-      "connector": "USB Type-B",
+      "connector": "usb-type-b",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-b-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB AV", "protocol_family": "USB 3.0", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "dedicated device" } }
+        { "id": "usb-b-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "dedicated device" } }
       ]
     },
     {
       "id": "usb-a-1",
       "label": "USB A 1",
       "direction": "bidirectional",
-      "connector": "USB Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-a-1-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB 3.0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
+        { "id": "usb-a-1-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
     },
     {
       "id": "usb-a-2",
       "label": "USB A 2",
       "direction": "bidirectional",
-      "connector": "USB Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-a-2-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB 3.0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
+        { "id": "usb-a-2-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
     },
     {
       "id": "usb-a-3",
       "label": "USB A 3",
       "direction": "bidirectional",
-      "connector": "USB Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-a-3-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB 3.0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
+        { "id": "usb-a-3-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
     },
     {
       "id": "usb-a-4",
       "label": "USB A 4",
       "direction": "bidirectional",
-      "connector": "USB Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-a-4-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB host", "protocol_family": "USB 3.0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
+        { "id": "usb-a-4-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
     },
     {
       "id": "gpio-input-1",
       "label": "GPIO INPUT 1",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-1"] },
       "signals": [
-        { "id": "gpio-input-signal-1", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }
+        { "id": "gpio-input-signal-1", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }
       ]
     },
     {
       "id": "gpio-input-2",
       "label": "GPIO INPUT 2",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-2"] },
-      "signals": [{ "id": "gpio-input-signal-2", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-2", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-3",
       "label": "GPIO INPUT 3",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-3"] },
-      "signals": [{ "id": "gpio-input-signal-3", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-3", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-4",
       "label": "GPIO INPUT 4",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-4"] },
-      "signals": [{ "id": "gpio-input-signal-4", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-4", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-5",
       "label": "GPIO INPUT 5",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-5"] },
-      "signals": [{ "id": "gpio-input-signal-5", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-5", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-6",
       "label": "GPIO INPUT 6",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-6"] },
-      "signals": [{ "id": "gpio-input-signal-6", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-6", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-7",
       "label": "GPIO INPUT 7",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-7"] },
-      "signals": [{ "id": "gpio-input-signal-7", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-7", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-8",
       "label": "GPIO INPUT 8",
       "direction": "input",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-8"] },
-      "signals": [{ "id": "gpio-input-signal-8", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-8", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-12v-source",
       "label": "+12 VDC",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO input connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-12v"] },
-      "signals": [{ "id": "gpio-12v-signal", "name": "Auxiliary DC source", "direction": "output", "signal_type": "power", "signal_family": "DC power", "signal_characteristics": { "voltage": { "value": 12, "unit": "V" }, "current_max": { "value": 0.1, "unit": "A" } } }]
+      "signals": [{ "id": "gpio-12v-signal", "name": "Auxiliary DC source", "direction": "output", "signal_type": "power", "signal_family": "dc-power", "signal_characteristics": { "voltage": { "value": 12, "unit": "V" }, "current_max": { "value": 0.1, "unit": "A" } } }]
     },
     {
       "id": "gpio-output-1",
       "label": "GPIO OUTPUT 1",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-1"] },
-      "signals": [{ "id": "gpio-output-signal-1", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-1", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-2",
       "label": "GPIO OUTPUT 2",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-2"] },
-      "signals": [{ "id": "gpio-output-signal-2", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-2", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-3",
       "label": "GPIO OUTPUT 3",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-3"] },
-      "signals": [{ "id": "gpio-output-signal-3", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-3", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-4",
       "label": "GPIO OUTPUT 4",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-4"] },
-      "signals": [{ "id": "gpio-output-signal-4", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-4", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-5",
       "label": "GPIO OUTPUT 5",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-5"] },
-      "signals": [{ "id": "gpio-output-signal-5", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-5", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-6",
       "label": "GPIO OUTPUT 6",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-6"] },
-      "signals": [{ "id": "gpio-output-signal-6", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-6", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-7",
       "label": "GPIO OUTPUT 7",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-7"] },
-      "signals": [{ "id": "gpio-output-signal-7", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-7", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "gpio-output-8",
       "label": "GPIO OUTPUT 8",
       "direction": "output",
-      "connector": "10-pin Euroblock (shared GPIO output connector)",
+      "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-8"] },
-      "signals": [{ "id": "gpio-output-signal-8", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "GPIO", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-8", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
     },
     {
       "id": "rs232-1",
       "label": "RS232 COM 1",
       "direction": "bidirectional",
-      "connector": "3-position 3.5 mm connector",
+      "connector": "connector-3-position-3-5mm",
       "connector_gender": "receptacle",
-      "signals": [{ "id": "rs232-signal-1", "name": "Serial control", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "RS-232" }]
+      "signals": [{ "id": "rs232-signal-1", "name": "Serial control", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "rs-232" }]
     },
     {
       "id": "rs232-2",
       "label": "RS232 COM 2",
       "direction": "bidirectional",
-      "connector": "3-position 3.5 mm connector",
+      "connector": "connector-3-position-3-5mm",
       "connector_gender": "receptacle",
-      "signals": [{ "id": "rs232-signal-2", "name": "Serial control", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "RS-232" }]
+      "signals": [{ "id": "rs232-signal-2", "name": "Serial control", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "rs-232" }]
     },
     {
       "id": "ac-mains",
       "label": "AC MAINS",
       "direction": "input",
-      "connector": "IEC 60320 C14",
+      "connector": "iec-60320-c14",
       "connector_gender": "receptacle",
-      "signals": [{ "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "AC power", "signal_characteristics": { "voltage_range": { "min": 100, "max": 240, "unit": "V" }, "frequency": { "min": 50, "max": 60, "unit": "Hz" } } }]
+      "signals": [{ "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "ac-power", "signal_characteristics": { "voltage_range": { "min": 100, "max": 240, "unit": "V" }, "frequency": { "min": 50, "max": 60, "unit": "Hz" } } }]
     }
   ],
   "communication_capabilities": [
     {
       "id": "q-lan-network-audio",
       "type": "network_audio",
-      "protocol_family": "Q-LAN",
+      "protocol_family": "q-lan",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] },
@@ -438,7 +438,7 @@
     {
       "id": "aes67-network-audio",
       "type": "network_audio",
-      "protocol_family": "AES67",
+      "protocol_family": "aes67",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] },
@@ -448,7 +448,7 @@
     {
       "id": "dante-network-audio",
       "type": "network_audio",
-      "protocol_family": "Dante",
+      "protocol_family": "dante",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] },
@@ -459,7 +459,7 @@
     {
       "id": "q-sys-control",
       "type": "control",
-      "protocol_family": "Q-SYS Control",
+      "protocol_family": "q-sys-control",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] }
     },
@@ -473,7 +473,7 @@
     {
       "id": "voip-softphones",
       "type": "control",
-      "protocol_family": "VoIP",
+      "protocol_family": "voip",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] },

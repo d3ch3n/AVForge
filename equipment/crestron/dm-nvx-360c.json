@@ -12,97 +12,97 @@
       "id": "hdmi-input",
       "label": "HDMI INPUT",
       "direction": "input",
-      "connector": "HDMI Type A",
+      "connector": "hdmi-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "hdmi-input-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "HDMI", "protocol_family": "HDMI", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3" } }
+        { "id": "hdmi-input-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3" } }
       ]
     },
     {
       "id": "hdmi-output",
       "label": "HDMI OUTPUT",
       "direction": "output",
-      "connector": "HDMI Type A",
+      "connector": "hdmi-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "hdmi-output-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "HDMI", "protocol_family": "HDMI", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3", "scaler": true } }
+        { "id": "hdmi-output-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3", "scaler": true } }
       ]
     },
     {
       "id": "ethernet-1",
       "label": "Ethernet 1",
       "direction": "bidirectional",
-      "connector": "8-pin RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "ethernet-1-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+        { "id": "ethernet-1-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
     },
     {
       "id": "ethernet-2",
       "label": "Ethernet 2",
       "direction": "bidirectional",
-      "connector": "8-pin RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "ethernet-2-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+        { "id": "ethernet-2-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
     },
     {
       "id": "ethernet-3",
       "label": "Ethernet 3 (10/100)",
       "direction": "bidirectional",
-      "connector": "8-pin RJ45",
+      "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "ethernet-3-network", "name": "100BASE-TX Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+        { "id": "ethernet-3-network", "name": "100BASE-TX Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
     },
     {
       "id": "ethernet-4-sfp",
       "label": "Ethernet 4",
       "direction": "bidirectional",
-      "connector": "SFP port",
+      "connector": "sfp-receptacle",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "ethernet-4-network", "name": "Fiber Ethernet via SFP-1G Series transceiver", "direction": "bidirectional", "signal_type": "network", "signal_family": "Ethernet" }
+        { "id": "ethernet-4-network", "name": "Fiber Ethernet via SFP-1G Series transceiver", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
     },
     {
       "id": "usb-device",
       "label": "USB DEVICE",
       "direction": "bidirectional",
-      "connector": "USB 2.0 Type-C",
+      "connector": "usb-type-c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-device-extension", "name": "USB device signal extension", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB 2.0", "protocol_family": "USB 2.0" }
+        { "id": "usb-device-extension", "name": "USB device signal extension", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-2-0" }
       ]
     },
     {
       "id": "usb-host",
       "label": "USB HOST",
       "direction": "bidirectional",
-      "connector": "USB 2.0 Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-host-extension", "name": "USB host signal extension", "direction": "bidirectional", "signal_type": "data", "signal_family": "USB 2.0", "protocol_family": "USB 2.0" }
+        { "id": "usb-host-extension", "name": "USB host signal extension", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-2-0" }
       ]
     },
     {
       "id": "usb-hid",
       "label": "USB HID",
       "direction": "bidirectional",
-      "connector": "USB 2.0 Type-A",
+      "connector": "usb-type-a",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "usb-hid-control", "name": "USB HID signal extension", "direction": "bidirectional", "signal_type": "control", "signal_family": "USB HID", "protocol_family": "USB 2.0" }
+        { "id": "usb-hid-control", "name": "USB HID signal extension", "direction": "bidirectional", "signal_type": "control", "protocol_family": "usb-2-0" }
       ]
     },
     {
       "id": "audio-io",
       "label": "AUDIO I/O",
       "direction": "bidirectional",
-      "connector": "5-pin 3.5 mm detachable terminal block",
+      "connector": "terminal-block-5-pin-3-5mm",
       "connector_gender": "receptacle",
       "signals": [
         { "id": "analog-audio-io", "name": "Balanced/unbalanced stereo line-level audio", "direction": "bidirectional", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input or output, not both", "channels": 2, "input_impedance": { "value": 24000, "unit": "ohm" }, "output_impedance": { "value": 200, "unit": "ohm" }, "maximum_level": { "value": 4, "unit": "Vrms" }, "adc_dac": "24-bit 48 kHz" } }
@@ -114,7 +114,7 @@
     {
       "id": "dm-nvx-network-video",
       "type": "network_video",
-      "protocol_family": "DM NVX",
+      "protocol_family": "dm-nvx",
       "media_type": "video",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["ethernet-1", "ethernet-2", "ethernet-4-sfp"] },
@@ -123,7 +123,7 @@
     {
       "id": "aes67-audio",
       "type": "network_audio",
-      "protocol_family": "AES67",
+      "protocol_family": "aes67",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet-3"] },
@@ -133,7 +133,7 @@
     {
       "id": "usb-extension",
       "type": "data",
-      "protocol_family": "USB 2.0",
+      "protocol_family": "usb-2-0",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["usb-device", "usb-host"] },
       "notes": "The official documentation supports USB 2.0 Layer 2 or Layer 3 extension/routing and states that USB device or USB host operation is selected, not both."
