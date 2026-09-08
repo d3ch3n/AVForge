@@ -126,9 +126,9 @@
       "protocol_family": "aes67",
       "media_type": "audio",
       "direction": "bidirectional",
-      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet-3"] },
+      "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["ethernet-1", "ethernet-2", "ethernet-3", "ethernet-4-sfp"] },
       "capacity": { "rx_channels": 2, "tx_channels": 2 },
-      "notes": "The official documentation describes Ethernet 3 as a 100BASE-TX port for a dedicated audio network and documents 2-channel AES67 transmit/receive behavior."
+      "notes": "Official Product Manual DOC. 8879D states that Audio/NAX defaults to Port 3 and may be selected on Ethernet ports 1, 2, 3, or 4. The same manual documents 2-channel AES67 transmit/receive behavior for this family."
     },
     {
       "id": "usb-extension",

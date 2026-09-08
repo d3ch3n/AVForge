@@ -21,6 +21,24 @@ alone.
 Version 1 supports `CATALOG` analysis only. It does not decide whether a
 connection should be used in a project.
 
+### 1.1 Open-World Semantics
+
+The Compatibility Analyzer uses open-world semantics:
+
+> Absence of evidence is not evidence of absence.
+
+An undeclared protocol or capability does not mean that the equipment is
+unsupported. When that information is necessary to decide an applicable layer,
+the result is `INSUFFICIENT_DATA`.
+
+`INCOMPATIBLE` requires sufficient contrary evidence, such as an explicit
+unavailable declaration, an explicit deny, an assignment that excludes the
+selected interface, an explicitly contradictory signal or protocol, an
+impossible direction, or an explicitly insufficient catalog capacity.
+
+The analyzer MUST NOT turn an incomplete catalog record into an incompatibility
+without such evidence.
+
 ## 2. Input Contract
 
 The conceptual input MUST contain:
@@ -119,6 +137,23 @@ technically justified by the available data. If that cannot be established,
 the physical layer is `INSUFFICIENT_DATA` or `INCOMPATIBLE`, as applicable.
 
 The v1 contract does not create a cable catalog.
+
+### 2.4 Capability Assignment
+
+`allowed_interface_ids` identifies the interfaces to which a capability may be
+assigned.
+
+With `mode: "fixed"`, the capability is bound to the declared interface(s).
+An interface outside the declared list is incompatible with that capability.
+
+With `mode: "configurable"`, the capability may be assigned to one of the
+declared interfaces according to the documented product behavior. When the
+selected interface is allowed but configuration or assignment is required,
+the layer is `CONDITIONALLY_COMPATIBLE`.
+
+A documented default interface does not imply a fixed assignment. In
+particular, a default Audio/NAX port remains configurable when the catalog
+documents other allowed ports.
 
 ## 3. Final Results
 
@@ -370,12 +405,13 @@ of the physical pair.
 | Requested function | Applicable layers | Expected result |
 |---|---|---|
 | Generic Ethernet | physical, signal, direction | `COMPATIBLE` under an appropriate passive medium |
-| AES67 | physical, signal, protocol, direction | `INCOMPATIBLE` when AES67 is assigned to the NVX Ethernet 3 capability, not Ethernet 1 |
-| Dante | physical, signal, protocol | `INCOMPATIBLE` when no common Dante capability is declared |
-| Q-LAN | physical, signal, protocol | `INCOMPATIBLE` when no common Q-LAN capability is declared |
-| DM NVX | physical, signal, protocol | `INCOMPATIBLE` when the Core does not declare DM NVX support |
+| AES67 | physical, signal, protocol, direction | `CONDITIONALLY_COMPATIBLE` for Ethernet 1 when both records allow AES67 and assignment is configurable |
+| Dante | physical, signal, protocol | `INSUFFICIENT_DATA` when the Core declares Dante but the DM-NVX-360C has neither Dante nor an explicit deny |
+| Q-LAN | physical, signal, protocol | `INSUFFICIENT_DATA` when the Core declares Q-LAN but the DM-NVX-360C has neither Q-LAN nor an explicit deny |
+| DM NVX | physical, signal, protocol | `INSUFFICIENT_DATA` when the DM-NVX-360C declares DM NVX but the Core has neither DM NVX nor an explicit deny |
 | Generic control | physical, signal, protocol, direction | `INSUFFICIENT_DATA` when no common control protocol is identified |
 
+Port 3 is the documented Audio/NAX default, not an exclusive assignment.
 Analog impedance and voltage data are irrelevant and do not make
 `electrical.applicable` true for these network analyses.
 
@@ -430,7 +466,24 @@ Future project analysis requires installed state, resource allocation,
 topology, routing, license state, VLAN, multicast, PTP, QoS, redundancy,
 occupancy, and design rules.
 
-## 13. Layered System Responsibilities
+The official DM-NVX family documentation distinguishes Dante support by model:
+Dante applies to DM-NVX-363 and DM-NVX-363C, not DM-NVX-360 or DM-NVX-360C.
+The current Equipment Schema has an `availability` value of `unavailable`,
+but no clean standalone representation for an unsupported protocol without
+creating an artificial capability and assignment. This is a
+`MODEL_REPRESENTATION_GAP`; the analyzer MUST NOT create a fake Dante
+capability in the DM-NVX-360C record.
+
+## 13. Historical Scenarios and Executable Regressions
+
+Labels such as `SV1-SV20`, `MC1-MC20`, and `UM1-UM20` refer to historical or
+conceptual validation scenarios. They are not executable test suites in the
+current repository unless corresponding test files are present.
+
+The executable v0.1 regressions are JSON parsing, Draft 2020-12 validation,
+Semantic Validator execution, and `compatibility/test_analyze.py`.
+
+## 14. Layered System Responsibilities
 
 - **JSON Schema**: structural validity, types, required fields, and local formats.
 - **Semantic Validator**: local identity, references, canonical Vocabulary IDs,
@@ -444,7 +497,7 @@ These responsibilities MUST remain separate. The Semantic Validator is an
 independent prerequisite for valid catalog input; it is not a compatibility
 engine.
 
-## 14. Contract Decision
+## 15. Contract Decision
 
 The v1 contract is ready for implementation of a conservative `CATALOG`
 analyzer. No change is required in Equipment Schema v3.3 or Vocabulary v1.1
