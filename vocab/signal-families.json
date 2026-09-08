@@ -1,6 +1,6 @@
 {
   "vocabulary": "signal-families",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "analog-audio", "label": "Analog audio", "description": "Analog audio signal family." },
     { "id": "ethernet", "label": "Ethernet", "description": "Ethernet network signal family." },

@@ -1,6 +1,6 @@
 # AVForge Vocabulary
 
-AVForge Vocabulary v1.0.0 defines canonical terms used by the equipment model. It is separate from `schemas/equipment.schema.json`: the schema defines structure, while this directory defines the controlled language used in that structure.
+AVForge Vocabulary v1.1.0 defines canonical terms used by the equipment model. It is separate from `schemas/equipment.schema.json`: the schema defines structure, while this directory defines the controlled language used in that structure.
 
 ## Scope
 
@@ -10,7 +10,7 @@ For example, `RJ-45` is an acceptable alias for `rj45-8p8c`. `10-pin Euroblock (
 
 The vocabulary is intentionally small and evidence-based. Values that are descriptions, manufacturer marketing language, electrical characteristics, or project-instance data are not promoted to global terms without a clear canonical concept.
 
-`signal-formats.json` is empty in v1.0.0 because the current equipment records do not populate `signal_format`. Terms such as line level, balanced, converter resolution, and phantom power remain descriptions or electrical/signal characteristics until the model records them explicitly as formats.
+`signal-formats.json` is empty in v1.1.0 because the current equipment records do not populate `signal_format`. Terms such as line level, balanced, converter resolution, and phantom power remain descriptions or electrical/signal characteristics until the model records them explicitly as formats.
 
 `slot-types.json` and `module-types.json` use `scope` to make their product-family-specific nature explicit. They are not a catalog of every Crestron part and do not create a general module hierarchy.
 
@@ -31,6 +31,6 @@ Physical compatibility alone does not imply connection compatibility. In particu
 
 ## Deliberate Limits
 
-- Canonical IDs do not replace existing equipment values in this release.
+- Equipment records are migrated separately from Vocabulary releases.
 - Optional or undocumented protocol fields remain absent rather than being assigned `unknown` or a guessed protocol.
 - No compatibility relation is encoded by shared aliases, labels, families, or connector IDs.

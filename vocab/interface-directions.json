@@ -1,6 +1,6 @@
 {
   "vocabulary": "interface-directions",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "input", "label": "Input", "description": "Interface or signal receives data or energy.", "aliases": ["in"] },
     { "id": "output", "label": "Output", "description": "Interface or signal provides data or energy.", "aliases": ["out"] },

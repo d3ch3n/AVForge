@@ -1,6 +1,6 @@
 {
   "vocabulary": "signal-types",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "audio", "label": "Audio", "description": "Broad class for audio signals." },
     { "id": "video", "label": "Video", "description": "Broad class for video signals." },

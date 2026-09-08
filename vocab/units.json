@@ -1,6 +1,6 @@
 {
   "vocabulary": "units",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "watt", "label": "Watt", "symbol": "W", "description": "SI unit of power." },
     { "id": "volt", "label": "Volt", "symbol": "V", "description": "SI unit of electric potential difference." },
@@ -10,6 +10,9 @@
     { "id": "kilogram", "label": "Kilogram", "symbol": "kg", "description": "SI unit of mass." },
     { "id": "millimeter", "label": "Millimeter", "symbol": "mm", "description": "SI unit-derived unit of length." },
     { "id": "megabit-per-second", "label": "Megabit per second", "symbol": "Mbit/s", "description": "Unit of digital data rate.", "aliases": ["Mbit/s"] },
+    { "id": "bit-per-second", "label": "Bit per second", "symbol": "bit/s", "description": "Unit of digital data rate." },
+    { "id": "kilobit-per-second", "label": "Kilobit per second", "symbol": "kbit/s", "description": "Unit of digital data rate." },
+    { "id": "gigabit-per-second", "label": "Gigabit per second", "symbol": "Gbit/s", "description": "Unit of digital data rate." },
     { "id": "volt-rms", "label": "Volt RMS", "symbol": "Vrms", "description": "Root-mean-square voltage unit notation.", "aliases": ["Vrms"] },
     { "id": "decibel-u", "label": "Decibel referenced to 0.775 V", "symbol": "dBu", "description": "Voltage level expressed in dBu.", "aliases": ["dBu"] },
     { "id": "milliampere", "label": "Milliampere", "symbol": "mA", "description": "One thousandth of an ampere.", "aliases": ["mA"] },

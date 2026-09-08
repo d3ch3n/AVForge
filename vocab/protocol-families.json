@@ -1,6 +1,6 @@
 {
   "vocabulary": "protocol-families",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "ethernet", "label": "Ethernet", "description": "Ethernet networking protocol family. The current equipment records use Ethernet as a signal family, not as protocol_family." },
     { "id": "aes67", "label": "AES67", "description": "AES67 networked audio interoperability protocol." },

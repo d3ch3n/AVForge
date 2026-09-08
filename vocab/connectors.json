@@ -1,6 +1,6 @@
 {
   "vocabulary": "connectors",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entries": [
     { "id": "rj45-8p8c", "label": "RJ45 / 8P8C", "description": "Eight-position modular connector commonly used for balanced twisted-pair cabling.", "aliases": ["RJ45", "RJ-45", "8P8C", "8-pin RJ45"] },
     { "id": "hdmi-type-a", "label": "HDMI Type A", "description": "Standard-size HDMI Type A physical connector." },
