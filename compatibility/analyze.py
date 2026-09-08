@@ -135,6 +135,19 @@ def _matching_signals(interface: dict[str, Any], function: dict[str, Any]) -> li
     return [signal for signal in _signals(interface) if _matches_requirements(signal, function)]
 
 
+def _selected_signal(side: dict[str, Any], function: dict[str, Any], side_name: str) -> dict[str, Any] | None:
+    candidates = _matching_signals(side["interface"], function)
+    required_direction = "output" if side_name == "source" else "input"
+    directional_candidates = [
+        signal
+        for signal in candidates
+        if signal.get("direction") in {required_direction, "bidirectional"}
+    ]
+    if len(directional_candidates) != 1:
+        return None
+    return directional_candidates[0]
+
+
 def _signal_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
     applicable = any(function.get(field) is not None for field in ("signal_type", "signal_family", "signal_format"))
     if not applicable:
@@ -296,12 +309,12 @@ def _characteristics(signal: dict[str, Any]) -> dict[str, Any]:
 def _electrical_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
     if function.get("signal_family") != "analog-audio":
         return _layer(False)
-    source_signals = _matching_signals(source["interface"], function)
-    target_signals = _matching_signals(target["interface"], function)
-    if not source_signals or not target_signals:
-        return _layer(True, "INSUFFICIENT_DATA", ["Analog electrical comparison requires matching signal declarations."])
-    source_chars = _characteristics(source_signals[0])
-    target_chars = _characteristics(target_signals[0])
+    source_signal = _selected_signal(source, function, "source")
+    target_signal = _selected_signal(target, function, "target")
+    if source_signal is None or target_signal is None:
+        return _layer(True, "INSUFFICIENT_DATA", ["Analog electrical comparison requires one unambiguous signal per connection role."])
+    source_chars = _characteristics(source_signal)
+    target_chars = _characteristics(target_signal)
     if not source_chars or not target_chars:
         return _layer(True, "INSUFFICIENT_DATA", ["Required analog electrical characteristics are not declared."])
     source_balanced = source_chars.get("balanced")

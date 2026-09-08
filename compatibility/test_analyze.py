@@ -138,6 +138,72 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
 
+    def test_signal_selection_source_uses_output_signal_not_array_order(self):
+        input_signal = signal(signal_type="audio", signal_family="analog-audio", direction="input")
+        input_signal["id"] = "input"
+        output_signal = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
+        output_signal["id"] = "output"
+        source = equipment("source", signal=None, interface={"signals": [input_signal, output_signal]})
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+        source["interfaces"][0]["signals"] = [output_signal, input_signal]
+        reversed_result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(reversed_result["layers"]["electrical"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], reversed_result["result"])
+
+    def test_signal_selection_target_uses_input_signal_not_array_order(self):
+        output_signal = signal(signal_type="audio", signal_family="analog-audio", direction="output")
+        output_signal["id"] = "output"
+        input_signal = signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True)
+        input_signal["id"] = "input"
+        target = equipment("target", signal=None, interface={"signals": [output_signal, input_signal]})
+        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True))
+        result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+        target["interfaces"][0]["signals"] = [input_signal, output_signal]
+        reversed_result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(reversed_result["layers"]["electrical"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], reversed_result["result"])
+
+    def test_signal_selection_restricts_type_and_family_before_role(self):
+        irrelevant = signal(signal_type="video", signal_family="hdmi", direction="output")
+        irrelevant["id"] = "irrelevant"
+        audio_input = signal(signal_type="audio", signal_family="analog-audio", direction="input")
+        audio_input["id"] = "audio-input"
+        audio_output = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
+        audio_output["id"] = "audio-output"
+        source = equipment("source", signal=None, interface={"signals": [irrelevant, audio_input, audio_output]})
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        result = self.analyze({"signal_type": "audio", "signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+        source["interfaces"][0]["signals"] = [audio_output, audio_input, irrelevant]
+        reversed_result = self.analyze({"signal_type": "audio", "signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["result"], reversed_result["result"])
+
+    def test_signal_selection_accepts_bidirectional_signal_for_both_roles(self):
+        bidirectional = signal(signal_type="audio", signal_family="analog-audio", direction="bidirectional", balanced=True)
+        source = equipment("source", signal=bidirectional)
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        source_result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(source_result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+        target_result = self.analyze({"signal_family": "analog-audio"}, source=equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)), target=equipment("target", signal=bidirectional))
+        self.assertEqual(target_result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+    def test_signal_selection_does_not_choose_ambiguous_candidates(self):
+        first_output = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
+        first_output["id"] = "first-output"
+        second_output = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
+        second_output["id"] = "second-output"
+        source = equipment("source", signal=None, interface={"signals": [first_output, second_output]})
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["layers"]["electrical"]["result"], "INSUFFICIENT_DATA")
+
     def test_ac16_explicit_deny(self):
         source = equipment("source", signal=signal(), interface={"connection_constraints": {"id": "deny", "denied_targets": {"targets": [{"equipment_id": "target"}]}}})
         result = self.analyze({"signal_family": "hdmi"}, source=source)
