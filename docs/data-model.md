@@ -158,7 +158,9 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `power.sources` é uma lista de fontes alternativas ou métodos de alimentação. Cada source possui ID, método (`AC`, `DC`, `PoE` ou `other`) e pode registrar connector, voltage, frequency, current, power available e consumo típico/máximo. Não há duplicação de tensão ou frequência em outro nível da fonte.
 
-`poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Unidades calculáveis são controladas por valores canônicos: `W`, `V`, `A`, `Hz`, `BTU/h`, `kg` e `mm`.
+`poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
+
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.3 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
 
 ## Extensibilidade e evolução
 
@@ -168,7 +170,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.2.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools ou consistência de unidades. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.3.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 

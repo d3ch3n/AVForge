@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.2",
-  "description": "Universal structured model for audiovisual equipment.",
+  "title": "AVForge Equipment v3.3",
+  "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
   "properties": {
@@ -75,6 +75,11 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "minLength": 1
     },
+    "unitId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canonical unit identity from the AVForge Vocabulary. This schema validates only the structural string; existence in the external Vocabulary is validated separately. Display symbols are not stored here."
+    },
     "physicalConnector": {
       "type": "object",
       "required": ["id", "label", "connector_type", "connection_points"],
@@ -124,7 +129,7 @@
       "required": ["value", "unit"],
       "properties": {
         "value": { "type": "number" },
-        "unit": { "const": "mm" },
+        "unit": { "$ref": "#/$defs/unitId" },
         "note": { "type": "string" }
       },
       "additionalProperties": false
@@ -134,7 +139,7 @@
       "required": ["value", "unit"],
       "properties": {
         "value": { "type": "number" },
-        "unit": { "const": "W" },
+        "unit": { "$ref": "#/$defs/unitId" },
         "note": { "type": "string" }
       },
       "additionalProperties": false
@@ -147,7 +152,7 @@
         "nominal": { "type": "number" },
         "min": { "type": "number" },
         "max": { "type": "number" },
-        "unit": { "const": "V" },
+        "unit": { "$ref": "#/$defs/unitId" },
         "note": { "type": "string" }
       },
       "additionalProperties": false
@@ -160,7 +165,7 @@
         "nominal": { "type": "number" },
         "min": { "type": "number" },
         "max": { "type": "number" },
-        "unit": { "const": "Hz" },
+        "unit": { "$ref": "#/$defs/unitId" },
         "note": { "type": "string" }
       },
       "additionalProperties": false
@@ -186,7 +191,7 @@
           "required": ["value", "unit"],
           "properties": {
             "value": { "type": "number", "minimum": 0 },
-            "unit": { "const": "kg" },
+            "unit": { "$ref": "#/$defs/unitId" },
             "note": { "type": "string" }
           },
           "additionalProperties": false
@@ -214,7 +219,7 @@
           "required": ["value", "unit"],
           "properties": {
             "value": { "type": "number", "minimum": 0 },
-            "unit": { "const": "BTU/h" },
+            "unit": { "$ref": "#/$defs/unitId" },
             "note": { "type": "string" }
           },
           "additionalProperties": false
@@ -236,7 +241,7 @@
           "required": ["value", "unit"],
           "properties": {
             "value": { "type": "number", "minimum": 0 },
-            "unit": { "const": "A" },
+            "unit": { "$ref": "#/$defs/unitId" },
             "note": { "type": "string" }
           },
           "additionalProperties": false
@@ -382,7 +387,7 @@
           "required": ["value", "unit"],
           "properties": {
             "value": { "type": "number", "minimum": 0 },
-            "unit": { "enum": ["bit/s", "kbit/s", "Mbit/s", "Gbit/s"] }
+            "unit": { "$ref": "#/$defs/unitId" }
           },
           "additionalProperties": false
         },
@@ -394,7 +399,7 @@
             "properties": {
               "id": { "$ref": "#/$defs/stableId" },
               "value": { "type": "number", "minimum": 0 },
-              "unit": { "type": "string" },
+              "unit": { "$ref": "#/$defs/unitId" },
               "notes": { "type": "string" }
             },
             "additionalProperties": false
@@ -569,7 +574,7 @@
           "id": { "$ref": "#/$defs/stableId" },
           "name": { "type": "string", "minLength": 1 },
           "value": {},
-          "unit": { "type": "string" },
+          "unit": { "$ref": "#/$defs/unitId" },
           "notes": { "type": "string" }
         },
         "additionalProperties": true
