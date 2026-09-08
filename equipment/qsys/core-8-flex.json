@@ -471,14 +471,14 @@
       "notes": "The official A&E specification documents standard web interface monitoring, status and logging; exact LAN assignment behavior is not separately specified."
     },
     {
-      "id": "voip-softphones",
+      "id": "sip-softphones",
       "type": "control",
-      "protocol_family": "voip",
+      "protocol_family": "sip",
       "media_type": "audio",
       "direction": "bidirectional",
       "interface_assignment": { "mode": "configurable", "allowed_interface_ids": ["lan-a", "lan-b"] },
       "capacity": { "sessions": 2 },
-      "notes": "The reviewed official sources document up to two VoIP softphone instances; SIP-specific details were not recorded."
+      "notes": "Official Q-SYS sources document up to two SIP softphone instances. The sources reviewed do not document a more specific SIP signaling configuration or per-LAN assignment."
     },
     {
       "id": "network-redundancy",

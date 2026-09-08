@@ -1,6 +1,6 @@
 {
   "vocabulary": "protocol-families",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "entries": [
     { "id": "ethernet", "label": "Ethernet", "description": "Ethernet networking protocol family. The current equipment records use Ethernet as a signal family, not as protocol_family." },
     { "id": "aes67", "label": "AES67", "description": "AES67 networked audio interoperability protocol." },
@@ -15,6 +15,6 @@
     { "id": "usb-3-1", "label": "USB 3.1", "description": "USB 3.1 protocol generation." },
     { "id": "cec", "label": "Consumer Electronics Control", "description": "HDMI Consumer Electronics Control protocol family." },
     { "id": "q-sys-control", "label": "Q-SYS Control", "description": "Q-SYS control protocol family.", "manufacturer": "Q-SYS" },
-    { "id": "voip", "label": "VoIP", "description": "Voice-over-IP protocol family; no specific signaling protocol is asserted by the current record." }
+    { "id": "sip", "label": "Session Initiation Protocol", "description": "Session Initiation Protocol for establishing and managing voice-over-IP sessions." }
   ]
 }
