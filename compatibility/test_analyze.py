@@ -392,8 +392,9 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dm-nvx"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
         self.assertEqual(result["result"], "INCOMPATIBLE")
 
-    def test_real_core_without_coverage_dm_nvx_is_unknown(self):
+    def test_real_core_clone_without_coverage_dm_nvx_is_unknown(self):
         core = load_record("equipment/qsys/core-8-flex.json")
+        core.pop("catalog_coverage", None)
         nvx = load_record("equipment/crestron/dm-nvx-360c.json")
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dm-nvx"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")

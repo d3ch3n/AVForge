@@ -4,8 +4,13 @@
   "model": "Core 8 Flex",
   "product_name": "Q-SYS Core 8 Flex",
   "category": "audio-video-control-processor",
-  "schema_version": "3.1.0",
+  "schema_version": "3.4.0",
   "status": "draft",
+  "catalog_coverage": {
+    "communication_protocols": {
+      "complete": true
+    }
+  },
   "physical_connectors": [
     {
       "id": "gpio-input-terminal-block",
