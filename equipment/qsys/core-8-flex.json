@@ -60,10 +60,10 @@
           "signal_characteristics": {
             "configurable_role": "input",
             "balanced": true,
-            "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" },
+            "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" },
             "input_impedance": { "value": 10500, "unit": "ohm" },
-            "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" },
-            "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } },
+            "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" },
+            "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } },
             "converter": "24-bit, 48 kHz"
           }
         },
@@ -77,7 +77,7 @@
             "configurable_role": "output",
             "balanced": true,
             "output_impedance": { "value": 100, "unit": "ohm" },
-            "output_level_range": { "min": -40, "max": 20, "unit": "dBu" },
+            "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" },
             "converter": "24-bit, 48 kHz"
           }
         }
@@ -91,8 +91,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-2-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-2-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-2-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-2-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -102,8 +102,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-3-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-3-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-3-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-3-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -113,8 +113,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-4-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-4-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-4-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-4-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -124,8 +124,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-5-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-5-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-5-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-5-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -135,8 +135,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-6-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-6-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-6-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-6-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -146,8 +146,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-7-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-7-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-7-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-7-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -157,8 +157,8 @@
       "connector": "pluggable-terminal-block",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "flex-8-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "dBu" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "dBu" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "V" }, "current_max": { "value": 10, "unit": "mA" } }, "converter": "24-bit, 48 kHz" } },
-        { "id": "flex-8-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "dBu" }, "converter": "24-bit, 48 kHz" } }
+        { "id": "flex-8-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
+        { "id": "flex-8-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
       ]
     },
     {
@@ -168,7 +168,7 @@
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "lan-a-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
+        { "id": "lan-a-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "megabit-per-second" } } }
       ],
       "notes": "Primary LAN; official manual lists Q-LAN, AES67, Dante, VoIP, WAN streaming and control as supported applications."
     },
@@ -179,7 +179,7 @@
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
       "signals": [
-        { "id": "lan-b-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "Mbit/s" } } }
+        { "id": "lan-b-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "megabit-per-second" } } }
       ],
       "notes": "Backup/secondary LAN; official manual lists Q-LAN, AES67, Dante, VoIP, WAN streaming and control as supported applications."
     },
@@ -252,7 +252,7 @@
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-1"] },
       "signals": [
-        { "id": "gpio-input-signal-1", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }
+        { "id": "gpio-input-signal-1", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }
       ]
     },
     {
@@ -262,7 +262,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-2"] },
-      "signals": [{ "id": "gpio-input-signal-2", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-2", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-3",
@@ -271,7 +271,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-3"] },
-      "signals": [{ "id": "gpio-input-signal-3", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-3", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-4",
@@ -280,7 +280,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-4"] },
-      "signals": [{ "id": "gpio-input-signal-4", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-4", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-5",
@@ -289,7 +289,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-5"] },
-      "signals": [{ "id": "gpio-input-signal-5", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-5", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-6",
@@ -298,7 +298,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-6"] },
-      "signals": [{ "id": "gpio-input-signal-6", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-6", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-7",
@@ -307,7 +307,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-7"] },
-      "signals": [{ "id": "gpio-input-signal-7", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-7", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-input-8",
@@ -316,7 +316,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-in-8"] },
-      "signals": [{ "id": "gpio-input-signal-8", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "V" }, "modes": ["analog input", "contact closure"] } }]
+      "signals": [{ "id": "gpio-input-signal-8", "name": "General-purpose control input", "direction": "input", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "input_range": { "min": 0, "max": 24, "unit": "volt" }, "modes": ["analog input", "contact closure"] } }]
     },
     {
       "id": "gpio-12v-source",
@@ -325,7 +325,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-input-terminal-block", "connection_point_ids": ["gpio-12v"] },
-      "signals": [{ "id": "gpio-12v-signal", "name": "Auxiliary DC source", "direction": "output", "signal_type": "power", "signal_family": "dc-power", "signal_characteristics": { "voltage": { "value": 12, "unit": "V" }, "current_max": { "value": 0.1, "unit": "A" } } }]
+      "signals": [{ "id": "gpio-12v-signal", "name": "Auxiliary DC source", "direction": "output", "signal_type": "power", "signal_family": "dc-power", "signal_characteristics": { "voltage": { "value": 12, "unit": "volt" }, "current_max": { "value": 0.1, "unit": "ampere" } } }]
     },
     {
       "id": "gpio-output-1",
@@ -334,7 +334,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-1"] },
-      "signals": [{ "id": "gpio-output-signal-1", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-1", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-2",
@@ -343,7 +343,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-2"] },
-      "signals": [{ "id": "gpio-output-signal-2", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-2", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-3",
@@ -352,7 +352,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-3"] },
-      "signals": [{ "id": "gpio-output-signal-3", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-3", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-4",
@@ -361,7 +361,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-4"] },
-      "signals": [{ "id": "gpio-output-signal-4", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-4", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-5",
@@ -370,7 +370,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-5"] },
-      "signals": [{ "id": "gpio-output-signal-5", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-5", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-6",
@@ -379,7 +379,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-6"] },
-      "signals": [{ "id": "gpio-output-signal-6", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-6", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-7",
@@ -388,7 +388,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-7"] },
-      "signals": [{ "id": "gpio-output-signal-7", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-7", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "gpio-output-8",
@@ -397,7 +397,7 @@
       "connector": "euroblock-10-pin",
       "connector_gender": "receptacle",
       "physical_connection": { "connector_id": "gpio-output-terminal-block", "connection_point_ids": ["gpio-out-8"] },
-      "signals": [{ "id": "gpio-output-signal-8", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "V" }, "current_max": { "value": 0.2, "unit": "A" }, "pull_up": { "value": 3.3, "unit": "V" } } }]
+      "signals": [{ "id": "gpio-output-signal-8", "name": "General-purpose control output", "direction": "output", "signal_type": "control", "signal_family": "gpio", "signal_characteristics": { "electrical_mode": "open collector", "voltage_max": { "value": 24, "unit": "volt" }, "current_max": { "value": 0.2, "unit": "ampere" }, "pull_up": { "value": 3.3, "unit": "volt" } } }]
     },
     {
       "id": "rs232-1",
@@ -421,7 +421,7 @@
       "direction": "input",
       "connector": "iec-60320-c14",
       "connector_gender": "receptacle",
-      "signals": [{ "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "ac-power", "signal_characteristics": { "voltage_range": { "min": 100, "max": 240, "unit": "V" }, "frequency": { "min": 50, "max": 60, "unit": "Hz" } } }]
+      "signals": [{ "id": "ac-power-input", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "ac-power", "signal_characteristics": { "voltage_range": { "min": 100, "max": 240, "unit": "volt" }, "frequency": { "min": 50, "max": 60, "unit": "hertz" } } }]
     }
   ],
   "communication_capabilities": [

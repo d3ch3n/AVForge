@@ -18,13 +18,13 @@
         "id": "ac-mains",
         "method": "AC",
         "connector": "iec-60320-c14",
-        "voltage": { "min": 100, "max": 240, "unit": "V" },
-        "frequency": { "min": 50, "max": 60, "unit": "Hz" },
-        "current": { "value": 4.3, "unit": "A", "note": "Published input current is 4.3 A at 100 V and 1.8 A at 240 V." },
-        "power_consumption_max": { "value": 350, "unit": "W", "note": "Fully loaded chassis" }
+        "voltage": { "min": 100, "max": 240, "unit": "volt" },
+        "frequency": { "min": 50, "max": 60, "unit": "hertz" },
+        "current": { "value": 4.3, "unit": "ampere", "note": "Published input current is 4.3 A at 100 V and 1.8 A at 240 V." },
+        "power_consumption_max": { "value": 350, "unit": "watt", "note": "Fully loaded chassis" }
       }
     ],
-    "heat_dissipation": { "value": 1195, "unit": "BTU/h", "note": "Fully loaded chassis" }
+    "heat_dissipation": { "value": 1195, "unit": "btu-per-hour", "note": "Fully loaded chassis" }
   },
   "interfaces": [
     {
