@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.3",
+  "title": "AVForge Equipment v3.4",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -32,6 +32,20 @@
       "type": "array",
       "items": { "$ref": "#/$defs/communicationCapability" },
       "uniqueItems": true
+    },
+    "catalog_coverage": {
+      "type": "object",
+      "properties": {
+        "communication_protocols": {
+          "type": "object",
+          "required": ["complete"],
+          "properties": {
+            "complete": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "resource_pools": {
       "type": "array",

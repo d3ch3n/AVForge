@@ -4,6 +4,42 @@
 
 `equipment.schema.json` define um modelo universal de equipamento AV, em vez de um schema dedicado a um fabricante ou categoria. Campos específicos podem ser acomodados em `capabilities`, `extensions` e `custom_fields`, preservando um núcleo comum e IDs estáveis para relações futuras. O schema não contém campos específicos do Q-SYS.
 
+## Catalog Coverage
+
+`catalog_coverage` registra uma afirmação de completude de catálogo por domínio.
+Na versão 3.4, o único domínio modelado é
+`catalog_coverage.communication_protocols.complete`.
+
+Quando `catalog_coverage` ou `communication_protocols` estão ausentes, ou
+quando `complete` é `false`, a cobertura de protocolos permanece incompleta.
+Um protocolo ausente nesse caso significa somente não documentado ou não
+conhecido; não significa que o equipamento não o suporta.
+
+Quando `complete` é `true`, a afirmação é que todas as capacidades e famílias
+de protocolo oficialmente documentadas para o modelo, variante e escopo
+catalogados foram registradas. Um protocolo ausente pode então ser interpretado
+por uma camada de compatibilidade como ausente do catálogo oficial completo
+daquele escopo. Isso não é prova universal de não suporte, nem afirma que o
+produto nunca poderá receber suporte por firmware, licença ou opção futura.
+
+Catalog coverage é independente de `equipment.status`. `status: "approved"`
+não implica `communication_protocols.complete: true`; um record `draft` pode
+estruturalmente possuir `complete: true`, embora essa afirmação dependa de
+governança e revisão adequadas.
+
+`complete: true` não exige campos estruturais de evidence. Como regra de
+governança, a afirmação só deve ser usada após a revisão das fontes oficiais
+relevantes para o modelo exato, como product manual, datasheet/spec sheet,
+página oficial do produto e documentação oficial de features. Essas fontes
+continuam na estrutura de documentação e no processo editorial, não dentro de
+`catalog_coverage`.
+
+Coverage pertence somente ao equipment record que a declara. A coverage de um
+chassis, como `DMF-CI-8`, não cobre protocolos fornecidos por placas
+`DM-NVX`, outros módulos ou módulos instalados em uma futura instância. Cada
+módulo possui seu próprio record e sua própria coverage. Nenhuma regra de
+composição é criada por este campo.
+
 ## Identidade e escopo dos IDs
 
 O `id` do equipamento é obrigatório. Cada porta física conectável deve ter seu próprio `interfaces[].id`; `quantity` só expressa uma quantidade agregada de elementos equivalentes e nunca identifica portas individuais. Signals/capabilities, restrições, relações de compatibilidade e connection points também possuem IDs próprios. Esses IDs são estáveis no cadastro e não devem depender de labels visuais.
@@ -160,7 +196,7 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
 
-`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.3 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.4 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
 
 ## Extensibilidade e evolução
 
@@ -170,7 +206,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.3.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.4.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 
