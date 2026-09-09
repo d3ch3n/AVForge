@@ -13,6 +13,9 @@
     { "id": "pluggable-terminal-block", "label": "Pluggable terminal block", "description": "Pluggable terminal block whose pitch and other mechanical details are not specified." },
     { "id": "screw-6-32", "label": "6-32 screw", "description": "6-32 screw connection used for chassis grounding." },
     { "id": "iec-60320-c14", "label": "IEC 60320 C14", "description": "IEC 60320 C14 appliance inlet." },
-    { "id": "sfp-receptacle", "label": "SFP Receptacle", "description": "Physical receptacle for an SFP transceiver interface.", "aliases": ["SFP port"] }
+    { "id": "sfp-receptacle", "label": "SFP Receptacle", "description": "Physical receptacle for an SFP transceiver interface.", "aliases": ["SFP port"] },
+    { "id": "usb-micro-b", "label": "USB Micro-B", "description": "USB Micro-B physical connector; USB generation is a separate property.", "aliases": ["Micro-B", "Micro USB"] },
+    { "id": "terminal-block-4-pin-3-5mm", "label": "4-pin 3.5 mm detachable terminal block", "description": "Four-position detachable terminal block with 3.5 mm pitch as documented for the interface." },
+    { "id": "dc-barrel-2-1-5-5mm", "label": "DC barrel 2.1 x 5.5 mm", "description": "Coaxial DC barrel power connector with 2.1 mm inner diameter and 5.5 mm outer diameter; voltage, polarity, and current rating are separate properties." }
   ]
 }
