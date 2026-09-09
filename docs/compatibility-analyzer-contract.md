@@ -473,6 +473,33 @@ The rules are:
 Therefore, a known condition combined with another required but unknown fact
 produces `INSUFFICIENT_DATA`.
 
+All seven layers always execute for a valid request; there is no semantic
+short-circuit, so every applicable contradiction and every gap stays
+visible. The fixed evaluation order (physical, electrical, signal,
+protocol, direction, restrictions, capacity) is presentation and
+diagnostic only: aggregation is membership-based and order-independent,
+and a non-applicable layer is neutral. `layers` is the structured
+per-layer record; `reasons` aggregates the reasons of every applicable
+layer including informational ones from compatible layers;
+`conditions`/`missing_data` filter that aggregate by state; `evidence`
+carries protocol evidence plus matched known compatibilities and is
+supplemental rather than exhaustive. Malformed requests and unknown
+equipment/interface references raise input errors instead of producing
+compatibility states. The only live producer of `CONDITIONALLY_COMPATIBLE`
+is protocol `availability: "conditional"`.
+
+Implemented layer states:
+
+| Layer | COMPATIBLE | INCOMPATIBLE | INSUFFICIENT_DATA | CONDITIONALLY_COMPATIBLE | NOT_APPLICABLE |
+|---|---|---|---|---|---|
+| physical | yes | yes (DIRECT) | yes | no | never |
+| electrical | yes | yes | yes | no | non-analog function |
+| signal | yes | yes | yes | no | no type/family/format requested |
+| protocol | yes | yes | yes | yes (availability) | no protocol requested |
+| direction | yes | yes | yes | no | never |
+| restrictions | yes | yes | yes | no | no constraints |
+| capacity | yes | yes | yes | no | no requirement |
+
 ## 9. Compatibility Analysis versus Project Connection
 
 Compatibility Analysis is not a Project Connection Decision.

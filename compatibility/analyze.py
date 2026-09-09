@@ -333,14 +333,12 @@ def _direction_layer(source: dict[str, Any], target: dict[str, Any], function: d
         return _layer(True, "INSUFFICIENT_DATA", [f"Requested direction is not deterministically interpretable: {required}."])
     if required == "bidirectional":
         required = None
-    source_state, source_conditional = _side_direction_state(source, function, "source", required)
-    target_state, target_conditional = _side_direction_state(target, function, "target", required)
+    source_state, _ = _side_direction_state(source, function, "source", required)
+    target_state, _ = _side_direction_state(target, function, "target", required)
     if source_state is False or target_state is False:
         return _layer(True, "INCOMPATIBLE", ["Source and target directions are not complementary."])
     if source_state is None or target_state is None:
         return _layer(True, "INSUFFICIENT_DATA", ["Direction is not declared for both interfaces."])
-    if source_conditional or target_conditional:
-        return _layer(True, "CONDITIONALLY_COMPATIBLE", ["A documented interface assignment is required."])
     return _layer(True, "COMPATIBLE")
 
 

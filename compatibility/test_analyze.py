@@ -2503,5 +2503,290 @@ class CapacityLayerV1Tests(unittest.TestCase):
         self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
 
 
+class IntegratedAnalyzerV1Tests(unittest.TestCase):
+    def hdmi_pair(self, source_direction="output", target_direction="input", source_extra=None, target_extra=None):
+        source_signal = {"id": "s", "name": "s", "signal_type": "video", "signal_family": "hdmi", "direction": source_direction}
+        target_signal = {"id": "s", "name": "s", "signal_type": "video", "signal_family": "hdmi", "direction": target_direction}
+        if source_extra:
+            source_signal.update(source_extra)
+        if target_extra:
+            target_signal.update(target_extra)
+        source = equipment("source", signal=None, interface={"signals": [source_signal], **passive_supported()})
+        target = equipment("target", signal=None, interface={"signals": [target_signal], **passive_supported()})
+        return source, target
+
+    def test_i01_final_all_compatible(self):
+        source, target = self.hdmi_pair()
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_i02_compatible_plus_not_applicable(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        result = analyze(request({"signal_family": "ethernet"}), [source, target])
+        self.assertFalse(result["layers"]["electrical"]["applicable"])
+        self.assertFalse(result["layers"]["protocol"]["applicable"])
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_i03_incompatible_plus_compatible(self):
+        source, target = self.hdmi_pair(source_direction="input", target_direction="input")
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i04_incompatible_plus_insufficient(self):
+        source = equipment(
+            "source", signal=None,
+            interface={"signals": [{"id": "s", "name": "s", "signal_type": "video", "signal_family": "hdmi", "direction": "input"}], **passive_supported()},
+        )
+        target = {"id": "target", "manufacturer": "target", "model": "target", "interfaces": [{"id": "a", "label": "a", "direction": "output", "connector": "hdmi-type-a", "connector_gender": "female", **passive_supported()}]}
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i05_incompatible_plus_conditional(self):
+        capability = {"id": "c", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="input", protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(direction="input", protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i06_insufficient_plus_compatible(self):
+        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output"), interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input"), interface=passive_supported())
+        result = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(result["layers"]["electrical"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_i07_insufficient_plus_conditional(self):
+        capability = {"id": "c", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=None, interface={"signals": []}, communication_capabilities=[capability])
+        target = equipment("target", signal=None, interface={"signals": []}, communication_capabilities=[capability])
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertFalse(result["layers"]["signal"]["applicable"])
+        self.assertEqual(result["layers"]["physical"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_i08_conditional_plus_compatible(self):
+        capability = {"id": "c", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="output", protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(direction="input", protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
+
+    def test_i09_all_not_applicable_aggregator(self):
+        from compatibility.analyze import _aggregate
+        layers = {name: {"applicable": False} for name in ("physical", "electrical", "signal", "protocol", "direction", "restrictions", "capacity")}
+        self.assertEqual(_aggregate(layers), "COMPATIBLE")
+
+    def test_i10_two_incompatible_layers(self):
+        coverage = {"communication_protocols": {"complete": True}}
+        source = equipment("source", signal=signal(signal_family="analog-audio", protocol_family="usb"), catalog_coverage=coverage, interface=passive_supported())
+        target = equipment("target", signal=signal(signal_family="analog-audio", protocol_family="cec"), catalog_coverage=coverage, interface=passive_supported())
+        result = analyze(request({"signal_family": "hdmi", "protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i11_aggregator_order_independence(self):
+        from compatibility.analyze import _aggregate
+        import itertools
+        states = [
+            {"applicable": True, "result": "COMPATIBLE", "reasons": []},
+            {"applicable": True, "result": "INSUFFICIENT_DATA", "reasons": []},
+            {"applicable": True, "result": "INCOMPATIBLE", "reasons": []},
+        ]
+        for permutation in itertools.permutations(states):
+            layers = {f"layer{i}": dict(layer) for i, layer in enumerate(permutation)}
+            self.assertEqual(_aggregate(layers), "INCOMPATIBLE")
+        without_incompatible = [layer for layer in states if layer["result"] != "INCOMPATIBLE"]
+        for permutation in itertools.permutations(without_incompatible):
+            layers = {f"layer{i}": dict(layer) for i, layer in enumerate(permutation)}
+            self.assertEqual(_aggregate(layers), "INSUFFICIENT_DATA")
+
+    def test_i12_reason_preservation(self):
+        source = equipment("source", signal=signal(protocol_family="usb"), interface=passive_supported())
+        target = equipment("target", signal=signal(protocol_family="cec"), interface=passive_supported())
+        result = analyze(request({"signal_family": "hdmi", "protocol_family": "rs-232"}), [source, target])
+        signal_reasons = result["layers"]["signal"]["reasons"]
+        protocol_reasons = result["layers"]["protocol"]["reasons"]
+        for reason in signal_reasons + protocol_reasons:
+            self.assertIn(reason, result["reasons"])
+
+    def test_i13_not_applicable_neutrality(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        result = analyze(request({"signal_family": "ethernet"}), [source, target])
+        not_applicable = [name for name, layer in result["layers"].items() if not layer["applicable"]]
+        self.assertTrue(not_applicable)
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_i14_signal_ambiguity_plus_independent_deny(self):
+        first = {"id": "first", "name": "first", "signal_type": "video", "signal_family": "hdmi", "direction": "output"}
+        second = {"id": "second", "name": "second", "signal_type": "video", "signal_family": "hdmi", "direction": "output"}
+        source = equipment(
+            "source", signal=None,
+            interface={"signals": [first, second], "connection_constraints": {"id": "deny", "denied_targets": {"targets": [{"equipment_id": "target"}]}}, **passive_supported()},
+        )
+        target = equipment("target", signal=signal(direction="input"), interface=passive_supported())
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["direction"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["layers"]["restrictions"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i15_physical_unknown_plus_protocol_incompatible(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        result = analyze(request({"protocol_family": "dante"}), [source, target])
+        self.assertEqual(result["layers"]["physical"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_i16_capacity_incompatible_plus_unknown(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "capacity": {"streams": 32}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[low], interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        result = analyze(request({"signal_family": "ethernet", "capacity_requirement": {"streams": 40}}), [source, target])
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i17_restrictions_incompatible_plus_unknown(self):
+        source = equipment(
+            "source", signal=None,
+            interface={"signals": [{"id": "s", "name": "s", "signal_type": "video", "direction": "output"}], "connection_constraints": {"id": "deny", "denied_targets": {"targets": [{"equipment_id": "target"}]}}, **passive_supported()},
+        )
+        target = equipment("target", signal=signal(direction="input"), interface=passive_supported())
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["layers"]["restrictions"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i18_real_analog_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "flex-1"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "audio-io"},
+                "requested_function": {"signal_family": "analog-audio"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        for layer in ("physical", "electrical", "signal", "direction"):
+            self.assertEqual(result["layers"][layer]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_i19_real_aes67_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_i20_real_rs232_insufficient(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        chassis = load_record("equipment/crestron/dmf-ci-8.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "rs232-1"},
+                "target": {"equipment_id": chassis["id"], "interface_id": "console-serial"},
+                "requested_function": {"protocol_family": "rs-232"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, chassis],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["physical"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_i21_real_usb_incompatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "usb-a-1"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "usb-host"},
+                "requested_function": {"protocol_family": "usb-2-0"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i22_real_capacity_incompatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67", "capacity_requirement": {"streams": 40}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i23_no_semantic_short_circuit(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "protocol_family": "rs-232", "availability": "unavailable", "capacity": {"streams": 32}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(protocol_family="usb"), communication_capabilities=[low], interface=passive_supported())
+        target = equipment("target", signal=signal(protocol_family="cec"), communication_capabilities=[low], interface=passive_supported())
+        result = analyze(
+            request({"signal_family": "hdmi", "protocol_family": "rs-232", "capacity_requirement": {"streams": 40}}),
+            [source, target],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_i24_errors_vs_insufficient(self):
+        with self.assertRaises(AnalysisInputError):
+            analyze(
+                {"source": {"equipment_id": "missing", "interface_id": "a"}, "target": {"equipment_id": "target", "interface_id": "a"}, "requested_function": {"signal_family": "hdmi"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"},
+                [equipment("target")],
+            )
+        with self.assertRaises(AnalysisInputError):
+            analyze(
+                {"source": {"equipment_id": "source", "interface_id": "missing"}, "target": {"equipment_id": "target", "interface_id": "a"}, "requested_function": {"signal_family": "hdmi"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"},
+                [equipment("source"), equipment("target")],
+            )
+        with self.assertRaises(AnalysisInputError):
+            analyze(
+                {"source": {"equipment_id": "source", "interface_id": "a"}, "target": {"equipment_id": "target", "interface_id": "a"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"},
+                [equipment("source"), equipment("target")],
+            )
+        result = analyze(request({"signal_family": "hdmi"}), [equipment("source"), equipment("target", signal=None, interface={"signals": []})])
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_i25_evidence_supplemental_shape(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertIsInstance(result["evidence"], list)
+        self.assertTrue(result["evidence"])
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+
 if __name__ == "__main__":
     unittest.main()

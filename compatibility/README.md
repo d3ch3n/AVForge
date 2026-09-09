@@ -238,6 +238,26 @@ not applicable. `known_compatibilities` stay evidence-only and a bare
 `CONDITIONALLY_COMPATIBLE` and never validates connector, signal,
 protocol, direction, electrical, or capacity concerns.
 
+## Integrated Result v1
+
+All seven layers (physical, electrical, signal, protocol, direction,
+restrictions, capacity) always execute for a valid request; there is no
+semantic short-circuit. The final state considers only applicable layers
+with membership-based precedence: any `INCOMPATIBLE` wins, otherwise any
+`INSUFFICIENT_DATA` wins, otherwise any `CONDITIONALLY_COMPATIBLE` wins,
+otherwise `COMPATIBLE`. Layer evaluation order is presentation and
+diagnostic only and cannot change the final state. A non-applicable layer
+is neutral. `layers` is the structured per-layer record;
+`reasons` aggregates the reasons of every applicable layer (including
+informational reasons from compatible layers);
+`conditions`/`missing_data` filter that aggregate by state; `evidence`
+carries protocol evidence plus matched known compatibilities and is
+supplemental rather than exhaustive — absence there never negates a layer
+decision. Malformed requests and unknown equipment/interface references
+raise input errors instead of producing compatibility states. The only
+live producer of `CONDITIONALLY_COMPATIBLE` is protocol
+`availability: "conditional"`.
+
 The official DM-NVX family distinction for Dante is not represented as a fake
 unavailable capability in the DM-NVX-360C record. This remains a known
 `MODEL_REPRESENTATION_GAP`.
