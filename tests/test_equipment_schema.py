@@ -24,7 +24,17 @@ def with_coverage(record, coverage):
     return value
 
 
-class EquipmentSchemaV34Tests(unittest.TestCase):
+def with_electrical(record, electrical_characteristics):
+    value = copy.deepcopy(record)
+    value["interfaces"][0]["electrical_characteristics"] = electrical_characteristics
+    return value
+
+
+def electrical_record(electrical_characteristics):
+    return with_electrical(load_record("equipment/qsys/core-8-flex.json"), electrical_characteristics)
+
+
+class EquipmentSchemaV35Tests(unittest.TestCase):
     def assert_valid(self, record):
         self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
 
@@ -103,6 +113,102 @@ class EquipmentSchemaV34Tests(unittest.TestCase):
             "equipment/crestron/dm-nvx-360c.json",
         ):
             self.assert_valid(load_record(path))
+
+    def test_e01_interface_without_electrical_characteristics(self):
+        self.assert_valid(load_record("equipment/qsys/core-8-flex.json"))
+
+    def test_e02_input_profile_minimum(self):
+        self.assert_valid(electrical_record({"input": {}}))
+
+    def test_e03_output_profile_minimum(self):
+        self.assert_valid(electrical_record({"output": {}}))
+
+    def test_e04_bidirectional_profiles(self):
+        self.assert_valid(electrical_record({"input": {}, "output": {}}))
+
+    def test_e05_balanced_mode(self):
+        self.assert_valid(electrical_record({"input": {"balance_modes": ["balanced"]}}))
+
+    def test_e06_unbalanced_mode(self):
+        self.assert_valid(electrical_record({"input": {"balance_modes": ["unbalanced"]}}))
+
+    def test_e07_both_balance_modes(self):
+        self.assert_valid(electrical_record({"input": {"balance_modes": ["balanced", "unbalanced"]}}))
+
+    def test_e08_mic_level_class(self):
+        self.assert_valid(electrical_record({"input": {"operating_level_classes": ["mic"]}}))
+
+    def test_e09_line_level_class(self):
+        self.assert_valid(electrical_record({"input": {"operating_level_classes": ["line"]}}))
+
+    def test_e10_mic_line_level_classes(self):
+        self.assert_valid(electrical_record({"input": {"operating_level_classes": ["mic", "line"]}}))
+
+    def test_e11_negative_dBu_nominal_level(self):
+        self.assert_valid(electrical_record({"input": {"nominal_levels": [{"value": -10, "unit": "decibel-u"}]}}))
+
+    def test_e12_input_phantom_provision(self):
+        self.assert_valid(electrical_record({"input": {"phantom_power": {"provision": {"supported": True, "voltage": {"value": 48, "unit": "volt"}, "current_max": {"value": 10, "unit": "milliampere"}}}}}))
+
+    def test_e13_output_phantom_requirement(self):
+        self.assert_valid(electrical_record({"output": {"phantom_power": {"requirement": {"required": True}}}}))
+
+    def test_e14_output_phantom_tolerance_false(self):
+        self.assert_valid(electrical_record({"output": {"phantom_power": {"tolerance": {"supported": False}}}}))
+
+    def test_e15_output_minimum_load_impedance(self):
+        self.assert_valid(electrical_record({"output": {"minimum_load_impedance": {"value": 600, "unit": "ohm"}}}))
+
+    def test_e16_empty_balance_modes(self):
+        self.assert_invalid(electrical_record({"input": {"balance_modes": []}}))
+
+    def test_e17_duplicate_balance_modes(self):
+        self.assert_invalid(electrical_record({"input": {"balance_modes": ["balanced", "balanced"]}}))
+
+    def test_e18_unknown_balance_mode(self):
+        self.assert_invalid(electrical_record({"input": {"balance_modes": ["both"]}}))
+
+    def test_e19_empty_level_classes(self):
+        self.assert_invalid(electrical_record({"input": {"operating_level_classes": []}}))
+
+    def test_e20_unknown_level_class(self):
+        self.assert_invalid(electrical_record({"input": {"operating_level_classes": ["instrument"]}}))
+
+    def test_e21_input_phantom_requirement(self):
+        self.assert_invalid(electrical_record({"input": {"phantom_power": {"requirement": {"required": True}}}}))
+
+    def test_e22_input_phantom_tolerance(self):
+        self.assert_invalid(electrical_record({"input": {"phantom_power": {"tolerance": {"supported": True}}}}))
+
+    def test_e23_output_phantom_provision(self):
+        self.assert_invalid(electrical_record({"output": {"phantom_power": {"provision": {"supported": True}}}}))
+
+    def test_e24_phantom_prohibits(self):
+        self.assert_invalid(electrical_record({"output": {"phantom_power": {"prohibits": True}}}))
+
+    def test_e25_phantom_enabled(self):
+        self.assert_invalid(electrical_record({"output": {"phantom_power": {"enabled": True}}}))
+
+    def test_e26_input_minimum_load_impedance(self):
+        self.assert_invalid(electrical_record({"input": {"minimum_load_impedance": {"value": 600, "unit": "ohm"}}}))
+
+    def test_e27_measurement_without_value(self):
+        self.assert_invalid(electrical_record({"input": {"nominal_levels": [{"unit": "volt-rms"}]}}))
+
+    def test_e28_measurement_without_unit(self):
+        self.assert_invalid(electrical_record({"input": {"nominal_levels": [{"value": 1}]}}))
+
+    def test_e29_negative_impedance(self):
+        self.assert_invalid(electrical_record({"input": {"impedance": {"nominal": {"value": -1, "unit": "ohm"}}}}))
+
+    def test_e30_negative_phantom_voltage(self):
+        self.assert_invalid(electrical_record({"input": {"phantom_power": {"provision": {"supported": True, "voltage": {"value": -48, "unit": "volt"}}}}}))
+
+    def test_e31_negative_phantom_current(self):
+        self.assert_invalid(electrical_record({"input": {"phantom_power": {"provision": {"supported": True, "current_max": {"value": -1, "unit": "ampere"}}}}}))
+
+    def test_e32_unknown_electrical_property(self):
+        self.assert_invalid(electrical_record({"other": {"value": True}}))
 
 
 if __name__ == "__main__":

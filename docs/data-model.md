@@ -7,7 +7,7 @@
 ## Catalog Coverage
 
 `catalog_coverage` registra uma afirmação de completude de catálogo por domínio.
-Na versão 3.4, o único domínio modelado é
+Na versão 3.5, o único domínio modelado é
 `catalog_coverage.communication_protocols.complete`.
 
 Quando `catalog_coverage` ou `communication_protocols` estão ausentes, ou
@@ -61,6 +61,48 @@ Uma interface continua possuindo `connector` e uma lista independente de `signal
 Características físicas e elétricas da porta pertencem a `electrical_characteristics` da interface. Características do sinal, formato ou variante pertencem a `signal_characteristics` e aos campos da capability. O schema mantém esses objetos extensíveis, mas não define ainda um vocabulário completo para impedância, nível, largura de banda ou resolução.
 
 `interface.direction` descreve a direção geral da porta. Uma capability pode declarar outra `direction`, permitindo que uma interface bidirecional tenha capacidades de entrada e saída diferentes.
+
+### Características elétricas
+
+`interface.electrical_characteristics` é a estrutura canônica para
+características elétricas da porta. Ela é opcional e possui perfis também
+opcionais `input` e `output`. `signal_characteristics` continua reservado
+para características do sinal, formato, variante ou protocolo; dados
+elétricos existentes nesse objeto são legados e não constituem a nova forma
+canônica.
+
+Na análise conceitual de uma conexão, o papel `SOURCE` usa o perfil `output`
+e o papel `TARGET` usa o perfil `input`. A seleção do signal e a resolução do
+perfil elétrico são decisões separadas. A v1 não associa um perfil elétrico
+diretamente a signal IDs.
+
+Os perfis podem declarar `balance_modes` com `balanced`, `unbalanced` ou ambos,
+e `operating_level_classes` com `mic`, `line` ou ambos. `nominal_levels` é uma
+lista de medições; `maximum_level` representa o limite do papel; e
+`impedance.nominal` representa a impedância nominal. Somente o perfil `output`
+pode declarar `minimum_load_impedance`.
+
+Valores de medição são armazenados como `value` e `unit`, sem conversão ou
+campo textual paralelo. O schema não converte dBu, dBV ou Vrms. A integridade
+do `unit` em relação ao vocabulário é responsabilidade da validação semântica.
+Valores negativos são válidos para níveis em dB, mas não para impedância,
+tensão ou corrente quando essas grandezas forem declaradas.
+
+Phantom power é orientado pelo papel elétrico. O perfil `input` pode declarar
+`phantom_power.provision`, com capacidade, tensão e corrente máxima. O perfil
+`output` pode declarar `phantom_power.requirement` e
+`phantom_power.tolerance`. Não existe `prohibits`: `tolerance.supported: false`
+é a evidência negativa explícita. `enabled` e `currently_enabled` não pertencem
+ao catálogo; representam estado de configuração de uma futura camada de
+projeto/runtime.
+
+A ausência de qualquer característica elétrica significa `UNKNOWN`, não
+`unsupported`. A extensão é aditiva: records 3.4 continuam estruturalmente
+válidos sem `electrical_characteristics`. Campos elétricos legados em
+`signal_characteristics`, como `balanced`, `input_impedance`,
+`output_impedance`, `maximum_level` e `phantom_power`, continuam aceitos
+temporariamente. Records revisados devem migrar somente fatos confirmados,
+com revisão de papel, unidade e fonte; não há migração automática.
 
 ## Restrições proprietárias
 
@@ -196,7 +238,7 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
 
-`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.4 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.5 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
 
 ## Extensibilidade e evolução
 
@@ -206,7 +248,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.4.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.5.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 
