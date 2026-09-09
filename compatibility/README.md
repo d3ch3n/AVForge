@@ -67,6 +67,42 @@ result means only that structured passive-interconnection evidence exists;
 signal, protocol, direction, electrical, restrictions, and capacity layers
 remain independent.
 
+## Electrical Analyzer v1
+
+The electrical layer is implemented for `signal_family: analog-audio` and
+reads exclusively the canonical `interface.electrical_characteristics`
+model. The source role uses the `output` profile and the target role uses
+the `input` profile. Legacy `signal_characteristics` electrical fields are
+not canonical and do not drive the decision.
+
+An optional request-root `electrical_requirements.balance_mode` (`balanced`
+or `unbalanced`) selects a single balance scenario:
+
+```json
+{
+  "requested_function": {"signal_family": "analog-audio"},
+  "electrical_requirements": {"balance_mode": "balanced"}
+}
+```
+
+`electrical_requirements` lives only at the request root, never inside
+`requested_function`. Without it, every common balance mode is evaluated
+independently: any compatible selectable scenario makes the layer
+`COMPATIBLE`; explicit contradictions make it `INCOMPATIBLE`; otherwise it
+is `INSUFFICIENT_DATA`. Variants conditional on `balance_mode` resolve
+`maximum_level` and `impedance` deterministically.
+
+`operating_level_classes` use capability overlap (`line` into `mic,line`
+is compatible; `line` into `mic`-only is incompatible). `maximum_level`,
+`nominal_levels`, ordinary `impedance.nominal`/`upper_bound`, and phantom
+data are informational evidence only. No 10:1 or bridging heuristic exists.
+The sole normative impedance rule compares an explicitly declared source
+`minimum_load_impedance` against a comparable target nominal impedance in
+the same unit. Absence of required canonical data yields
+`INSUFFICIENT_DATA` under open-world semantics. Phantom compatibility is
+not automatically decided. Non-analog functions keep the electrical layer
+non-applicable.
+
 ## CLI
 
 ```text

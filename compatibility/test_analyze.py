@@ -46,14 +46,17 @@ def signal(signal_type="video", signal_family="hdmi", direction="bidirectional",
     return value
 
 
-def request(function, assumption="APPROPRIATE_MEDIUM", source_id="source", target_id="target"):
-    return {
+def request(function, assumption="APPROPRIATE_MEDIUM", source_id="source", target_id="target", electrical_requirements=None):
+    value = {
         "source": {"equipment_id": source_id, "interface_id": "a"},
         "target": {"equipment_id": target_id, "interface_id": "a"},
         "requested_function": function,
         "analysis_scope": "CATALOG",
         "interconnect_assumption": assumption,
     }
+    if electrical_requirements is not None:
+        value["electrical_requirements"] = electrical_requirements
+    return value
 
 
 def passive_supported():
@@ -62,6 +65,22 @@ def passive_supported():
 
 def passive_unsupported():
     return {"physical_connection_capabilities": {"passive_interconnection": {"status": "unsupported"}}}
+
+
+def analog_signal(direction="bidirectional"):
+    return signal(signal_type="audio", signal_family="analog-audio", direction=direction)
+
+
+def ec_output(modes=("balanced",), levels=("line",), **extra):
+    profile = {"balance_modes": list(modes), "operating_level_classes": list(levels)}
+    profile.update(extra)
+    return {"electrical_characteristics": {"output": profile}}
+
+
+def ec_input(modes=("balanced",), levels=("line",), **extra):
+    profile = {"balance_modes": list(modes), "operating_level_classes": list(levels)}
+    profile.update(extra)
+    return {"electrical_characteristics": {"input": profile}}
 
 
 class CompatibilityAnalyzerTests(unittest.TestCase):
@@ -153,8 +172,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         input_signal["id"] = "input"
         output_signal = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
         output_signal["id"] = "output"
-        source = equipment("source", signal=None, interface={"signals": [input_signal, output_signal]})
-        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        source = equipment("source", signal=None, interface={"signals": [input_signal, output_signal], "electrical_characteristics": {"output": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}}})
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True), interface=ec_input())
         result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
 
@@ -168,8 +187,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         output_signal["id"] = "output"
         input_signal = signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True)
         input_signal["id"] = "input"
-        target = equipment("target", signal=None, interface={"signals": [output_signal, input_signal]})
-        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True))
+        target = equipment("target", signal=None, interface={"signals": [output_signal, input_signal], "electrical_characteristics": {"input": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}}})
+        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True), interface=ec_output())
         result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
 
@@ -185,8 +204,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         audio_input["id"] = "audio-input"
         audio_output = signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)
         audio_output["id"] = "audio-output"
-        source = equipment("source", signal=None, interface={"signals": [irrelevant, audio_input, audio_output]})
-        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        source = equipment("source", signal=None, interface={"signals": [irrelevant, audio_input, audio_output], "electrical_characteristics": {"output": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}}})
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True), interface=ec_input())
         result = self.analyze({"signal_type": "audio", "signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
 
@@ -196,12 +215,12 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_signal_selection_accepts_bidirectional_signal_for_both_roles(self):
         bidirectional = signal(signal_type="audio", signal_family="analog-audio", direction="bidirectional", balanced=True)
-        source = equipment("source", signal=bidirectional)
-        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        source = equipment("source", signal=bidirectional, interface=ec_output())
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True), interface=ec_input())
         source_result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(source_result["layers"]["electrical"]["result"], "COMPATIBLE")
 
-        target_result = self.analyze({"signal_family": "analog-audio"}, source=equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True)), target=equipment("target", signal=bidirectional))
+        target_result = self.analyze({"signal_family": "analog-audio"}, source=equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True), interface=ec_output()), target=equipment("target", signal=bidirectional, interface=ec_input()))
         self.assertEqual(target_result["layers"]["electrical"]["result"], "COMPATIBLE")
 
     def test_signal_selection_does_not_choose_ambiguous_candidates(self):
@@ -402,8 +421,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_ac51_protocol_coverage_does_not_change_electrical_layer(self):
         coverage = {"communication_protocols": {"complete": True}}
-        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True), catalog_coverage=coverage)
-        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True), catalog_coverage=coverage)
+        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True), catalog_coverage=coverage, interface=ec_output())
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True), catalog_coverage=coverage, interface=ec_input())
         result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
         self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
 
@@ -657,6 +676,361 @@ class PhysicalConnectionModelV1Tests(unittest.TestCase):
             [chassis, module],
         )
         self.assertEqual(result["layers"]["physical"]["result"], "INSUFFICIENT_DATA")
+
+
+class ElectricalAnalyzerV1Tests(unittest.TestCase):
+    def electrical(self, source, target, function=None, electrical_requirements=None, **kwargs):
+        request_function = {"signal_family": "analog-audio"}
+        request_function.update(function or {})
+        return analyze(
+            request(request_function, electrical_requirements=electrical_requirements, **kwargs),
+            [source, target],
+        )["layers"]["electrical"]
+
+    def analog_pair(self, source_profile, target_profile, source_direction="output", target_direction="input"):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction=source_direction),
+            interface={"electrical_characteristics": {"output": source_profile}} if source_profile is not None else {},
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction=target_direction),
+            interface={"electrical_characteristics": {"input": target_profile}} if target_profile is not None else {},
+        )
+        return source, target
+
+    def test_e01_balanced_supported_both(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e02_unbalanced_supported_both(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["unbalanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e03_requested_balanced_unsupported_source(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_e04_requested_balanced_unsupported_target(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["unbalanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_e05_requested_mode_missing_source_info(self):
+        source, target = self.analog_pair(
+            {"operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_e06_requested_mode_missing_target_info(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_e07_multiple_modes_one_compatible(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e08_balanced_variant_resolved(self):
+        source, target = self.analog_pair(
+            {
+                "balance_modes": ["balanced", "unbalanced"],
+                "operating_level_classes": ["line"],
+                "variants": [
+                    {"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}},
+                    {"conditions": {"balance_mode": "unbalanced"}, "maximum_level": {"value": 2, "unit": "volt-rms"}},
+                ],
+            },
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        self.assertTrue(any("4" in reason for reason in layer["reasons"]))
+
+    def test_e09_unbalanced_variant_resolved(self):
+        source, target = self.analog_pair(
+            {
+                "balance_modes": ["balanced", "unbalanced"],
+                "operating_level_classes": ["line"],
+                "variants": [
+                    {"conditions": {"balance_mode": "balanced"}, "impedance": {"nominal": {"value": 200, "unit": "ohm"}}},
+                    {"conditions": {"balance_mode": "unbalanced"}, "impedance": {"nominal": {"value": 100, "unit": "ohm"}}},
+                ],
+            },
+            {"balance_modes": ["unbalanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "unbalanced"})
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        self.assertTrue(any("100" in reason or "Impedance" in reason for reason in layer["reasons"]))
+
+    def test_e08b_duplicate_matching_variant_is_insufficient(self):
+        source, target = self.analog_pair(
+            {
+                "balance_modes": ["balanced"],
+                "operating_level_classes": ["line"],
+                "maximum_level": {"value": 1, "unit": "volt-rms"},
+                "variants": [
+                    {"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}},
+                ],
+            },
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target, electrical_requirements={"balance_mode": "balanced"})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_e10_line_output_to_line_input(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e11_line_output_to_mic_line_input(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"]},
+        )
+        layer = self.electrical(source, target)
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        self.assertTrue(any("line" in reason for reason in layer["reasons"]))
+
+    def test_e12_line_output_to_mic_only_input(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["mic"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INCOMPATIBLE")
+
+    def test_e12b_missing_operating_level_is_insufficient(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INSUFFICIENT_DATA")
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INSUFFICIENT_DATA")
+
+    def test_e13_maximum_level_is_informational(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "maximum_level": {"value": 10, "unit": "volt-rms"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "maximum_level": {"value": 2, "unit": "volt-rms"}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e14_nominal_levels_are_informational(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "nominal_levels": [{"value": 4, "unit": "decibel-u"}]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "nominal_levels": [{"value": -10, "unit": "decibel-u"}]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e15_ordinary_impedance_is_informational(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"nominal": {"value": 100, "unit": "ohm"}}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"nominal": {"value": 24000, "unit": "ohm"}}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e16_minimum_load_satisfied(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "minimum_load_impedance": {"value": 600, "unit": "ohm"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"nominal": {"value": 24000, "unit": "ohm"}}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "COMPATIBLE")
+
+    def test_e17_minimum_load_violated(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "minimum_load_impedance": {"value": 600, "unit": "ohm"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"nominal": {"value": 100, "unit": "ohm"}}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INCOMPATIBLE")
+
+    def test_e18_minimum_load_target_unknown(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "minimum_load_impedance": {"value": 600, "unit": "ohm"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INSUFFICIENT_DATA")
+
+    def test_e18b_minimum_load_unit_mismatch_or_upper_bound_only(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "minimum_load_impedance": {"value": 600, "unit": "ohm"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"nominal": {"value": 1, "unit": "kilohm"}}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INSUFFICIENT_DATA")
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "minimum_load_impedance": {"value": 600, "unit": "ohm"}},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": {"upper_bound": {"value": 100, "unit": "ohm", "inclusive": False}}},
+        )
+        self.assertEqual(self.electrical(source, target)["result"], "INSUFFICIENT_DATA")
+
+    def test_e19_physical_compatible_electrical_incompatible_is_incompatible(self):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="output"),
+            interface={**passive_supported(), "electrical_characteristics": {"output": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}}},
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="input"),
+            interface={**passive_supported(), "electrical_characteristics": {"input": {"balance_modes": ["balanced"], "operating_level_classes": ["mic"]}}},
+        )
+        result = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["electrical"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_e20_electrical_unknown_yields_final_insufficient(self):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="output"),
+            interface=passive_supported(),
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="input"),
+            interface=passive_supported(),
+        )
+        result = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(result["layers"]["electrical"]["result"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_e21_digital_case_not_applicable(self):
+        result = analyze(request({"signal_family": "hdmi"}), [equipment("source"), equipment("target")])
+        self.assertFalse(result["layers"]["electrical"]["applicable"])
+
+    def test_e22_legacy_balanced_without_canonical_is_insufficient(self):
+        source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="output", balanced=True))
+        target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="input", balanced=True))
+        result = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(result["layers"]["electrical"]["result"], "INSUFFICIENT_DATA")
+
+    def test_e23_request_validation(self):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="output"),
+            interface=ec_output(),
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="input"),
+            interface=ec_input(),
+        )
+        valid = analyze(request({"signal_family": "analog-audio"}, electrical_requirements={"balance_mode": "balanced"}), [source, target])
+        self.assertEqual(valid["layers"]["electrical"]["result"], "COMPATIBLE")
+        valid_unbalanced = analyze(request({"signal_family": "analog-audio"}, electrical_requirements={"balance_mode": "unbalanced"}), [source, target])
+        self.assertEqual(valid_unbalanced["layers"]["electrical"]["result"], "INCOMPATIBLE")
+        with self.assertRaises(AnalysisInputError):
+            analyze(request({"signal_family": "analog-audio"}, electrical_requirements={"balance_mode": "foo"}), [source, target])
+        with self.assertRaises(AnalysisInputError):
+            analyze(request({"signal_family": "analog-audio"}, electrical_requirements="balanced"), [source, target])
+        empty_requirements = analyze(request({"signal_family": "analog-audio"}, electrical_requirements={}), [source, target])
+        self.assertEqual(empty_requirements["layers"]["electrical"]["result"], "COMPATIBLE")
+        no_requirements = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(no_requirements["layers"]["electrical"]["result"], "COMPATIBLE")
+
+    def test_e27_nested_electrical_requirements_is_not_consumed(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+        )
+        nested_only = analyze(
+            request({"signal_family": "analog-audio", "electrical_requirements": {"balance_mode": "balanced"}}),
+            [source, target],
+        )
+        root_only = analyze(
+            request({"signal_family": "analog-audio"}, electrical_requirements={"balance_mode": "balanced"}),
+            [source, target],
+        )
+        self.assertEqual(root_only["layers"]["electrical"]["result"], "COMPATIBLE")
+        self.assertEqual(
+            root_only["layers"]["electrical"]["reasons"],
+            ["Balance mode balanced is supported by both endpoints with operating level overlap ['line']."],
+        )
+        self.assertIn("Compatible balance mode(s): ['balanced', 'unbalanced'].", nested_only["layers"]["electrical"]["reasons"])
+
+    def test_e28_root_and_nested_conflict_root_governs(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced"], "operating_level_classes": ["line"]},
+        )
+        result = analyze(
+            request(
+                {"signal_family": "analog-audio", "electrical_requirements": {"balance_mode": "unbalanced"}},
+                electrical_requirements={"balance_mode": "balanced"},
+            ),
+            [source, target],
+        )
+        self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+    def test_e24_no_conditional_for_mode_choice(self):
+        source, target = self.analog_pair(
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+            {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"]},
+        )
+        layer = self.electrical(source, target)
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        self.assertNotEqual(layer["result"], "CONDITIONALLY_COMPATIBLE")
+
+    def test_e25_real_analog_cases_are_electrically_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        cases = [
+            (core, "flex-1", nvx, "audio-io"),
+            (nvx, "audio-io", core, "flex-1"),
+            (hd, "audio-out-aux-1", nvx, "audio-io"),
+            (hd, "audio-out-aux-1", core, "flex-1"),
+        ]
+        for source_record, source_interface, target_record, target_interface in cases:
+            with self.subTest(source=source_interface, target=target_interface):
+                result = analyze(
+                    {
+                        "source": {"equipment_id": source_record["id"], "interface_id": source_interface},
+                        "target": {"equipment_id": target_record["id"], "interface_id": target_interface},
+                        "requested_function": {"signal_family": "analog-audio"},
+                        "analysis_scope": "CATALOG",
+                        "interconnect_assumption": "APPROPRIATE_MEDIUM",
+                    },
+                    [core, nvx, hd],
+                )
+                self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+
+    def test_e26_real_variant_evidence_resolves(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        audio = next(interface for interface in nvx["interfaces"] if interface["id"] == "audio-io")
+        output = audio["electrical_characteristics"]["output"]
+        balanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "balanced")
+        unbalanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "unbalanced")
+        self.assertEqual(balanced["impedance"]["nominal"]["value"], 200)
+        self.assertEqual(unbalanced["impedance"]["nominal"]["value"], 100)
+        self.assertEqual(balanced["maximum_level"]["value"], 4)
+        self.assertEqual(unbalanced["maximum_level"]["value"], 2)
 
 
 if __name__ == "__main__":

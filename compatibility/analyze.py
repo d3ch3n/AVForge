@@ -71,6 +71,12 @@ def _validate_request(request: Any) -> None:
         for key, value in function["capacity_requirement"].items():
             if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
                 raise AnalysisInputError(f"capacity_requirement.{key} must be a non-negative number")
+    holder = request.get("electrical_requirements")
+    if holder is not None:
+        if not isinstance(holder, dict):
+            raise AnalysisInputError("electrical_requirements must be an object")
+        if "balance_mode" in holder and holder["balance_mode"] not in ("balanced", "unbalanced"):
+            raise AnalysisInputError('electrical_requirements.balance_mode must be "balanced" or "unbalanced"')
     scope = request.get("analysis_scope")
     if scope not in SCOPES:
         raise AnalysisInputError("analysis_scope must be CATALOG in v0.1")
@@ -324,24 +330,146 @@ def _characteristics(signal: dict[str, Any]) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _electrical_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
+def _electrical_profile(interface: dict[str, Any], role: str) -> dict[str, Any] | None:
+    characteristics = interface.get("electrical_characteristics")
+    if not isinstance(characteristics, dict):
+        return None
+    profile = characteristics.get("output" if role == "source" else "input")
+    return profile if isinstance(profile, dict) else None
+
+
+def _resolve_electrical_profile(profile: dict[str, Any], mode: str) -> tuple[dict[str, Any] | None, str | None]:
+    base = {key: value for key, value in profile.items() if key != "variants"}
+    variants = profile.get("variants", [])
+    if "variants" not in profile:
+        return base, None
+    if not isinstance(variants, list):
+        return None, "variants-not-a-list"
+    matches = [
+        item for item in variants
+        if isinstance(item, dict) and isinstance(item.get("conditions"), dict)
+        and item["conditions"].get("balance_mode") == mode
+    ]
+    if len(matches) > 1:
+        return None, "duplicate-variant"
+    if not matches:
+        return base, None
+    variant = matches[0]
+    for key in ("maximum_level", "impedance"):
+        if key in variant and key in base:
+            return None, "base-variant-conflict"
+    resolved = dict(base)
+    for key in ("maximum_level", "impedance"):
+        if key in variant:
+            resolved[key] = variant[key]
+    return resolved, None
+
+
+def _measurement_text(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return None
+    amount = value.get("value")
+    unit = value.get("unit")
+    if isinstance(amount, (int, float)) and isinstance(unit, str):
+        return f"{amount} {unit}"
+    return None
+
+
+def _requested_balance_mode(request: dict[str, Any]) -> str | None:
+    requirements = request.get("electrical_requirements")
+    if isinstance(requirements, dict) and requirements.get("balance_mode") in ("balanced", "unbalanced"):
+        return requirements["balance_mode"]
+    return None
+
+
+def _evaluate_electrical_scenario(
+    source_profile: dict[str, Any],
+    target_profile: dict[str, Any],
+    mode: str,
+) -> tuple[str, list[str]]:
+    source_resolved, source_issue = _resolve_electrical_profile(source_profile, mode)
+    target_resolved, target_issue = _resolve_electrical_profile(target_profile, mode)
+    if source_issue is not None or target_issue is not None:
+        return "INSUFFICIENT_DATA", ["Electrical variant resolution is structurally inconsistent for the evaluated balance mode."]
+    assert source_resolved is not None and target_resolved is not None
+    source_modes = source_profile.get("balance_modes")
+    target_modes = target_profile.get("balance_modes")
+    if isinstance(source_modes, list) and mode not in source_modes:
+        return "INCOMPATIBLE", [f"Source does not support balance mode {mode}."]
+    if isinstance(target_modes, list) and mode not in target_modes:
+        return "INCOMPATIBLE", [f"Target does not support balance mode {mode}."]
+    if not isinstance(source_modes, list) or not isinstance(target_modes, list):
+        return "INSUFFICIENT_DATA", ["Balance mode capability is not declared for both endpoints."]
+    source_levels = source_resolved.get("operating_level_classes")
+    target_levels = target_resolved.get("operating_level_classes")
+    if isinstance(source_levels, list) and isinstance(target_levels, list):
+        overlap = sorted(set(source_levels) & set(target_levels))
+        if not overlap:
+            return "INCOMPATIBLE", ["Operating level classes do not overlap for the evaluated balance mode."]
+    else:
+        return "INSUFFICIENT_DATA", ["Operating level classes are not declared for both endpoints."]
+    overlap = sorted(set(source_levels) & set(target_levels))
+    source_minimum = source_resolved.get("minimum_load_impedance")
+    if isinstance(source_minimum, dict) and "value" in source_minimum and "unit" in source_minimum:
+        target_nominal = (target_resolved.get("impedance") or {}) if isinstance(target_resolved.get("impedance"), dict) else {}
+        nominal = target_nominal.get("nominal")
+        if not isinstance(nominal, dict) or nominal.get("unit") != source_minimum.get("unit") or not isinstance(nominal.get("value"), (int, float)):
+            return "INSUFFICIENT_DATA", ["Target input impedance is not sufficient to evaluate the declared source minimum load."]
+        if nominal["value"] < source_minimum["value"]:
+            return "INCOMPATIBLE", ["Target input impedance is below the declared source minimum load."]
+    reasons = [f"Balance mode {mode} is supported by both endpoints with operating level overlap {overlap}."]
+    maximum = _measurement_text(source_resolved.get("maximum_level")) or _measurement_text(target_resolved.get("maximum_level"))
+    if maximum is not None:
+        reasons.append(f"Maximum level {maximum} is informational.")
+    nominal_levels = source_resolved.get("nominal_levels") or target_resolved.get("nominal_levels")
+    if isinstance(nominal_levels, list) and nominal_levels:
+        reasons.append("Nominal levels are informational.")
+    impedance = source_resolved.get("impedance") or target_resolved.get("impedance")
+    if isinstance(impedance, dict) and impedance:
+        reasons.append("Impedance data is informational.")
+    if isinstance(source_resolved.get("phantom_power"), dict) or isinstance(target_resolved.get("phantom_power"), dict):
+        reasons.append("Phantom power data is informational.")
+    return "COMPATIBLE", reasons
+
+
+def _electrical_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any], request: dict[str, Any] | None = None) -> dict[str, Any]:
     if function.get("signal_family") != "analog-audio":
         return _layer(False)
-    source_signal = _selected_signal(source, function, "source")
-    target_signal = _selected_signal(target, function, "target")
-    if source_signal is None or target_signal is None:
+    if _selected_signal(source, function, "source") is None or _selected_signal(target, function, "target") is None:
         return _layer(True, "INSUFFICIENT_DATA", ["Analog electrical comparison requires one unambiguous signal per connection role."])
-    source_chars = _characteristics(source_signal)
-    target_chars = _characteristics(target_signal)
-    if not source_chars or not target_chars:
+    source_profile = _electrical_profile(source["interface"], "source")
+    target_profile = _electrical_profile(target["interface"], "target")
+    if source_profile is None or target_profile is None:
         return _layer(True, "INSUFFICIENT_DATA", ["Required analog electrical characteristics are not declared."])
-    source_balanced = source_chars.get("balanced")
-    target_balanced = target_chars.get("balanced")
-    if source_balanced is not None and target_balanced is not None and source_balanced != target_balanced:
-        return _layer(True, "CONDITIONALLY_COMPATIBLE", ["Balanced/unbalanced connection requires a documented wiring condition."])
-    if source_balanced is None or target_balanced is None:
-        return _layer(True, "INSUFFICIENT_DATA", ["Balanced/unbalanced behavior is not structured for both signals."])
-    return _layer(True, "COMPATIBLE")
+    requested = _requested_balance_mode(request or {})
+    if requested is not None:
+        state, reasons = _evaluate_electrical_scenario(source_profile, target_profile, requested)
+        return _layer(True, state, reasons)
+    source_modes = source_profile.get("balance_modes")
+    target_modes = target_profile.get("balance_modes")
+    if isinstance(source_modes, list) and isinstance(target_modes, list):
+        common = sorted(set(source_modes) & set(target_modes))
+        if not common:
+            return _layer(True, "INCOMPATIBLE", ["No common balance mode is declared by both endpoints."])
+        results = [(_evaluate_electrical_scenario(source_profile, target_profile, mode), mode) for mode in common]
+        compatible = [(reasons, mode) for (state, reasons), mode in results if state == "COMPATIBLE"]
+        if compatible:
+            reasons, modes = [], []
+            for scenario_reasons, mode in compatible:
+                modes.append(mode)
+                reasons.extend(scenario_reasons)
+            return _layer(True, "COMPATIBLE", [f"Compatible balance mode(s): {sorted(modes)}."] + reasons)
+        if any(state == "INCOMPATIBLE" for (state, _), _ in results):
+            reasons: list[str] = []
+            for (state, scenario_reasons), mode in results:
+                if state == "INCOMPATIBLE":
+                    reasons.extend(scenario_reasons)
+            return _layer(True, "INCOMPATIBLE", reasons)
+        reasons = []
+        for (_, scenario_reasons), _ in results:
+            reasons.extend(scenario_reasons)
+        return _layer(True, "INSUFFICIENT_DATA", reasons)
+    return _layer(True, "INSUFFICIENT_DATA", ["Balance mode capability is not declared for both endpoints."])
 
 
 def _selector_matches(selector: dict[str, Any], target: dict[str, Any], interface_id: str) -> bool:
@@ -472,7 +600,7 @@ def analyze(request: dict[str, Any], records: list[dict[str, Any]]) -> dict[str,
     protocol_layer, protocol_evidence = _protocol_layer(source, target, function)
     layers = {
         "physical": _physical_layer(source, target, request["interconnect_assumption"]),
-        "electrical": _electrical_layer(source, target, function),
+        "electrical": _electrical_layer(source, target, function, request),
         "signal": _signal_layer(source, target, function),
         "protocol": protocol_layer,
         "direction": _direction_layer(source, target, function),

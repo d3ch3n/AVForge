@@ -258,10 +258,33 @@ it evaluates connector identity and physical mating. Under
 capability described above; connector identity remains available as context
 but does not decide that assumption.
 
-`electrical` evaluates electrical requirements relevant to the requested
-function, including levels, impedance, balance, power, and electrical limits.
-Analog electrical data are not required for a network protocol analysis unless
-the requested function explicitly requires them.
+`electrical` is implemented for `signal_family: analog-audio` and reads
+exclusively the canonical `interface.electrical_characteristics` model.
+The source role uses the `output` profile and the target role uses the
+`input` profile. Legacy `signal_characteristics` electrical fields are not
+canonical. An optional request-root `electrical_requirements.balance_mode`
+(`balanced` or `unbalanced`) selects one balance scenario:
+
+```json
+{
+  "requested_function": {"signal_family": "analog-audio"},
+  "electrical_requirements": {"balance_mode": "balanced"}
+}
+```
+
+`electrical_requirements` lives only at the request root, never inside
+`requested_function`. Otherwise every common balance mode is evaluated and
+any compatible selectable scenario makes the layer `COMPATIBLE`.
+`balance_mode`-conditional variants resolve `maximum_level` and
+`impedance`. `operating_level_classes` use capability overlap.
+`maximum_level`, `nominal_levels`, ordinary impedance, and phantom data are
+informational evidence only; no 10:1 or bridging heuristic exists. The sole
+normative impedance rule compares an explicit source
+`minimum_load_impedance` against a comparable target nominal impedance in
+the same unit. Missing canonical data yields `INSUFFICIENT_DATA`.
+Phantom compatibility is not automatically decided. Analog electrical data
+are not required for a network protocol analysis unless the requested
+function explicitly requires them.
 
 `signal` evaluates signal type, family, format, channels, and related signal
 characteristics.
@@ -460,11 +483,12 @@ For an analog audio request, `physical`, `electrical`, `signal`, and
 applicable only when a restriction is declared, and `capacity` is applicable
 only when a quantity is requested.
 
-The result is `COMPATIBLE` only when connector/interconnect details, electrical
-characteristics, signal format, and complementary direction are established.
-Known mode selection or a documented balanced/unbalanced wiring requirement
-produces `CONDITIONALLY_COMPATIBLE`. Missing required pinout or electrical
-data produces `INSUFFICIENT_DATA`, not a condition.
+The result is `COMPATIBLE` only when passive-interconnection evidence,
+canonical electrical characteristics, signal format, and complementary
+direction are established. A documented input/output mode selection can
+produce `CONDITIONALLY_COMPATIBLE` in the direction layer. Missing required
+canonical electrical data produces `INSUFFICIENT_DATA`, not a condition.
+Balance-mode choice alone does not produce `CONDITIONALLY_COMPATIBLE`.
 
 ## 12. Gap Classification
 
