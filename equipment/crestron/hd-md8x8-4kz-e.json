@@ -5,7 +5,7 @@
   "product_name": "Crestron HD-MD8X8-4KZ-E",
   "category": "hdmi-av-switcher",
   "product_family": "DM Essentials Point to Point",
-  "schema_version": "3.5.0",
+  "schema_version": "3.7.0",
   "status": "draft",
   "hardware": {
     "form_factor": "19-inch rack-mountable AV switcher",
@@ -182,6 +182,7 @@
       "direction": "output",
       "connector": "terminal-block-5-pin-3-5mm",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         {
           "id": "audio-out-aux-1-analog",
@@ -223,6 +224,7 @@
       "direction": "output",
       "connector": "terminal-block-5-pin-3-5mm",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         {
           "id": "audio-out-aux-2-analog",
