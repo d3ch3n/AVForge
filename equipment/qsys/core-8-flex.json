@@ -4,7 +4,7 @@
   "model": "Core 8 Flex",
   "product_name": "Q-SYS Core 8 Flex",
   "category": "audio-video-control-processor",
-  "schema_version": "3.4.0",
+  "schema_version": "3.5.0",
   "status": "draft",
   "catalog_coverage": {
     "communication_protocols": {
@@ -87,6 +87,25 @@
           }
         }
       ],
+      "electrical_characteristics": {
+        "input": {
+          "balance_modes": ["balanced"],
+          "operating_level_classes": ["mic", "line"],
+          "impedance": { "nominal": { "value": 10500, "unit": "ohm" } },
+          "phantom_power": {
+            "provision": {
+              "supported": true,
+              "voltage": { "value": 48, "unit": "volt" },
+              "current_max": { "value": 10, "unit": "milliampere" }
+            }
+          }
+        },
+        "output": {
+          "balance_modes": ["balanced"],
+          "operating_level_classes": ["line"],
+          "impedance": { "nominal": { "value": 100, "unit": "ohm" } }
+        }
+      },
       "notes": "One physical Flex Channel; software-configurable as input or output. Connector pitch/type is not specified in the reviewed official text sources."
     },
     {
@@ -98,7 +117,16 @@
       "signals": [
         { "id": "flex-2-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-2-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": {
+          "balance_modes": ["balanced"],
+          "operating_level_classes": ["mic", "line"],
+          "impedance": { "nominal": { "value": 10500, "unit": "ohm" } },
+          "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } }
+        },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-3",
@@ -109,7 +137,11 @@
       "signals": [
         { "id": "flex-3-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-3-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-4",
@@ -120,7 +152,11 @@
       "signals": [
         { "id": "flex-4-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-4-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-5",
@@ -131,7 +167,11 @@
       "signals": [
         { "id": "flex-5-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-5-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-6",
@@ -142,7 +182,11 @@
       "signals": [
         { "id": "flex-6-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-6-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-7",
@@ -153,7 +197,11 @@
       "signals": [
         { "id": "flex-7-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-7-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "flex-8",
@@ -164,7 +212,11 @@
       "signals": [
         { "id": "flex-8-analog-input", "name": "Microphone/line analog input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input", "balanced": true, "unbalanced_signal_max_level": { "value": 23, "unit": "decibel-u" }, "input_impedance": { "value": 10500, "unit": "ohm" }, "input_sensitivity_range": { "min": -40, "max": 24, "unit": "decibel-u" }, "phantom_power": { "standard": "IEC 61938 P48", "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } }, "converter": "24-bit, 48 kHz" } },
         { "id": "flex-8-analog-output", "name": "Line-level analog output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "output", "balanced": true, "output_impedance": { "value": 100, "unit": "ohm" }, "output_level_range": { "min": -40, "max": 20, "unit": "decibel-u" }, "converter": "24-bit, 48 kHz" } }
-      ]
+      ],
+      "electrical_characteristics": {
+        "input": { "balance_modes": ["balanced"], "operating_level_classes": ["mic", "line"], "impedance": { "nominal": { "value": 10500, "unit": "ohm" } }, "phantom_power": { "provision": { "supported": true, "voltage": { "value": 48, "unit": "volt" }, "current_max": { "value": 10, "unit": "milliampere" } } } },
+        "output": { "balance_modes": ["balanced"], "operating_level_classes": ["line"], "impedance": { "nominal": { "value": 100, "unit": "ohm" } } }
+      }
     },
     {
       "id": "lan-a",
