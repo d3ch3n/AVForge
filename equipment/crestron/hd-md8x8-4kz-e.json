@@ -1,0 +1,286 @@
+{
+  "id": "crestron.hd-md8x8-4kz-e",
+  "manufacturer": "Crestron",
+  "model": "HD-MD8X8-4KZ-E",
+  "product_name": "Crestron HD-MD8X8-4KZ-E",
+  "category": "hdmi-av-switcher",
+  "product_family": "DM Essentials Point to Point",
+  "schema_version": "3.5.0",
+  "status": "draft",
+  "hardware": {
+    "form_factor": "19-inch rack-mountable AV switcher",
+    "rack_mountable": true,
+    "rack_units": 1,
+    "dimensions": {
+      "width": { "value": 441, "unit": "millimeter", "note": "Without rack ears" },
+      "height": { "value": 44, "unit": "millimeter" },
+      "depth": { "value": 179, "unit": "millimeter" }
+    },
+    "weight": { "value": 2.37, "unit": "kilogram" }
+  },
+  "power": {
+    "sources": [
+      {
+        "id": "dc-input",
+        "method": "DC",
+        "voltage": { "value": 24, "unit": "volt" },
+        "current": { "value": 2.5, "unit": "ampere" },
+        "power_consumption_typical": { "value": 29, "unit": "watt" },
+        "notes": "The switcher receives 24 VDC. The included PW-2420RU power pack supplies this input; its AC input is not an input of the switcher."
+      }
+    ],
+    "heat_dissipation": { "value": 98, "unit": "btu-per-hour", "note": "Typical" }
+  },
+  "interfaces": [
+    {
+      "id": "hdmi-in-1",
+      "label": "HDMI IN 1",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [
+        {
+          "id": "hdmi-in-1-av",
+          "name": "HDMI digital video/audio input",
+          "direction": "input",
+          "signal_type": "video",
+          "signal_family": "hdmi",
+          "protocol_family": "hdmi",
+          "signal_characteristics": {
+            "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz",
+            "color_sampling": "4:4:4",
+            "hdr": ["HDR10", "HDR10+", "Dolby Vision"],
+            "hdcp": "2.3",
+            "edid": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "hdmi-in-2",
+      "label": "HDMI IN 2",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-2-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-3",
+      "label": "HDMI IN 3",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-3-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-4",
+      "label": "HDMI IN 4",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-4-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-5",
+      "label": "HDMI IN 5",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-5-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-6",
+      "label": "HDMI IN 6",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-6-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-7",
+      "label": "HDMI IN 7",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-7-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-in-8",
+      "label": "HDMI IN 8",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-in-8-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-1",
+      "label": "HDMI OUT 1",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-1-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-2",
+      "label": "HDMI OUT 2",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-2-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-3",
+      "label": "HDMI OUT 3",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-3-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-4",
+      "label": "HDMI OUT 4",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-4-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-5",
+      "label": "HDMI OUT 5",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-5-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-6",
+      "label": "HDMI OUT 6",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-6-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-7",
+      "label": "HDMI OUT 7",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-7-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "hdmi-out-8",
+      "label": "HDMI OUT 8",
+      "direction": "output",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "hdmi-out-8-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"], "hdcp": "2.3", "edid": true } }]
+    },
+    {
+      "id": "audio-out-aux-1",
+      "label": "AUDIO OUT, AUX 1",
+      "direction": "output",
+      "connector": "terminal-block-5-pin-3-5mm",
+      "connector_gender": "receptacle",
+      "signals": [
+        {
+          "id": "audio-out-aux-1-analog",
+          "name": "Stereo analog line-level audio output",
+          "direction": "output",
+          "signal_type": "audio",
+          "signal_family": "analog-audio",
+          "signal_characteristics": {
+            "channels": 2,
+            "balance_modes": ["balanced", "unbalanced"],
+            "output_impedance": "<100 ohm",
+            "maximum_output": { "balanced": "4 Vrms", "unbalanced": "2 Vrms" }
+          }
+        }
+      ],
+      "electrical_characteristics": { "output": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"] } }
+    },
+    {
+      "id": "audio-out-aux-2",
+      "label": "AUDIO OUT, AUX 2",
+      "direction": "output",
+      "connector": "terminal-block-5-pin-3-5mm",
+      "connector_gender": "receptacle",
+      "signals": [
+        {
+          "id": "audio-out-aux-2-analog",
+          "name": "Stereo analog line-level audio output",
+          "direction": "output",
+          "signal_type": "audio",
+          "signal_family": "analog-audio",
+          "signal_characteristics": {
+            "channels": 2,
+            "balance_modes": ["balanced", "unbalanced"],
+            "output_impedance": "<100 ohm",
+            "maximum_output": { "balanced": "4 Vrms", "unbalanced": "2 Vrms" }
+          }
+        }
+      ],
+      "electrical_characteristics": { "output": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"] } }
+    },
+    {
+      "id": "lan",
+      "label": "LAN",
+      "direction": "bidirectional",
+      "connector": "rj45-8p8c",
+      "connector_gender": "female",
+      "signals": [{ "id": "lan-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "protocol_family": "ethernet" }]
+    },
+    {
+      "id": "service-usb",
+      "label": "SERVICE",
+      "direction": "bidirectional",
+      "connector": "usb-type-a",
+      "connector_gender": "female",
+      "signals": [{ "id": "service-usb-data", "name": "USB service data", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb", "signal_characteristics": { "functions": ["firmware loading", "configuration management"], "power_output": "up to 5 V, 500 mA" } }],
+      "notes": "Service port; not modeled as a general USB AV endpoint."
+    },
+    {
+      "id": "chassis-ground",
+      "label": "G",
+      "direction": "input",
+      "connector": "screw-6-32",
+      "connector_gender": "none",
+      "signals": [{ "id": "protective-ground", "name": "Chassis ground", "direction": "input", "signal_type": "power", "signal_family": "protective-ground" }]
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "ethernet-management",
+      "type": "management",
+      "protocol_family": "ethernet",
+      "media_type": "network",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["lan"] },
+      "notes": "The official product page documents Ethernet setup and control, web browser setup and control, and 100/1000 Mbps Ethernet. Additional documented security and cloud protocols are not represented as protocol-family IDs here."
+    },
+    {
+      "id": "cec-control",
+      "type": "control",
+      "protocol_family": "cec",
+      "media_type": "control",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "simultaneous", "allowed_interface_ids": ["hdmi-in-1", "hdmi-in-2", "hdmi-in-3", "hdmi-in-4", "hdmi-in-5", "hdmi-in-6", "hdmi-in-7", "hdmi-in-8", "hdmi-out-1", "hdmi-out-2", "hdmi-out-3", "hdmi-out-4", "hdmi-out-5", "hdmi-out-6", "hdmi-out-7", "hdmi-out-8"] },
+      "notes": "CEC over the HDMI connections provides source and display device control."
+    }
+  ],
+  "capabilities": [
+    { "id": "av-switching", "name": "8x8 digital AV switching", "value": { "inputs": 8, "outputs": 8 } },
+    { "id": "video-capability", "name": "4K60 4:4:4 HDR video support", "value": { "maximum_resolution": "4096x2160 or 3840x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"] } },
+    { "id": "hdcp", "name": "HDCP compliance", "value": "2.3" },
+    { "id": "edid-management", "name": "EDID management" },
+    { "id": "hdmi-audio-de-embedding", "name": "HDMI audio de-embedding", "value": "Embedded HDMI 2-channel LPCM to AUX stereo outputs" },
+    { "id": "enterprise-security", "name": "Enterprise-grade security", "value": ["IEEE 802.1X", "PKI", "TLS", "SSH", "HTTPS"] },
+    { "id": "xio-cloud-support", "name": "XiO Cloud service support" }
+  ],
+  "catalog_coverage": { "communication_protocols": { "complete": false } },
+  "documentation": [
+    { "type": "product_page", "uri": "https://www.crestron.com/Products/Catalog/Audio-Video-and-USB/DM-Essentials-Point-to-Point/HDMI-Switcher/HD-MD8X8-4KZ-E", "title": "HD-MD8X8-4KZ-E", "language": "en" },
+    { "type": "datasheet", "uri": "https://www.crestron.com/getmedia/1adb39b5-5319-45c1-883c-4523ae7aba6e/ss_HD-MD8X8-4KZ-E", "title": "Spec Sheet: HD-MD8X8-4KZ-E", "language": "en" },
+    { "type": "other", "uri": "https://www.crestron.com/Products/Accessory/Power-Supplies/Power-Packs/PW-2420RU", "title": "PW-2420RU power pack", "language": "en" }
+  ]
+}
