@@ -402,7 +402,9 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
     def test_ac48_present_protocol_configurable_allowed(self):
         capability = {"id": "cap", "type": "data", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
         records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported()), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())]
-        self.assertEqual(analyze(request({"protocol_family": "rs-232"}), records)["result"], "CONDITIONALLY_COMPATIBLE")
+        result = analyze(request({"protocol_family": "rs-232"}), records)
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
 
     def test_ac49_complete_coverage_precedes_other_compatible_layers(self):
         coverage = {"communication_protocols": {"complete": True}}
@@ -454,7 +456,7 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         module["catalog_coverage"] = {"communication_protocols": {"complete": True}}
         module_request = {"source": {"equipment_id": module["id"], "interface_id": "ethernet-1"}, "target": {"equipment_id": module["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dm-nvx"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}
         result = analyze(module_request, [module])
-        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
 
     def test_ac56_generic_ethernet_request_ignores_protocol_coverage(self):
         coverage = {"communication_protocols": {"complete": True}}
@@ -476,12 +478,14 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "dante"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
 
-    def test_real_nvx_complete_aes67_ethernet_one_is_conditional(self):
+    def test_real_nvx_complete_aes67_ethernet_one_is_compatible(self):
         core = load_record("equipment/qsys/core-8-flex.json")
         nvx = load_record("equipment/crestron/dm-nvx-360c.json")
         nvx["catalog_coverage"] = {"communication_protocols": {"complete": True}}
         result = analyze({"source": {"equipment_id": core["id"], "interface_id": "lan-a"}, "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"}, "requested_function": {"protocol_family": "aes67"}, "analysis_scope": "CATALOG", "interconnect_assumption": "APPROPRIATE_MEDIUM"}, [core, nvx])
-        self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
 
     def test_real_core_complete_dm_nvx_is_incompatible(self):
         core = load_record("equipment/qsys/core-8-flex.json")
@@ -531,7 +535,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         capability = {"id": "rs232-cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
         records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported()), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())]
         result = analyze(request({"protocol_family": "rs-232"}), records)
-        self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
 
     def test_ac32_configurable_capability_excludes_interface(self):
         capability = {"id": "rs232-cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["b"]}}
@@ -1021,18 +1026,6 @@ class ElectricalAnalyzerV1Tests(unittest.TestCase):
                     [core, nvx, hd],
                 )
                 self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
-
-    def test_e26_real_variant_evidence_resolves(self):
-        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
-        audio = next(interface for interface in nvx["interfaces"] if interface["id"] == "audio-io")
-        output = audio["electrical_characteristics"]["output"]
-        balanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "balanced")
-        unbalanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "unbalanced")
-        self.assertEqual(balanced["impedance"]["nominal"]["value"], 200)
-        self.assertEqual(unbalanced["impedance"]["nominal"]["value"], 100)
-        self.assertEqual(balanced["maximum_level"]["value"], 4)
-        self.assertEqual(unbalanced["maximum_level"]["value"], 2)
-
 
     def test_e26_real_variant_evidence_resolves(self):
         nvx = load_record("equipment/crestron/dm-nvx-360c.json")
@@ -1587,6 +1580,279 @@ class SignalOpenWorldIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(result["layers"]["signal"]["result"], "INCOMPATIBLE")
         self.assertEqual(result["result"], "INCOMPATIBLE")
+
+
+class ProtocolLayerV1Tests(unittest.TestCase):
+    def protocol(self, source, target, protocol, **kwargs):
+        return analyze(
+            request({"protocol_family": protocol}, **kwargs),
+            [source, target],
+        )["layers"]["protocol"]["result"]
+
+    def proto_pair(self, source_protocols, target_protocols):
+        source_signals = [
+            {"id": f"s{i}", "name": f"s{i}", "signal_type": "control", "direction": "bidirectional", "protocol_family": proto}
+            for i, proto in enumerate(source_protocols)
+        ]
+        target_signals = [
+            {"id": f"t{i}", "name": f"t{i}", "signal_type": "control", "direction": "bidirectional", "protocol_family": proto}
+            for i, proto in enumerate(target_protocols)
+        ]
+        source = equipment("source", signal=None, interface={"signals": source_signals})
+        target = equipment("target", signal=None, interface={"signals": target_signals})
+        return source, target
+
+    def test_p01_exact_bilateral_match(self):
+        source, target = self.proto_pair(["rs-232"], ["rs-232"])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p02_source_explicit_mismatch(self):
+        source, target = self.proto_pair(["usb"], ["rs-232"])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INCOMPATIBLE")
+
+    def test_p03_target_explicit_mismatch(self):
+        source, target = self.proto_pair(["rs-232"], ["usb"])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INCOMPATIBLE")
+
+    def test_p04_source_unknown(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal(protocol_family="rs-232"))
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INSUFFICIENT_DATA")
+
+    def test_p05_target_unknown(self):
+        source = equipment("source", signal=signal(protocol_family="rs-232"))
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INSUFFICIENT_DATA")
+
+    def test_p06_both_unknown(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INSUFFICIENT_DATA")
+
+    def test_p07_multiple_capabilities_one_match(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        other = {"id": "other", "type": "control", "protocol_family": "cec", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[other, capability])
+        target = equipment("target", signal=signal(), communication_capabilities=[capability, other])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p08_multiple_equivalent_routes(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p09_no_array_order_selection(self):
+        first = {"id": "first", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        second = {"id": "second", "type": "control", "protocol_family": "cec", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[first, second])
+        target = equipment("target", signal=signal(), communication_capabilities=[second, first])
+        forward = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        source["communication_capabilities"] = [second, first]
+        target["communication_capabilities"] = [first, second]
+        reversed_order = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(forward["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(forward["result"], reversed_order["result"])
+
+    def test_p10_ethernet_signal_does_not_prove_aes67(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        result = analyze(request({"protocol_family": "aes67"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "INSUFFICIENT_DATA")
+
+    def test_p11_signal_and_capability_or_evidence(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(protocol_family="cec"))
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INCOMPATIBLE")
+        both = equipment("target", signal=signal(protocol_family="cec"), communication_capabilities=[capability])
+        self.assertEqual(self.protocol(source, both, "rs-232"), "COMPATIBLE")
+
+    def test_p12_configurable_assignment_is_compatible(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(), communication_capabilities=[capability])
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+
+    def test_p13_fixed_assignment(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(), communication_capabilities=[capability])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p14_capability_direction_boundary(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "output", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(), communication_capabilities=[capability])
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+
+    def test_p15_protocol_signal_independence(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), interface=passive_supported())
+        result = analyze(request({"signal_family": "ethernet"}), [source, target])
+        self.assertFalse(result["layers"]["protocol"]["applicable"])
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_p16_protocol_direction_independence(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="output"), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(direction="input"), communication_capabilities=[capability])
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+
+    def test_p17_proprietary_protocol_needs_restrictions_layer(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "dm-nvx", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(), communication_capabilities=[capability])
+        result = analyze(request({"protocol_family": "dm-nvx"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertFalse(result["layers"]["restrictions"]["applicable"])
+
+    def test_p18_hdmi_real(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": nvx["id"], "interface_id": "hdmi-output"},
+                "target": {"equipment_id": hd["id"], "interface_id": "hdmi-in-1"},
+                "requested_function": {"protocol_family": "hdmi"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [nvx, hd],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+
+    def test_p19_aes67_real(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        nvx["catalog_coverage"] = {"communication_protocols": {"complete": True}}
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_p20_usb_exact_version(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "usb-a-1"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "usb-host"},
+                "requested_function": {"protocol_family": "usb-2-0"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+
+    def test_p21_dante_without_catalog_support(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "dante"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+
+    def test_p22_optional_metadata_missing(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INSUFFICIENT_DATA")
+
+    def test_p23_mismatch_plus_unknown_is_insufficient(self):
+        mismatch = {"id": "m", "name": "m", "signal_type": "control", "direction": "bidirectional", "protocol_family": "cec"}
+        unknown = {"id": "u", "name": "u", "signal_type": "control", "direction": "bidirectional"}
+        source = equipment("source", signal=None, interface={"signals": [mismatch, unknown]})
+        target = equipment("target", signal=signal(protocol_family="rs-232"))
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "INSUFFICIENT_DATA")
+
+    def test_p24_final_aggregation_precedence(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["b"]}}
+        source = equipment("source", signal=signal(protocol_family="rs-232"))
+        target = equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface={"id": "b", "label": "b"})
+        target["interfaces"].append({"id": "a", "label": "a", "direction": "bidirectional", "connector": "hdmi-type-a", "connector_gender": "female", "signals": [signal(protocol_family="rs-232")]})
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_p25_other_signal_does_not_defeat_capability(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(protocol_family="cec"), communication_capabilities=[capability])
+        target = equipment("target", signal=signal(protocol_family="rs-232"))
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p26_unavailable_plus_available_is_supported(self):
+        missing = {"id": "missing", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "unavailable", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        present = {"id": "present", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[missing, present])
+        target = equipment("target", signal=signal(), communication_capabilities=[present, missing])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p27_conditional_plus_available_is_supported(self):
+        conditional = {"id": "cond", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        present = {"id": "present", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[conditional, present])
+        target = equipment("target", signal=signal(), communication_capabilities=[present, conditional])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "COMPATIBLE")
+
+    def test_p28_unavailable_plus_conditional_is_conditional(self):
+        missing = {"id": "missing", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "unavailable", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        conditional = {"id": "cond", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(), communication_capabilities=[missing, conditional])
+        target = equipment("target", signal=signal(), communication_capabilities=[conditional, missing])
+        self.assertEqual(self.protocol(source, target, "rs-232"), "CONDITIONALLY_COMPATIBLE")
+
+    def test_p29_mismatch_plus_unknown_is_insufficient(self):
+        mismatch = {"id": "m", "name": "m", "signal_type": "control", "direction": "bidirectional", "protocol_family": "cec"}
+        unknown = {"id": "u", "name": "u", "signal_type": "control", "direction": "bidirectional"}
+        source = equipment("source", signal=None, interface={"signals": [mismatch, unknown]})
+        target = equipment("target", signal=None, interface={"signals": [mismatch, unknown]})
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INSUFFICIENT_DATA")
+
+    def test_p30_all_routes_contradicted_is_incompatible(self):
+        source = equipment("source", signal=signal(protocol_family="cec"))
+        target = equipment("target", signal=signal(protocol_family="usb"))
+        self.assertEqual(self.protocol(source, target, "rs-232"), "INCOMPATIBLE")
+
+    def test_p31_configurable_capability_direction_is_compatible(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="output"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(direction="input"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_p32_configurable_conditional_availability(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="output"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(direction="input"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
 
 
 if __name__ == "__main__":

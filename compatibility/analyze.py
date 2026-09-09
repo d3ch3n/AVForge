@@ -219,28 +219,39 @@ def _protocol_coverage_complete(record: dict[str, Any]) -> bool:
 def _protocol_support(side: dict[str, Any], protocol: str) -> tuple[str, list[str], list[dict[str, Any]]]:
     interface = side["interface"]
     record = side["equipment"]
-    signal_matches = [signal for signal in _signals(interface) if signal.get("protocol_family") == protocol]
-    explicit_other_protocol = any(
+    interface_id = interface.get("id", "")
+    signals = _signals(interface)
+    signal_supports = any(signal.get("protocol_family") == protocol for signal in signals)
+    other_protocol_signal = any(
         signal.get("protocol_family") is not None and signal.get("protocol_family") != protocol
-        for signal in _signals(interface)
+        for signal in signals
     )
-    capabilities, excluded = _communication_capabilities(record, protocol, interface.get("id", ""))
+    unknown_signal_route = any(signal.get("protocol_family") is None for signal in signals)
+    capabilities, excluded = _communication_capabilities(record, protocol, interface_id)
     if excluded and not capabilities:
-        return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly assigned away from interface {interface['id']}."], []
-    evidence = signal_matches + capabilities
-    if not evidence:
-        if explicit_other_protocol:
-            return "INCOMPATIBLE", [f"Interface {interface['id']} explicitly declares a different protocol."] , []
-        if _protocol_coverage_complete(record):
-            return "INCOMPATIBLE", [f"Protocol {protocol} is absent from the complete catalog protocol coverage."] , []
-        return "INSUFFICIENT_DATA", [f"Protocol {protocol} is not declared for interface {interface['id']}."] , []
-    if any(capability.get("availability") == "unavailable" for capability in capabilities):
-        return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly unavailable."] , evidence
-    if any((capability.get("interface_assignment") or {}).get("mode") == "configurable" for capability in capabilities):
-        return "CONDITIONALLY_COMPATIBLE", [f"Protocol {protocol} requires interface assignment/configuration."] , evidence
-    if any(capability.get("availability") == "conditional" for capability in capabilities):
-        return "CONDITIONALLY_COMPATIBLE", [f"Protocol {protocol} has a documented conditional availability."] , evidence
-    return "COMPATIBLE", [], evidence
+        return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly assigned away from interface {interface_id}."], []
+    available = [capability for capability in capabilities if capability.get("availability") in (None, "available")]
+    conditional = [capability for capability in capabilities if capability.get("availability") == "conditional"]
+    unavailable = [capability for capability in capabilities if capability.get("availability") == "unavailable"]
+    unknown_signal_route = any(signal.get("protocol_family") is None for signal in signals)
+    evidence = [signal for signal in signals if signal.get("protocol_family") == protocol] + capabilities
+    if available or (signal_supports and not unavailable and not conditional):
+        return "COMPATIBLE", [], evidence
+    if signal_supports and unavailable:
+        return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly unavailable for interface {interface_id}."], evidence
+    if conditional:
+        return "CONDITIONALLY_COMPATIBLE", [f"Protocol {protocol} has a documented conditional availability."], evidence
+    if signal_supports:
+        return "COMPATIBLE", [], evidence
+    if unavailable or other_protocol_signal:
+        if unknown_signal_route:
+            return "INSUFFICIENT_DATA", [f"Protocol {protocol} is not declared for interface {interface_id}."], evidence
+        if unavailable:
+            return "INCOMPATIBLE", [f"Protocol {protocol} is explicitly unavailable for interface {interface_id}."], evidence
+        return "INCOMPATIBLE", [f"Interface {interface_id} explicitly declares a different protocol."], evidence
+    if _protocol_coverage_complete(record):
+        return "INCOMPATIBLE", [f"Protocol {protocol} is absent from the complete catalog protocol coverage."], []
+    return "INSUFFICIENT_DATA", [f"Protocol {protocol} is not declared for interface {interface_id}."], evidence
 
 
 def _protocol_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -300,19 +311,15 @@ def _side_direction_state(side: dict[str, Any], function: dict[str, Any], side_n
     if protocol:
         capabilities, _ = _communication_capabilities(side["equipment"], protocol, side["interface"].get("id", ""))
         values = {capability.get("direction") for capability in capabilities if capability.get("direction")}
-        configurable = any(
-            (capability.get("interface_assignment") or {}).get("mode") == "configurable"
-            for capability in capabilities
-        )
         if values:
             if required in ("input", "output"):
                 if any(_role_acceptable(value, side_name, required) for value in values):
-                    return True, configurable
+                    return True, False
                 return False, False
             if (side_name == "source" and ("output" in values or "bidirectional" in values)) or (
                 side_name == "target" and ("input" in values or "bidirectional" in values)
             ):
-                return True, configurable
+                return True, False
             return False, False
     direction = side["interface"].get("direction")
     if not direction:

@@ -118,8 +118,10 @@ schema definition. It does not drive direction classification, its absence
 means nothing, and the catalog is read as capability rather than runtime
 configuration. No `CONDITIONALLY_COMPATIBLE` is produced from a configurable
 role or from having several selectable modes; that state remains available
-for a real structured external condition, such as a configurable
-communication-capability assignment.
+for a real structured external condition. A selectable
+communication-capability assignment (`interface_assignment.mode ==
+"configurable") is capability, not a condition: an allowed interface
+reports its direction as compatible.
 
 ## Signal Layer v1
 
@@ -138,6 +140,29 @@ otherwise `INSUFFICIENT_DATA`. Without a requested format, format data is
 ignored. The layer never produces `CONDITIONALLY_COMPATIBLE` and never
 validates direction, protocol, or conversion: role selection stays with the
 direction layer and functional identity with signal selection.
+
+## Protocol Layer v1
+
+The protocol layer answers whether both endpoints support the requested
+`protocol_family`, compared by exact string equality with no aliases,
+hierarchy, or cross-family inference (`aes67`, `ethernet`, `usb`,
+`usb-2-0`, `usb-3-0`, and `usb-3-1` are all distinct). Two canonical
+evidence sources are aggregated as alternatives: `signal.protocol_family`
+and `communication_capabilities[*].protocol_family` honoring
+`interface_assignment.allowed_interface_ids`. Any usable route without a
+condition makes the side supported, even beside unrelated negative routes;
+an explicitly conditional route without an unconditional one makes it
+conditional; otherwise explicit impossibility on every route makes it
+contradicted and incomplete data makes it unknown. In particular,
+`interface_assignment.mode == "configurable"` on an allowed interface is a
+valid selectable capability, never a condition by itself — only
+`availability: "conditional"` (or license/module style requirements)
+produces `CONDITIONALLY_COMPATIBLE`. Assignment away from the analyzed
+interface, `availability: "unavailable"` with no usable alternative, an
+explicitly different protocol with no unknown route, or complete catalog
+coverage without the protocol all prove impossibility. The layer never
+infers protocols from connectors, signal families, or Ethernet, and never
+absorbs manufacturer, model, or restriction constraints.
 
 ## CLI
 

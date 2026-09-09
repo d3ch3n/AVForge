@@ -183,8 +183,10 @@ An interface outside the declared list is incompatible with that capability.
 
 With `mode: "configurable"`, the capability may be assigned to one of the
 declared interfaces according to the documented product behavior. When the
-selected interface is allowed but configuration or assignment is required,
-the layer is `CONDITIONALLY_COMPATIBLE`.
+analyzed interface is allowed, that assignment is a valid selectable
+capability, not a pending condition: the protocol and direction layers
+report it as compatible. A genuine external requirement, such as
+`availability: "conditional"`, is reported separately.
 
 A documented default interface does not imply a fixed assignment. In
 particular, a default Audio/NAX port remains configurable when the catalog
@@ -300,9 +302,23 @@ format, format data is ignored. The signal layer never produces
 `CONDITIONALLY_COMPATIBLE` and never validates direction, protocol, or
 conversion.
 
-`protocol` evaluates the requested protocol family, its declared support, and
-the capability-to-interface assignment. A connector or generic signal family
-does not imply protocol support.
+`protocol` is implemented over the requested `protocol_family` by exact
+equality with no aliases, hierarchy, or cross-family inference. Two
+canonical evidence sources aggregate as alternatives:
+`signal.protocol_family` and `communication_capabilities[*].protocol_family`
+honoring `interface_assignment.allowed_interface_ids`. Any usable route
+without a condition makes the side supported; an explicitly conditional
+route without an unconditional one makes it conditional; otherwise explicit
+impossibility on every route is contradicted and incomplete data is
+unknown. `interface_assignment.mode == "configurable"` on an allowed
+interface is a valid selectable capability, never a condition by itself —
+only `availability: "conditional"` and equivalent structured requirements
+produce `CONDITIONALLY_COMPATIBLE`. Assignment away from the interface,
+`availability: "unavailable"` with no usable alternative, an explicitly
+different protocol with no unknown route, or complete catalog coverage
+without the protocol all prove impossibility. A connector or generic signal
+family does not imply protocol support, and manufacturer, model, or
+restriction constraints stay in the restrictions layer.
 
 `direction` is implemented as a capability check over the functionally
 selected signals. The source role requires `output` or `bidirectional`
@@ -486,7 +502,7 @@ of the physical pair.
 | Requested function | Applicable layers | Expected result |
 |---|---|---|
 | Generic Ethernet | physical, signal, direction | `COMPATIBLE` under an appropriate passive medium |
-| AES67 | physical, signal, protocol, direction | `CONDITIONALLY_COMPATIBLE` for Ethernet 1 when both records allow AES67 and assignment is configurable |
+| AES67 | physical, signal, protocol, direction | `COMPATIBLE` for Ethernet 1 when both records allow AES67 on the analyzed interfaces |
 | Dante | physical, signal, protocol | `INSUFFICIENT_DATA` when the Core declares Dante but the DM-NVX-360C has neither Dante nor an explicit deny |
 | Q-LAN | physical, signal, protocol | `INSUFFICIENT_DATA` when the Core declares Q-LAN but the DM-NVX-360C has neither Q-LAN nor an explicit deny |
 | DM NVX | physical, signal, protocol | `INSUFFICIENT_DATA` when the DM-NVX-360C declares DM NVX but the Core has neither DM NVX nor an explicit deny |
