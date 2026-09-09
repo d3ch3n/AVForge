@@ -164,6 +164,32 @@ coverage without the protocol all prove impossibility. The layer never
 infers protocols from connectors, signal families, or Ethernet, and never
 absorbs manufacturer, model, or restriction constraints.
 
+## Capacity Layer v1
+
+The capacity layer answers whether both endpoints declare sufficient
+catalog ceilings for the requested quantities. It applies only with
+`requested_function.capacity_requirement`; otherwise it is not applicable.
+Quantitative comparison covers only the scalar dimensions `rx_channels`,
+`tx_channels`, `streams`, `sessions`, and `endpoints` (`bandwidth` and
+`other_limits` are out of v1 scope: a requirement on any other dimension
+yields `INSUFFICIENT_DATA`). Sources are `communication_capabilities`
+capacity ceilings and shared `resource_pools` ceilings resolved through
+`resource_pool_id`; when both declare a dimension the effective route
+limit is their minimum. Pools are never added to capabilities, routes are
+never summed, and a broken pool reference leaves the route unknown unless
+the capability ceiling alone already contradicts the request. Relevant
+capabilities are alternative evidence routes evaluated per side and
+bilaterally: any sufficient route makes the side supported, an unknown
+route without sufficiency makes it unknown, and only all-contradicted
+routes make it contradicted. All requested dimensions must hold on the
+same route. Explicit contradiction on either side makes the layer
+`INCOMPATIBLE` even beside unknown data; otherwise unknown data makes it
+`INSUFFICIENT_DATA`. Zero is a known capacity, missing data is not zero,
+and `capability_modifiers`, slot counts, and runtime allocation stay out
+of v1. The layer never produces `CONDITIONALLY_COMPATIBLE` — assignment
+modes carry no quantitative arithmetic — and never validates connector,
+signal, protocol, direction, electrical, or restriction concerns.
+
 ## CLI
 
 ```text

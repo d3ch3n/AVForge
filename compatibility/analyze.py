@@ -608,40 +608,133 @@ def _restriction_layer(source: dict[str, Any], target: dict[str, Any], function:
     return _layer(True, "COMPATIBLE", [])
 
 
-def _capacity_for(side: dict[str, Any], function: dict[str, Any]) -> dict[str, float] | None:
-    protocol = function.get("protocol_family")
-    capabilities = []
-    if protocol:
-        capabilities, _ = _communication_capabilities(side["equipment"], protocol, side["interface"].get("id", ""))
-        if not capabilities:
-            return None
-    else:
-        capabilities = [item for item in side["equipment"].get("communication_capabilities", []) if isinstance(item, dict)]
-    for capability in capabilities:
-        capacity = capability.get("capacity")
-        if isinstance(capacity, dict):
-            return {key: value for key, value in capacity.items() if isinstance(value, (int, float)) and not isinstance(value, bool)}
-        pool_id = capability.get("resource_pool_id")
-        if pool_id:
-            pool = next((item for item in side["equipment"].get("resource_pools", []) if item.get("id") == pool_id), None)
-            if isinstance(pool, dict) and isinstance(pool.get("resources"), dict):
-                return {key: value for key, value in pool["resources"].items() if isinstance(value, (int, float)) and not isinstance(value, bool)}
+SUPPORTED_CAPACITY_DIMENSIONS = ("rx_channels", "tx_channels", "streams", "sessions", "endpoints")
+
+
+def _capacity_number(value: Any) -> float | int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
     return None
+
+
+def _relevant_capacity_capabilities(record: dict[str, Any], interface_id: str, protocol: str | None) -> list[dict[str, Any]]:
+    relevant = []
+    for capability in record.get("communication_capabilities", []):
+        if not isinstance(capability, dict):
+            continue
+        if protocol is not None and capability.get("protocol_family") != protocol:
+            continue
+        allowed = (capability.get("interface_assignment") or {}).get("allowed_interface_ids", [])
+        if interface_id not in allowed:
+            continue
+        relevant.append(capability)
+    return relevant
+
+
+def _resolve_pool_limits(record: dict[str, Any], pool_id: Any) -> tuple[dict[str, float | int] | None, bool]:
+    if pool_id is None:
+        return None, False
+    pool = next(
+        (item for item in record.get("resource_pools", []) if isinstance(item, dict) and item.get("id") == pool_id),
+        None,
+    )
+    if pool is None or not isinstance(pool.get("resources"), dict):
+        return None, True
+    limits: dict[str, float | int] = {}
+    for dimension in SUPPORTED_CAPACITY_DIMENSIONS:
+        value = _capacity_number(pool["resources"].get(dimension))
+        if value is not None:
+            limits[dimension] = value
+    return limits, False
+
+
+def _route_dimension_state(
+    capability_limits: dict[str, float | int],
+    pool_limits: dict[str, float | int] | None,
+    pool_broken: bool,
+    dimension: str,
+    required: float | int,
+) -> str:
+    own = capability_limits.get(dimension)
+    pooled = pool_limits.get(dimension) if pool_limits is not None else None
+    if own is not None and pooled is not None:
+        return "supported" if min(own, pooled) >= required else "contradicted"
+    if own is not None:
+        if own < required:
+            return "contradicted"
+        if pool_broken:
+            return "unknown"
+        return "supported"
+    if pooled is not None:
+        return "supported" if pooled >= required else "contradicted"
+    return "unknown"
+
+
+def _evaluate_capacity_route(
+    record: dict[str, Any],
+    capability: dict[str, Any],
+    dimensions: list[str],
+    requirement: dict[str, Any],
+) -> str:
+    capability_limits: dict[str, float | int] = {}
+    own = capability.get("capacity")
+    if isinstance(own, dict):
+        for dimension in SUPPORTED_CAPACITY_DIMENSIONS:
+            value = _capacity_number(own.get(dimension))
+            if value is not None:
+                capability_limits[dimension] = value
+    pool_limits, pool_broken = _resolve_pool_limits(record, capability.get("resource_pool_id"))
+    contradicted = False
+    unknown = False
+    for dimension in dimensions:
+        state = _route_dimension_state(
+            capability_limits, pool_limits, pool_broken, dimension, requirement[dimension]
+        )
+        if state == "contradicted":
+            contradicted = True
+        elif state == "unknown":
+            unknown = True
+    if contradicted:
+        return "contradicted"
+    if unknown:
+        return "unknown"
+    return "supported"
+
+
+def _side_capacity_state(
+    side: dict[str, Any], dimensions: list[str], requirement: dict[str, Any], protocol: str | None
+) -> str:
+    record = side["equipment"]
+    interface_id = side["interface"].get("id", "")
+    routes = _relevant_capacity_capabilities(record, interface_id, protocol)
+    if not routes:
+        return "unknown"
+    states = [_evaluate_capacity_route(record, capability, dimensions, requirement) for capability in routes]
+    if any(state == "supported" for state in states):
+        return "supported"
+    if any(state == "unknown" for state in states):
+        return "unknown"
+    return "contradicted"
 
 
 def _capacity_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
     requirement = function.get("capacity_requirement")
     if requirement is None:
         return _layer(False)
-    source_capacity = _capacity_for(source, function)
-    target_capacity = _capacity_for(target, function)
-    if source_capacity is None or target_capacity is None:
+    dimensions = [key for key in requirement if key in SUPPORTED_CAPACITY_DIMENSIONS]
+    unsupported = [key for key in requirement if key not in SUPPORTED_CAPACITY_DIMENSIONS]
+    protocol = function.get("protocol_family")
+    source_state = _side_capacity_state(source, dimensions, requirement, protocol) if dimensions else "unknown"
+    target_state = _side_capacity_state(target, dimensions, requirement, protocol) if dimensions else "unknown"
+    if source_state == "contradicted" or target_state == "contradicted":
+        keys = sorted({key for key in dimensions if key in requirement})
+        return _layer(True, "INCOMPATIBLE", [f"Requested {keys} exceeds declared catalog capacity."])
+    if unsupported or source_state == "unknown" or target_state == "unknown":
+        if unsupported:
+            return _layer(True, "INSUFFICIENT_DATA", ["Requested capacity dimension is not supported by Capacity v1."])
         return _layer(True, "INSUFFICIENT_DATA", ["Requested catalog capacity is not declared for both endpoints."])
-    for key, required in requirement.items():
-        if key not in source_capacity or key not in target_capacity:
-            return _layer(True, "INSUFFICIENT_DATA", [f"Catalog capacity does not declare required field: {key}."])
-        if source_capacity[key] < required or target_capacity[key] < required:
-            return _layer(True, "INCOMPATIBLE", [f"Requested {key} exceeds declared catalog capacity."])
     return _layer(True, "COMPATIBLE")
 
 

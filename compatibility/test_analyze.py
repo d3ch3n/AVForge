@@ -2134,5 +2134,374 @@ class RestrictionsLayerV1Tests(unittest.TestCase):
                 self.assertNotIn("connection_constraints", interface)
 
 
+class CapacityLayerV1Tests(unittest.TestCase):
+    def capacity(self, source, target, requirement, function=None, **kwargs):
+        request_function = {"signal_family": "ethernet", "capacity_requirement": requirement}
+        request_function.update(function or {})
+        return analyze(
+            request(request_function, **kwargs),
+            [source, target],
+        )["layers"]["capacity"]
+
+    def capped(self, equipment_id, capacity=None, pool_id=None, pools=None, protocol=None, assignment=None):
+        capability = {"id": "cap", "type": "data", "direction": "bidirectional"}
+        if protocol is not None:
+            capability["protocol_family"] = protocol
+        if capacity is not None:
+            capability["capacity"] = capacity
+        if pool_id is not None:
+            capability["resource_pool_id"] = pool_id
+        capability["interface_assignment"] = assignment or {"mode": "fixed", "allowed_interface_ids": ["a"]}
+        record = equipment(equipment_id, signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[capability])
+        if pools is not None:
+            record["resource_pools"] = pools
+        return record
+
+    def test_c01_no_requirement_not_applicable(self):
+        result = analyze(request({"signal_family": "ethernet"}), [equipment("source"), equipment("target")])
+        self.assertFalse(result["layers"]["capacity"]["applicable"])
+
+    def test_c02_sufficient_exact_capacity(self):
+        source = self.capped("source", capacity={"rx_channels": 4})
+        target = self.capped("target", capacity={"rx_channels": 4})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "COMPATIBLE")
+
+    def test_c03_insufficient_exact_capacity(self):
+        source = self.capped("source", capacity={"rx_channels": 2})
+        target = self.capped("target", capacity={"rx_channels": 2})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INCOMPATIBLE")
+
+    def test_c04_missing_capacity_data(self):
+        self.assertEqual(self.capacity(equipment("source"), equipment("target"), {"rx_channels": 4})["result"], "INSUFFICIENT_DATA")
+
+    def test_c05_zero_capacity(self):
+        source = self.capped("source", capacity={"rx_channels": 0})
+        target = self.capped("target", capacity={"rx_channels": 0})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 1})["result"], "INCOMPATIBLE")
+
+    def test_c06_exact_boundary_equal(self):
+        source = self.capped("source", capacity={"sessions": 2})
+        target = self.capped("target", capacity={"sessions": 2})
+        self.assertEqual(self.capacity(source, target, {"sessions": 2})["result"], "COMPATIBLE")
+
+    def test_c07_sufficient_plus_insufficient_routes(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 2}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        high = {"id": "high", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 8}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[low, high])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "COMPATIBLE")
+
+    def test_c08_insufficient_plus_unknown_routes(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 2}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        bare = {"id": "bare", "type": "data", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[low, bare])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INSUFFICIENT_DATA")
+
+    def test_c09_sufficient_plus_unknown_routes(self):
+        bare = {"id": "bare", "type": "data", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        high = {"id": "high", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 8}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[bare, high])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "COMPATIBLE")
+
+    def test_c10_shared_pool_not_summed(self):
+        pools = [{"id": "pool", "resources": {"rx_channels": 4}}]
+        source = self.capped("source", pool_id="pool", pools=pools)
+        target = self.capped("target", pool_id="pool", pools=pools)
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "INCOMPATIBLE")
+
+    def test_c11_capability_pool_effective_min(self):
+        pools = [{"id": "pool", "resources": {"rx_channels": 8}}]
+        source = self.capped("source", capacity={"rx_channels": 16}, pool_id="pool", pools=pools)
+        target = self.capped("target", capacity={"rx_channels": 16}, pool_id="pool", pools=pools)
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 12})["result"], "INCOMPATIBLE")
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "COMPATIBLE")
+
+    def test_c12_pool_only_capacity(self):
+        pools = [{"id": "pool", "resources": {"streams": 32}}]
+        source = self.capped("source", pool_id="pool", pools=pools)
+        target = self.capped("target", pool_id="pool", pools=pools)
+        self.assertEqual(self.capacity(source, target, {"streams": 20})["result"], "COMPATIBLE")
+
+    def test_c13_capability_only_capacity(self):
+        source = self.capped("source", capacity={"sessions": 2})
+        target = self.capped("target", capacity={"sessions": 2})
+        self.assertEqual(self.capacity(source, target, {"sessions": 2})["result"], "COMPATIBLE")
+        self.assertEqual(self.capacity(source, target, {"sessions": 3})["result"], "INCOMPATIBLE")
+
+    def test_c14_broken_pool_otherwise_sufficient(self):
+        source = self.capped("source", capacity={"rx_channels": 8}, pool_id="missing")
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INSUFFICIENT_DATA")
+
+    def test_c15_broken_pool_explicit_insufficient(self):
+        source = self.capped("source", capacity={"rx_channels": 2}, pool_id="missing")
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INCOMPATIBLE")
+
+    def test_c16_source_target_sufficient(self):
+        source = self.capped("source", capacity={"rx_channels": 8})
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "COMPATIBLE")
+
+    def test_c17_source_insufficient(self):
+        source = self.capped("source", capacity={"rx_channels": 2})
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INCOMPATIBLE")
+
+    def test_c18_target_insufficient(self):
+        source = self.capped("source", capacity={"rx_channels": 8})
+        target = self.capped("target", capacity={"rx_channels": 2})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INCOMPATIBLE")
+
+    def test_c19_source_unknown_target_sufficient(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"))
+        target = self.capped("target", capacity={"rx_channels": 8})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INSUFFICIENT_DATA")
+
+    def test_c20_source_unknown_target_contradicted(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"))
+        target = self.capped("target", capacity={"rx_channels": 2})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "INCOMPATIBLE")
+
+    def test_c21_configurable_no_conditional(self):
+        assignment = {"mode": "configurable", "allowed_interface_ids": ["a"]}
+        source = self.capped("source", capacity={"rx_channels": 8}, assignment=assignment)
+        target = self.capped("target", capacity={"rx_channels": 8}, assignment=assignment)
+        layer = self.capacity(source, target, {"rx_channels": 4})
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        self.assertNotEqual(layer["result"], "CONDITIONALLY_COMPATIBLE")
+
+    def test_c22_simultaneous_no_arithmetic(self):
+        assignment = {"mode": "simultaneous", "allowed_interface_ids": ["a", "b"]}
+        source = self.capped("source", capacity={"rx_channels": 8}, assignment=assignment)
+        target = self.capped("target", capacity={"rx_channels": 8}, assignment=assignment)
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "COMPATIBLE")
+
+    def test_c23_redundant_no_arithmetic(self):
+        assignment = {"mode": "redundant", "allowed_interface_ids": ["a", "b"]}
+        source = self.capped("source", capacity={"rx_channels": 8}, assignment=assignment)
+        target = self.capped("target", capacity={"rx_channels": 8}, assignment=assignment)
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "COMPATIBLE")
+
+    def test_c24_segregated_no_arithmetic(self):
+        assignment = {"mode": "segregated", "allowed_interface_ids": ["a", "b"]}
+        source = self.capped("source", capacity={"rx_channels": 8}, assignment=assignment)
+        target = self.capped("target", capacity={"rx_channels": 8}, assignment=assignment)
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "COMPATIBLE")
+
+    def test_c25_protocol_scoped_discovery(self):
+        source = self.capped("source", capacity={"rx_channels": 8}, protocol="aes67")
+        target = self.capped("target", capacity={"rx_channels": 8}, protocol="aes67")
+        layer = self.capacity(source, target, {"rx_channels": 4}, {"protocol_family": "aes67"})
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_c26_protocol_unrelated_ignored(self):
+        source = self.capped("source", capacity={"rx_channels": 8}, protocol="dante")
+        target = self.capped("target", capacity={"rx_channels": 8}, protocol="dante")
+        layer = self.capacity(source, target, {"rx_channels": 4}, {"protocol_family": "aes67"})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_c27_no_protocol_order_independence(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 2}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        high = {"id": "high", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 8}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[low, high])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        forward = analyze(request({"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 4}}), [source, target])
+        source["communication_capabilities"] = [high, low]
+        reversed_order = analyze(request({"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 4}}), [source, target])
+        self.assertEqual(forward["layers"]["capacity"]["result"], "COMPATIBLE")
+        self.assertEqual(forward["result"], reversed_order["result"])
+
+    def test_c28_no_protocol_insufficient_plus_unknown(self):
+        low = {"id": "low", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 2}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        bare = {"id": "bare", "type": "data", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[low, bare])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        result = analyze(request({"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 4}}), [source, target])
+        self.assertEqual(result["layers"]["capacity"]["result"], "INSUFFICIENT_DATA")
+
+    def test_c29_no_protocol_sufficient_plus_unknown(self):
+        bare = {"id": "bare", "type": "data", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        high = {"id": "high", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 8}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[bare, high])
+        target = self.capped("target", capacity={"rx_channels": 8})
+        result = analyze(request({"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 4}}), [source, target])
+        self.assertEqual(result["layers"]["capacity"]["result"], "COMPATIBLE")
+
+    def test_c30_multidimension_same_route(self):
+        source = self.capped("source", capacity={"rx_channels": 8, "streams": 4})
+        target = self.capped("target", capacity={"rx_channels": 8, "streams": 4})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8, "streams": 4})["result"], "COMPATIBLE")
+
+    def test_c31_dimensions_not_composed_across_routes(self):
+        route_a = {"id": "a", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 8, "streams": 2}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        route_b = {"id": "b", "type": "data", "direction": "bidirectional", "capacity": {"rx_channels": 4, "streams": 4}, "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[route_a, route_b])
+        target = self.capped("target", capacity={"rx_channels": 8, "streams": 4})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8, "streams": 4})["result"], "INCOMPATIBLE")
+
+    def test_c32_unsupported_bandwidth_dimension(self):
+        source = self.capped("source", capacity={"rx_channels": 64})
+        target = self.capped("target", capacity={"rx_channels": 64})
+        layer = self.capacity(source, target, {"bandwidth": 100})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_c33_unsupported_arbitrary_dimension(self):
+        source = self.capped("source", capacity={"rx_channels": 64})
+        target = self.capped("target", capacity={"rx_channels": 64})
+        layer = self.capacity(source, target, {"flows": 4})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_c34_zero_requirement_zero_capacity(self):
+        source = self.capped("source", capacity={"rx_channels": 0})
+        target = self.capped("target", capacity={"rx_channels": 0})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 0})["result"], "COMPATIBLE")
+
+    def test_c35_shared_pool_multiple_capabilities(self):
+        first = {"id": "first", "type": "data", "direction": "bidirectional", "resource_pool_id": "pool", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        second = {"id": "second", "type": "data", "direction": "bidirectional", "resource_pool_id": "pool", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        pools = [{"id": "pool", "resources": {"rx_channels": 4}}]
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), communication_capabilities=[first, second])
+        source["resource_pools"] = pools
+        target = self.capped("target", capacity={"rx_channels": 4})
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 8})["result"], "INCOMPATIBLE")
+        self.assertEqual(self.capacity(source, target, {"rx_channels": 4})["result"], "COMPATIBLE")
+
+    def test_c36_real_dante_effective_eight(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        nvx["catalog_coverage"] = {"communication_protocols": {"complete": True}}
+        eight = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": core["id"], "interface_id": "lan-b"},
+                "requested_function": {"protocol_family": "dante", "capacity_requirement": {"rx_channels": 8}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(eight["layers"]["capacity"]["result"], "COMPATIBLE")
+        nine = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": core["id"], "interface_id": "lan-b"},
+                "requested_function": {"protocol_family": "dante", "capacity_requirement": {"rx_channels": 9}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(nine["layers"]["capacity"]["result"], "INCOMPATIBLE")
+
+    def test_c37_real_aes67_rx2_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67", "capacity_requirement": {"rx_channels": 2}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "COMPATIBLE")
+
+    def test_c38_real_aes67_rx4_incompatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67", "capacity_requirement": {"rx_channels": 4}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+
+    def test_c39_real_aes67_streams40_contradicted(self):
+        # Core pool streams ceiling (32) explicitly contradicts streams=40;
+        # per global precedence an explicit contradiction wins over the
+        # NVX-side unknown (NVX declares no streams dimension).
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67", "capacity_requirement": {"streams": 40}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+
+    def test_c40_hdmd_requirement_insufficient(self):
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        core = load_record("equipment/qsys/core-8-flex.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": hd["id"], "interface_id": "lan"},
+                "target": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "requested_function": {"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 2}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [hd, core],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INSUFFICIENT_DATA")
+
+    def test_c41_dmf_slots_not_capacity(self):
+        chassis = load_record("equipment/crestron/dmf-ci-8.json")
+        core = load_record("equipment/qsys/core-8-flex.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": chassis["id"], "interface_id": "console-serial"},
+                "target": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "requested_function": {"signal_family": "ethernet", "capacity_requirement": {"rx_channels": 2}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [chassis, core],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INSUFFICIENT_DATA")
+
+    def test_c42_modifiers_not_applied(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": core["id"], "interface_id": "lan-b"},
+                "requested_function": {"protocol_family": "dante", "capacity_requirement": {"rx_channels": 16}},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["capacity"]["result"], "INCOMPATIBLE")
+
+
+    def test_c43_contradicted_supported_dimension_plus_unsupported_dimension(self):
+        source = self.capped("source", capacity={"rx_channels": 8})
+        target = self.capped("target", capacity={"rx_channels": 8})
+        layer = self.capacity(source, target, {"rx_channels": 10, "bandwidth": 100})
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_c44_supported_plus_unsupported_dimension_without_contradiction(self):
+        source = self.capped("source", capacity={"rx_channels": 64})
+        target = self.capped("target", capacity={"rx_channels": 64})
+        layer = self.capacity(source, target, {"rx_channels": 2, "bandwidth": 100})
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+
 if __name__ == "__main__":
     unittest.main()

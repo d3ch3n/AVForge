@@ -349,8 +349,21 @@ direction, electrical, or capacity concerns. When no restriction is relevant
 to the requested function, this layer is non-applicable.
 
 `capacity` is applicable only when `requested_function` includes
-`capacity_requirement`. In `CATALOG`, it evaluates declared catalog capacity
-only. Capability existence is not the same as sufficient catalog capacity.
+`capacity_requirement`. In `CATALOG`, it evaluates declared catalog ceilings
+only, over the scalar dimensions `rx_channels`, `tx_channels`, `streams`,
+`sessions`, and `endpoints` (`bandwidth` and `other_limits` are out of v1
+scope and yield `INSUFFICIENT_DATA`). Capability ceilings and shared
+`resource_pools` ceilings resolved through `resource_pool_id` combine per
+route as their minimum and are never summed across routes or pools; a
+broken pool reference leaves the route unknown unless the capability
+ceiling alone already contradicts the request. Relevant capabilities are
+alternative routes per side and bilaterally: any sufficient route makes
+the side supported, explicit contradiction on either side makes the layer
+`INCOMPATIBLE` even beside unknown data, otherwise unknown data makes it
+`INSUFFICIENT_DATA`. Zero is a known capacity, missing data is not zero,
+and `capability_modifiers`, slot counts, and runtime allocation stay out
+of v1. The capacity layer never produces `CONDITIONALLY_COMPATIBLE`.
+Capability existence is not the same as sufficient catalog capacity.
 
 ## 5. Missing Data and Conditions
 
