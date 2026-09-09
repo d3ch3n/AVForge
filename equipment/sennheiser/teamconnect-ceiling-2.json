@@ -1,0 +1,107 @@
+{
+  "id": "sennheiser-teamconnect-ceiling-2",
+  "manufacturer": "Sennheiser",
+  "model": "TeamConnect Ceiling 2",
+  "product_name": "Sennheiser TeamConnect Ceiling 2",
+  "category": "network-ceiling-microphone",
+  "product_family": "TeamConnect",
+  "schema_version": "3.7.0",
+  "status": "draft",
+  "hardware": {
+    "form_factor": "Ceiling-mounted network microphone array",
+    "rack_mountable": false,
+    "dimensions": {
+      "width": { "value": 590, "unit": "millimeter" },
+      "height": { "value": 590, "unit": "millimeter" },
+      "depth": { "value": 43, "unit": "millimeter" }
+    }
+  },
+  "power": {
+    "sources": [
+      {
+        "id": "poe",
+        "method": "PoE",
+        "poe_consumed": { "standard": "IEEE 802.3af", "class": "Class 3" },
+        "notes": "Power over Ethernet via the control network interface; use a switch providing PoE or a PoE injector. Power consumption figures are omitted because official sources conflict (Instruction Manual 03/2026 states Max. 11 W; the official product page states Max. 8.8 W)."
+      }
+    ]
+  },
+  "interfaces": [
+    {
+      "id": "dante-primary",
+      "label": "Dante Primary",
+      "direction": "output",
+      "connector": "rj45-8p8c",
+      "connector_gender": "female",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "dante-primary-audio", "name": "Dante digital audio output", "direction": "output", "signal_type": "audio", "protocol_family": "dante" }
+      ],
+      "notes": "Primary Dante network audio output; redundant output and series connection of multiple ceiling microphones (switched mode) are configured via Dante Domain Manager or Dante Controller."
+    },
+    {
+      "id": "dante-secondary",
+      "label": "Dante Secondary",
+      "direction": "output",
+      "connector": "rj45-8p8c",
+      "connector_gender": "female",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "dante-secondary-audio", "name": "Dante digital audio output", "direction": "output", "signal_type": "audio", "protocol_family": "dante" }
+      ],
+      "notes": "Secondary Dante network audio output; see Dante Primary notes for redundancy and switched-mode behavior."
+    },
+    {
+      "id": "control-poe",
+      "label": "Ethernet PoE Ctrl",
+      "direction": "bidirectional",
+      "connector": "rj45-8p8c",
+      "connector_gender": "female",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "control-network", "name": "Ethernet network and control", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
+      ],
+      "notes": "Carries PoE power supply and data/control, including configuration via Sennheiser Control Cockpit software; use shielded STP network cables."
+    },
+    {
+      "id": "analog-output",
+      "label": "Analog Out",
+      "direction": "output",
+      "connector": "terminal-block-3-pin-3-81mm",
+      "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "analog-output-audio", "name": "Analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }
+      ],
+      "notes": "3-pin analog audio output socket suitable for Phoenix Contact MCVW 1.5-3-ST-3.81; no level, balance, impedance, or phantom data is officially documented, so no electrical profile is modeled."
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "dante-audio-tx",
+      "type": "network_audio",
+      "protocol_family": "dante",
+      "media_type": "audio",
+      "direction": "output",
+      "interface_assignment": { "mode": "redundant", "allowed_interface_ids": ["dante-primary", "dante-secondary"] },
+      "notes": "Transmit-only Dante audio output; the two ports support redundant output and series connection (switched mode) as configured externally."
+    },
+    {
+      "id": "ethernet-control",
+      "type": "management",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["control-poe"] },
+      "notes": "Device configuration and monitoring over the control network interface; no control protocol family is documented at protocol level."
+    }
+  ],
+  "capabilities": [
+    { "id": "microphone-array", "name": "Ceiling microphone array", "value": "28 KE 10-237 capsules with automatic beamforming" },
+    { "id": "dante-audio-output", "name": "Dante network audio output" },
+    { "id": "analog-audio-output", "name": "Analog audio output" },
+    { "id": "poe-powered", "name": "PoE powered device", "value": "IEEE 802.3af Class 3" }
+  ],
+  "documentation": [
+    { "type": "manual", "uri": "https://docs.cloud.sennheiser.com/en-us/tc-ceiling-2/tc-ceiling-2_instruction_manual_03_2026_en.pdf", "title": "TeamConnect Ceiling 2 Instruction Manual 03/2026", "language": "en" },
+    { "type": "product_page", "uri": "https://www.sennheiser.com/en-us/product-families/tcc", "title": "TeamConnect Ceiling Solutions", "language": "en" }
+  ]
+}
