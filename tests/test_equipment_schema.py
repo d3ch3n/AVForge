@@ -34,7 +34,7 @@ def electrical_record(electrical_characteristics):
     return with_electrical(load_record("equipment/qsys/core-8-flex.json"), electrical_characteristics)
 
 
-class EquipmentSchemaV35Tests(unittest.TestCase):
+class EquipmentSchemaV36Tests(unittest.TestCase):
     def assert_valid(self, record):
         self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
 
@@ -209,6 +209,81 @@ class EquipmentSchemaV35Tests(unittest.TestCase):
 
     def test_e32_unknown_electrical_property(self):
         self.assert_invalid(electrical_record({"other": {"value": True}}))
+
+    def test_e33_valid_input_variant_balanced(self):
+        self.assert_valid(electrical_record({"input": {"balance_modes": ["balanced"], "variants": [{"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    def test_e34_valid_output_variant_unbalanced(self):
+        self.assert_valid(electrical_record({"output": {"balance_modes": ["unbalanced"], "variants": [{"conditions": {"balance_mode": "unbalanced"}, "impedance": {"nominal": {"value": 100, "unit": "ohm"}}}]}}))
+
+    def test_e35_valid_variant_with_maximum_level(self):
+        self.assert_valid(electrical_record({"output": {"variants": [{"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    def test_e36_valid_variant_with_impedance_nominal(self):
+        self.assert_valid(electrical_record({"input": {"variants": [{"conditions": {"balance_mode": "balanced"}, "impedance": {"nominal": {"value": 200, "unit": "ohm"}}}]}}))
+
+    def test_e37_valid_impedance_upper_bound_open(self):
+        self.assert_valid(electrical_record({"output": {"impedance": {"upper_bound": {"value": 100, "unit": "ohm", "inclusive": False}}}}))
+
+    def test_e38_valid_impedance_upper_bound_inclusive(self):
+        self.assert_valid(electrical_record({"output": {"impedance": {"upper_bound": {"value": 100, "unit": "ohm", "inclusive": True}}}}))
+
+    def test_e39_invalid_condition_unknown_property(self):
+        self.assert_invalid(electrical_record({"input": {"variants": [{"conditions": {"operating_level_class": "line"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    def test_e40_invalid_balance_mode_enum(self):
+        self.assert_invalid(electrical_record({"input": {"variants": [{"conditions": {"balance_mode": "both"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    # E41 SEMANTIC_VALIDATOR_PENDING: duplicate balance_mode variants are cross-object semantics.
+    # E42 SEMANTIC_VALIDATOR_PENDING: condition membership in profile.balance_modes is cross-object semantics.
+
+    def test_e43_invalid_upper_bound_missing_inclusive(self):
+        self.assert_invalid(electrical_record({"output": {"impedance": {"upper_bound": {"value": 100, "unit": "ohm"}}}}))
+
+    def test_e44_invalid_upper_bound_negative_value(self):
+        self.assert_invalid(electrical_record({"output": {"impedance": {"upper_bound": {"value": -1, "unit": "ohm", "inclusive": False}}}}))
+
+    def test_e45_invalid_unknown_upper_bound_property(self):
+        self.assert_invalid(electrical_record({"output": {"impedance": {"upper_bound": {"value": 100, "unit": "ohm", "inclusive": False, "operator": "<"}}}}))
+
+    def test_e46_invalid_phantom_inside_variant(self):
+        self.assert_invalid(electrical_record({"input": {"variants": [{"conditions": {"balance_mode": "balanced"}, "phantom_power": {"provision": {"supported": True}}}]}}))
+
+    def test_e47_valid_base_property_plus_unrelated_conditional_property(self):
+        self.assert_valid(electrical_record({"output": {"impedance": {"nominal": {"value": 100, "unit": "ohm"}}, "variants": [{"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    # E48 SEMANTIC_VALIDATOR_PENDING: base and conditional values for one property require cross-object semantics.
+
+    def test_e49_valid_existing_schema_35_shaped_record_unchanged(self):
+        self.assert_valid(load_record("equipment/crestron/dm-nvx-360c.json"))
+
+    def test_e50_valid_partial_variant_coverage(self):
+        self.assert_valid(electrical_record({"output": {"balance_modes": ["balanced", "unbalanced"], "variants": [{"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}}]}}))
+
+    def test_e51_invalid_unknown_variant_property(self):
+        self.assert_invalid(electrical_record({"output": {"variants": [{"conditions": {"balance_mode": "balanced"}, "operating_level_classes": ["line"]}]}}))
+
+    def test_e52_valid_core_8_flex_unchanged(self):
+        self.assert_valid(load_record("equipment/qsys/core-8-flex.json"))
+
+    def test_e53_valid_future_dm_nvx_shape(self):
+        self.assert_valid(electrical_record({"output": {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"], "variants": [
+            {"conditions": {"balance_mode": "balanced"}, "impedance": {"nominal": {"value": 200, "unit": "ohm"}}, "maximum_level": {"value": 4, "unit": "volt-rms"}},
+            {"conditions": {"balance_mode": "unbalanced"}, "impedance": {"nominal": {"value": 100, "unit": "ohm"}}, "maximum_level": {"value": 2, "unit": "volt-rms"}}
+        ]}}))
+
+    def test_e54_valid_future_hd_md_shape(self):
+        self.assert_valid(electrical_record({"output": {"balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"], "impedance": {"upper_bound": {"value": 100, "unit": "ohm", "inclusive": False}}, "variants": [
+            {"conditions": {"balance_mode": "balanced"}, "maximum_level": {"value": 4, "unit": "volt-rms"}},
+            {"conditions": {"balance_mode": "unbalanced"}, "maximum_level": {"value": 2, "unit": "volt-rms"}}
+        ]}}))
+
+    def test_e55_all_equipment_records_remain_valid(self):
+        for path in sorted((ROOT / "equipment").glob("**/*.json")):
+            self.assert_valid(json.loads(path.read_text()))
+
+    def test_e56_invalid_variant_with_empty_impedance_payload(self):
+        self.assert_invalid(electrical_record({"output": {"variants": [{"conditions": {"balance_mode": "balanced"}, "impedance": {}}]}}))
 
 
 if __name__ == "__main__":

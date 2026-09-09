@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.5",
+  "title": "AVForge Equipment v3.6",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -173,8 +173,54 @@
     "impedance": {
       "type": "object",
       "properties": {
-        "nominal": { "$ref": "#/$defs/nonNegativeMeasurement" }
+        "nominal": { "$ref": "#/$defs/nonNegativeMeasurement" },
+        "upper_bound": { "$ref": "#/$defs/electricalUpperBound" }
       },
+      "additionalProperties": false
+    },
+    "electricalUpperBound": {
+      "type": "object",
+      "required": ["value", "unit", "inclusive"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": { "$ref": "#/$defs/unitId" },
+        "inclusive": { "type": "boolean" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "electricalConditions": {
+      "type": "object",
+      "required": ["balance_mode"],
+      "properties": {
+        "balance_mode": { "enum": ["balanced", "unbalanced"] }
+      },
+      "additionalProperties": false
+    },
+    "electricalVariantImpedance": {
+      "type": "object",
+      "properties": {
+        "nominal": { "$ref": "#/$defs/nonNegativeMeasurement" },
+        "upper_bound": { "$ref": "#/$defs/electricalUpperBound" }
+      },
+      "anyOf": [
+        { "required": ["nominal"] },
+        { "required": ["upper_bound"] }
+      ],
+      "additionalProperties": false
+    },
+    "electricalVariant": {
+      "type": "object",
+      "required": ["conditions"],
+      "properties": {
+        "conditions": { "$ref": "#/$defs/electricalConditions" },
+        "maximum_level": { "$ref": "#/$defs/measurement" },
+        "impedance": { "$ref": "#/$defs/electricalVariantImpedance" }
+      },
+      "anyOf": [
+        { "required": ["maximum_level"] },
+        { "required": ["impedance"] }
+      ],
       "additionalProperties": false
     },
     "inputPhantomPower": {
@@ -227,7 +273,13 @@
         },
         "maximum_level": { "$ref": "#/$defs/measurement" },
         "impedance": { "$ref": "#/$defs/impedance" },
-        "phantom_power": { "$ref": "#/$defs/inputPhantomPower" }
+        "phantom_power": { "$ref": "#/$defs/inputPhantomPower" },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/electricalVariant" },
+          "uniqueItems": true
+        }
       },
       "additionalProperties": false
     },
@@ -244,7 +296,13 @@
         "maximum_level": { "$ref": "#/$defs/measurement" },
         "impedance": { "$ref": "#/$defs/impedance" },
         "minimum_load_impedance": { "$ref": "#/$defs/nonNegativeMeasurement" },
-        "phantom_power": { "$ref": "#/$defs/outputPhantomPower" }
+        "phantom_power": { "$ref": "#/$defs/outputPhantomPower" },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/electricalVariant" },
+          "uniqueItems": true
+        }
       },
       "additionalProperties": false
     },

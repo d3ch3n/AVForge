@@ -7,7 +7,7 @@
 ## Catalog Coverage
 
 `catalog_coverage` registra uma afirmação de completude de catálogo por domínio.
-Na versão 3.5, o único domínio modelado é
+Na versão 3.6, o único domínio modelado é
 `catalog_coverage.communication_protocols.complete`.
 
 Quando `catalog_coverage` ou `communication_protocols` estão ausentes, ou
@@ -103,6 +103,51 @@ válidos sem `electrical_characteristics`. Campos elétricos legados em
 `output_impedance`, `maximum_level` e `phantom_power`, continuam aceitos
 temporariamente. Records revisados devem migrar somente fatos confirmados,
 com revisão de papel, unidade e fonte; não há migração automática.
+
+### Extensão elétrica do Schema 3.6
+
+O Schema 3.6 mantém a estrutura 3.5 e adiciona `variants` localmente em
+`electrical_characteristics.input` e `electrical_characteristics.output`.
+Uma variant pertence ao perfil elétrico do papel correspondente: `output` é
+resolvido para `SOURCE` e `input` para `TARGET`.
+
+Cada variant possui `conditions` e pelo menos uma propriedade de payload. A
+única condição permitida nesta versão é `conditions.balance_mode`, com valor
+`balanced` ou `unbalanced`. Não há condições para classe de nível, carga,
+estado runtime, operadores booleanos, expressões aninhadas ou chaves livres.
+
+O perfil base contém propriedades incondicionais. A variant não substitui o
+perfil inteiro; ela contém somente propriedades condicionadas. Variants
+parciais são válidas e a ausência de uma variant significa `UNKNOWN` para a
+propriedade naquele modo. Não existe fallback implícito.
+
+Uma única variant por `balance_mode` é permitida semanticamente, mesmo que
+variants duplicadas contenham propriedades diferentes. A condição deve
+corresponder a um valor declarado em `profile.balance_modes`. Essas duas
+regras comparam objetos diferentes e são responsabilidade futura do Semantic
+Validator, não do JSON Schema.
+
+O payload de uma variant é limitado a `maximum_level` e `impedance`. A
+impedância pode declarar `nominal` e `upper_bound`; `nominal` e
+`upper_bound` podem coexistir. `upper_bound` exige `value`, `unit` e
+`inclusive`, e aceita opcionalmente `note`. `inclusive: false` representa
+`<` e `inclusive: true` representa `<=`. `lower_bound`, `range` e operadores
+genéricos não fazem parte desta versão.
+
+`nominal_levels`, `balance_modes`, `operating_level_classes`,
+`minimum_load_impedance` e qualquer forma de phantom power não pertencem ao
+payload de variants. Phantom power permanece modelado somente nos perfis
+base existentes.
+
+A regra de não combinar uma propriedade base com a mesma propriedade em uma
+variant também é semântica. Uma propriedade base e outra propriedade
+condicionada podem coexistir. O Schema garante a forma, mas não tenta
+resolver essas relações cross-object.
+
+`measurement` global permanece inalterado. `impedance` continua sendo
+informacional para compatibilidade; a extensão não cria regras de
+incompatibilidade por impedância nem exige alteração do Compatibility
+Analyzer.
 
 ## Restrições proprietárias
 
@@ -238,7 +283,7 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
 
-`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.5 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.6 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
 
 ## Extensibilidade e evolução
 
@@ -248,7 +293,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.5.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.6.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 
