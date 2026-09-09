@@ -262,6 +262,19 @@ def _validate_references(
         if "resource_pool_id" in capability:
             internal(capability["resource_pool_id"], pool_ids, f"communication_capabilities[{index}].resource_pool_id")
 
+    for index, capability in enumerate(equipment.get("amplifier_output_capabilities", [])):
+        if not isinstance(capability, dict):
+            continue
+        for group_index, group in enumerate(capability.get("member_groups", [])):
+            if not isinstance(group, list):
+                continue
+            for member_index, member_id in enumerate(group):
+                internal(
+                    member_id,
+                    interface_ids,
+                    f"amplifier_output_capabilities[{index}].member_groups[{group_index}][{member_index}]",
+                )
+
     for index, modifier in enumerate(equipment.get("capability_modifiers", [])):
         _external_reference(modifier.get("source_equipment_id"), f"capability_modifiers[{index}].source_equipment_id", equipment_id, equipment_index, issues)
         for affect_index, affect in enumerate(modifier.get("affects", [])):
@@ -487,6 +500,184 @@ def _validate_electrical_variants(
                 )
 
 
+def _validate_amplifier_capabilities(
+    equipment: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    """Validate cross-field consistency for Schema 3.8 amplifier output capabilities."""
+    equipment_id = equipment.get("id", "<missing-id>")
+    capabilities = equipment.get("amplifier_output_capabilities", [])
+    if not isinstance(capabilities, list):
+        return
+
+    interfaces_by_id = {
+        interface.get("id"): interface
+        for interface in equipment.get("interfaces", [])
+        if isinstance(interface, dict) and isinstance(interface.get("id"), str)
+    }
+
+    seen_capability_ids: set[str] = set()
+    for index, capability in enumerate(capabilities):
+        if not isinstance(capability, dict):
+            continue
+        base_path = f"amplifier_output_capabilities[{index}]"
+        capability_id = capability.get("id")
+        if isinstance(capability_id, str):
+            if capability_id in seen_capability_ids:
+                _issue(
+                    issues,
+                    "DUPLICATE_AMPLIFIER_CAPABILITY_ID",
+                    ERROR,
+                    equipment_id,
+                    f"{base_path}.id",
+                    f"Duplicate amplifier output capability ID '{capability_id}'.",
+                    referenced_id=capability_id,
+                )
+            seen_capability_ids.add(capability_id)
+
+        topology = capability.get("topology")
+        member_groups = capability.get("member_groups", [])
+        if isinstance(member_groups, list):
+            for group_index, group in enumerate(member_groups):
+                if not isinstance(group, list):
+                    continue
+                group_path = f"{base_path}.member_groups[{group_index}]"
+                if topology == "independent":
+                    if len(group) != 1:
+                        _issue(
+                            issues,
+                            "AMPLIFIER_ARITY_INDEPENDENT",
+                            ERROR,
+                            equipment_id,
+                            group_path,
+                            f"Amplifier capability '{capability_id}': independent topology requires exactly 1 member per group.",
+                            topology=topology,
+                        )
+                elif topology in ("bridge", "parallel", "bridge_parallel"):
+                    if len(group) < 2:
+                        _issue(
+                            issues,
+                            "AMPLIFIER_ARITY_COMBINED",
+                            ERROR,
+                            equipment_id,
+                            group_path,
+                            f"Amplifier capability '{capability_id}': topology '{topology}' requires at least 2 members per group.",
+                            topology=topology,
+                        )
+                for member_id in group:
+                    interface = interfaces_by_id.get(member_id) if isinstance(member_id, str) else None
+                    if not isinstance(interface, dict):
+                        continue
+                    direction = interface.get("direction")
+                    if isinstance(direction, str) and direction not in ("output", "bidirectional"):
+                        _issue(
+                            issues,
+                            "AMPLIFIER_MEMBER_NOT_OUTPUT",
+                            ERROR,
+                            equipment_id,
+                            group_path,
+                            f"Amplifier capability '{capability_id}': member '{member_id}' is not an output-capable interface.",
+                            referenced_id=member_id if isinstance(member_id, str) else None,
+                        )
+                    signals = interface.get("signals", [])
+                    has_audio = any(
+                        isinstance(signal, dict) and signal.get("signal_type") == "audio"
+                        for signal in signals
+                    ) if isinstance(signals, list) else False
+                    if not has_audio:
+                        _issue(
+                            issues,
+                            "AMPLIFIER_MEMBER_SIGNAL_UNDECLARED",
+                            WARNING,
+                            equipment_id,
+                            group_path,
+                            f"Amplifier capability '{capability_id}': member '{member_id}' declares no audio signal.",
+                            referenced_id=member_id if isinstance(member_id, str) else None,
+                        )
+
+        operating_points = capability.get("operating_points", [])
+        if isinstance(operating_points, list):
+            seen_point_ids: set[str] = set()
+            for point_index, point in enumerate(operating_points):
+                if not isinstance(point, dict):
+                    continue
+                point_path = f"{base_path}.operating_points[{point_index}]"
+                point_id = point.get("id")
+                if isinstance(point_id, str):
+                    if point_id in seen_point_ids:
+                        _issue(
+                            issues,
+                            "DUPLICATE_AMPLIFIER_OPERATING_POINT_ID",
+                            ERROR,
+                            equipment_id,
+                            f"{point_path}.id",
+                            f"Amplifier capability '{capability_id}': duplicate operating point ID '{point_id}' within the capability.",
+                            referenced_id=point_id,
+                        )
+                    seen_point_ids.add(point_id)
+                load = point.get("load")
+                if isinstance(load, dict):
+                    load_type = load.get("type")
+                    if load_type == "low_impedance":
+                        impedance = load.get("impedance")
+                        if isinstance(impedance, dict):
+                            unit = impedance.get("unit")
+                            if isinstance(unit, str) and unit != "ohm":
+                                _issue(
+                                    issues,
+                                    "AMPLIFIER_LOAD_UNIT_INVALID",
+                                    ERROR,
+                                    equipment_id,
+                                    f"{point_path}.load.impedance.unit",
+                                    f"Amplifier capability '{capability_id}': low_impedance load requires unit 'ohm'.",
+                                    referenced_id=unit,
+                                )
+                    elif load_type == "constant_voltage":
+                        voltage = load.get("voltage")
+                        if isinstance(voltage, dict):
+                            unit = voltage.get("unit")
+                            if isinstance(unit, str) and unit != "volt":
+                                _issue(
+                                    issues,
+                                    "AMPLIFIER_LOAD_UNIT_INVALID",
+                                    ERROR,
+                                    equipment_id,
+                                    f"{point_path}.load.voltage.unit",
+                                    f"Amplifier capability '{capability_id}': constant_voltage load requires unit 'volt'.",
+                                    referenced_id=unit,
+                                )
+                ratings = point.get("ratings", [])
+                if isinstance(ratings, list):
+                    for rating_index, rating in enumerate(ratings):
+                        if not isinstance(rating, dict):
+                            continue
+                        rating_path = f"{point_path}.ratings[{rating_index}]"
+                        rating_type = rating.get("type")
+                        if isinstance(rating_type, str) and rating_type not in ("maximum", "continuous"):
+                            _issue(
+                                issues,
+                                "AMPLIFIER_RATING_TYPE_UNKNOWN",
+                                WARNING,
+                                equipment_id,
+                                f"{rating_path}.type",
+                                f"Amplifier capability '{capability_id}': unknown rating type '{rating_type}'.",
+                                referenced_id=rating_type,
+                            )
+                        power = rating.get("power")
+                        if isinstance(power, dict):
+                            unit = power.get("unit")
+                            if isinstance(unit, str) and unit != "watt":
+                                _issue(
+                                    issues,
+                                    "AMPLIFIER_POWER_UNIT_INVALID",
+                                    ERROR,
+                                    equipment_id,
+                                    f"{rating_path}.power.unit",
+                                    f"Amplifier capability '{capability_id}': power rating requires unit 'watt'.",
+                                    referenced_id=unit,
+                                )
+
+
 def validate_records(
     records: list[dict[str, Any]],
     vocab_dir: Path | None = None,
@@ -506,6 +697,7 @@ def validate_records(
         _validate_references(record, ids_by_type, equipment_index, issues)
         _validate_vocabularies(record, vocabularies, issues)
         _validate_electrical_variants(record, issues)
+        _validate_amplifier_capabilities(record, issues)
 
     errors = [issue for issue in issues if issue["severity"] == ERROR]
     warnings = [issue for issue in issues if issue["severity"] == WARNING]

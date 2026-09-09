@@ -374,5 +374,179 @@ class EquipmentSchemaV37Tests(unittest.TestCase):
         self.assert_invalid(record)
 
 
+def low_impedance_load(value=8, unit="ohm"):
+    return {"type": "low_impedance", "impedance": {"value": value, "unit": unit}}
+
+
+def constant_voltage_load(value=70, unit="volt"):
+    return {"type": "constant_voltage", "voltage": {"value": value, "unit": unit}}
+
+
+def power_rating(rating_type="maximum", value=1000, unit="watt"):
+    return {"type": rating_type, "power": {"value": value, "unit": unit}}
+
+
+def operating_point(point_id="op-1", load=None, ratings=None):
+    return {
+        "id": point_id,
+        "load": load if load is not None else low_impedance_load(),
+        "ratings": ratings if ratings is not None else [power_rating()],
+    }
+
+
+def amplifier_capability(cap_id="amp-1", topology="independent", groups=None, points=None, notes=None):
+    capability = {
+        "id": cap_id,
+        "topology": topology,
+        "member_groups": groups if groups is not None else [["output-a"]],
+        "operating_points": points if points is not None else [operating_point()],
+    }
+    if notes is not None:
+        capability["notes"] = notes
+    return capability
+
+
+def amplifier_record(capabilities):
+    value = copy.deepcopy(load_record("equipment/qsys/core-8-flex.json"))
+    value["amplifier_output_capabilities"] = capabilities
+    return value
+
+
+class EquipmentSchemaV38Tests(unittest.TestCase):
+    def assert_valid(self, record):
+        self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
+
+    def assert_invalid(self, record):
+        self.assertTrue(list(VALIDATOR.iter_errors(record)))
+
+    def test_a00_record_without_amplifier_capabilities_is_valid(self):
+        self.assert_valid(load_record("equipment/qsys/core-8-flex.json"))
+
+    def test_a01_valid_independent_low_impedance(self):
+        self.assert_valid(amplifier_record([amplifier_capability(
+            topology="independent",
+            groups=[["output-a"]],
+            points=[operating_point(ratings=[power_rating("maximum", 1000), power_rating("continuous", 300)])],
+        )]))
+
+    def test_a02_valid_bridge_constant_voltage(self):
+        self.assert_valid(amplifier_record([amplifier_capability(
+            cap_id="amp-bridge",
+            topology="bridge",
+            groups=[["output-a", "output-b"]],
+            points=[operating_point("op-140v", constant_voltage_load(140))],
+        )]))
+
+    def test_a03_valid_parallel_with_three_members(self):
+        self.assert_valid(amplifier_record([amplifier_capability(
+            cap_id="amp-parallel",
+            topology="parallel",
+            groups=[["output-a", "output-b", "output-c"]],
+        )]))
+
+    def test_a04_valid_bridge_parallel_with_four_members(self):
+        self.assert_valid(amplifier_record([amplifier_capability(
+            cap_id="amp-bridge-parallel",
+            topology="bridge_parallel",
+            groups=[["output-a", "output-b", "output-c", "output-d"]],
+        )]))
+
+    def test_a05_valid_unknown_rating_type_is_structural(self):
+        self.assert_valid(amplifier_record([amplifier_capability(
+            points=[operating_point(ratings=[power_rating("peak", 1200)])],
+        )]))
+
+    def test_a06_invalid_missing_capability_id(self):
+        capability = amplifier_capability()
+        del capability["id"]
+        self.assert_invalid(amplifier_record([capability]))
+
+    def test_a07_invalid_missing_topology(self):
+        capability = amplifier_capability()
+        del capability["topology"]
+        self.assert_invalid(amplifier_record([capability]))
+
+    def test_a08_invalid_missing_member_groups(self):
+        capability = amplifier_capability()
+        del capability["member_groups"]
+        self.assert_invalid(amplifier_record([capability]))
+
+    def test_a09_invalid_empty_member_groups(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(groups=[])]))
+
+    def test_a10_invalid_empty_member_group(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(groups=[[]])]))
+
+    def test_a11_invalid_unknown_topology(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(topology="fast")]))
+
+    def test_a12_invalid_missing_operating_points(self):
+        capability = amplifier_capability()
+        del capability["operating_points"]
+        self.assert_invalid(amplifier_record([capability]))
+
+    def test_a13_invalid_empty_operating_points(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(points=[])]))
+
+    def test_a14_invalid_low_impedance_without_impedance(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(load={"type": "low_impedance"})],
+        )]))
+
+    def test_a15_invalid_low_impedance_with_voltage(self):
+        load = low_impedance_load()
+        load["voltage"] = {"value": 70, "unit": "volt"}
+        self.assert_invalid(amplifier_record([amplifier_capability(points=[operating_point(load=load)])]))
+
+    def test_a16_invalid_constant_voltage_without_voltage(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(load={"type": "constant_voltage"})],
+        )]))
+
+    def test_a17_invalid_constant_voltage_with_impedance(self):
+        load = constant_voltage_load()
+        load["impedance"] = {"value": 8, "unit": "ohm"}
+        self.assert_invalid(amplifier_record([amplifier_capability(points=[operating_point(load=load)])]))
+
+    def test_a18_invalid_load_with_both_voltage_and_impedance(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(load={"type": "low_impedance", "impedance": {"value": 8, "unit": "ohm"}, "voltage": {"value": 70, "unit": "volt"}})],
+        )]))
+
+    def test_a19_invalid_negative_impedance(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(load=low_impedance_load(value=-8))],
+        )]))
+
+    def test_a20_invalid_negative_voltage(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(load=constant_voltage_load(value=-70))],
+        )]))
+
+    def test_a21_invalid_rating_missing_type(self):
+        rating = power_rating()
+        del rating["type"]
+        self.assert_invalid(amplifier_record([amplifier_capability(points=[operating_point(ratings=[rating])])]))
+
+    def test_a22_invalid_rating_missing_power(self):
+        rating = power_rating()
+        del rating["power"]
+        self.assert_invalid(amplifier_record([amplifier_capability(points=[operating_point(ratings=[rating])])]))
+
+    def test_a23_invalid_negative_power(self):
+        self.assert_invalid(amplifier_record([amplifier_capability(
+            points=[operating_point(ratings=[power_rating(value=-100)])],
+        )]))
+
+    def test_a24_invalid_extra_properties_rejected(self):
+        capability = amplifier_capability(notes="FAST provenance")
+        capability["wiring_class"] = "Class 2"
+        self.assert_invalid(amplifier_record([capability]))
+
+    def test_a25_valid_all_existing_records_remain_valid(self):
+        for path in sorted((ROOT / "equipment").glob("**/*.json")):
+            self.assert_valid(json.loads(path.read_text()))
+
+
 if __name__ == "__main__":
     unittest.main()

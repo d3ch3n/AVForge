@@ -174,6 +174,59 @@ informacional para compatibilidade; a extensão não cria regras de
 incompatibilidade por impedância nem exige alteração do Compatibility
 Analyzer.
 
+### Capacidades de saída de amplificador
+
+O Schema 3.8 adiciona a raiz opcional `amplifier_output_capabilities`,
+uma lista de capacidades de catálogo que descrevem como um ou mais
+interfaces de saída existentes podem operar em conjunto. É uma
+capacidade de catálogo (o que o equipamento suporta), não uma
+configuração de runtime, de projeto ou de instância; a seleção de qual
+modo está ativo em uma unidade implantada pertence a uma futura camada
+de instância e nunca a este registro.
+
+Cada entrada possui `id` opaco, `topology`, `member_groups`,
+`operating_points` e `notes` opcional. Os interfaces físicas de saída
+continuam sendo os endpoints conectáveis; nenhuma interface virtual
+(como uma suposta `output-ab-bridge`) deve ser criada. Os grupos de
+membros referenciam `interfaces[].id` existentes; a mesma matriz de
+pontos de operação aplica-se identicamente a cada grupo listado, sem
+implicar que os grupos operem simultaneamente e sem autorizar grupos
+não listados. Somente grupos explicitamente documentados pelo
+fabricante são registrados; combinações nunca são inferidas por regra.
+
+`topology` é um enum fechado e fabricante-neutro: `independent` (um
+canal opera sozinho), `bridge` (canais em série/BTL, dobrando a tensão
+disponível), `parallel` (canais em paralelo, multiplicando a corrente
+disponível) e `bridge_parallel` (conjuntos em ponte combinados em
+paralelo, aumentando tensão e corrente). Nomes de marketing como FAST
+ou FlexAmp são proveniência em `notes`/documentação, nunca valores de
+topologia. Regras universais de aridade são mínimas e dirigidas pela
+topologia: `independent` exige exatamente 1 membro por grupo;
+`bridge`, `parallel` e `bridge_parallel` exigem ao menos 2. Aridades
+exatas e regras de agrupamento específicas pertencem à curadoria do
+registro, não ao validador universal.
+
+Cada `operating_point` possui `id` opaco (único dentro da capability),
+`load` e `ratings`. `load` usa discriminação estrutural estrita:
+`low_impedance` exige `impedance` em `ohm` (sem `voltage`), e
+`constant_voltage` exige `voltage` em `volt` (sem `impedance`).
+Tensão de distribuição nunca pode ser lida como impedância. Cada
+`ratings[]` possui `type` (string aberta; `maximum` e `continuous`
+são a terminologia de fonte conhecida) e `power` em `watt`. Valores
+`NR` (não recomendado) são omitidos com nota, nunca zerados. Potência
+total compartilhada do equipamento, alocação simultânea de canais e
+semântica de recursos FlexAmp permanecem adiados e fora de `capacity`
+e `resource_pools`; a potência por ponto de operação é capacidade
+documentada, não pool compartilhado.
+
+O Compatibility Analyzer v1 ignora esta estrutura: não analisa seleção
+de topologia, compatibilidade Low-Z vs tensão constante, segurança de
+carga, adequação de potência ou alocação compartilhada. Política
+editorial para fontes oficiais em conflito: omitir o valor conflitante,
+preservar os fatos não conflitantes, explicar em `notes` e registrar
+ambas as fontes em `documentation[]`. Ausente ou omitido significa
+`UNKNOWN`, nunca falso ou zero.
+
 ## Restrições proprietárias
 
 `connection_constraints` possui ID próprio e registra o `protocol_family` requerido, o papel da interface remota, `allowed_targets` e `denied_targets`. Cada alvo pode selecionar equipamento por ID, fabricante, modelo ou família e pode restringir `remote_interface_id` ou `remote_interface_role`. `allowed_targets.exhaustive` informa se a lista permitida é exaustiva.

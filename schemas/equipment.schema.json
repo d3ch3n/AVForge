@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.7",
+  "title": "AVForge Equipment v3.8",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -28,6 +28,11 @@
       "uniqueItems": true
     },
     "capabilities": { "$ref": "#/$defs/capabilities" },
+    "amplifier_output_capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/amplifierOutputCapability" },
+      "uniqueItems": true
+    },
     "communication_capabilities": {
       "type": "array",
       "items": { "$ref": "#/$defs/communicationCapability" },
@@ -326,6 +331,81 @@
       "properties": {
         "input": { "$ref": "#/$defs/electricalInputProfile" },
         "output": { "$ref": "#/$defs/electricalOutputProfile" }
+      },
+      "additionalProperties": false
+    },
+    "amplifierOutputCapability": {
+      "type": "object",
+      "required": ["id", "topology", "member_groups", "operating_points"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "topology": { "enum": ["independent", "bridge", "parallel", "bridge_parallel"] },
+        "member_groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/stableId" },
+            "uniqueItems": true
+          },
+          "uniqueItems": true
+        },
+        "operating_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/amplifierOperatingPoint" },
+          "uniqueItems": true
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "amplifierOperatingPoint": {
+      "type": "object",
+      "required": ["id", "load", "ratings"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "load": { "$ref": "#/$defs/amplifierLoad" },
+        "ratings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/amplifierPowerRating" },
+          "uniqueItems": true
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "amplifierLoad": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "impedance"],
+          "properties": {
+            "type": { "const": "low_impedance" },
+            "impedance": { "$ref": "#/$defs/nonNegativeMeasurement" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "voltage"],
+          "properties": {
+            "type": { "const": "constant_voltage" },
+            "voltage": { "$ref": "#/$defs/nonNegativeMeasurement" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "amplifierPowerRating": {
+      "type": "object",
+      "required": ["type", "power"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "power": { "$ref": "#/$defs/nonNegativeMeasurement" },
+        "note": { "type": "string" }
       },
       "additionalProperties": false
     },
