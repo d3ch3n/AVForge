@@ -5,7 +5,7 @@
   "product_name": "Crestron DM-NVX-360C",
   "category": "av-over-ip-encoder-decoder-card",
   "product_family": "DM-NVX-C",
-  "schema_version": "3.4.0",
+  "schema_version": "3.5.0",
   "status": "draft",
   "interfaces": [
     {
@@ -107,6 +107,17 @@
       "signals": [
         { "id": "analog-audio-io", "name": "Balanced/unbalanced stereo line-level audio", "direction": "bidirectional", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "configurable_role": "input or output, not both", "channels": 2, "input_impedance": { "value": 24000, "unit": "ohm" }, "output_impedance": { "value": 200, "unit": "ohm" }, "maximum_level": { "value": 4, "unit": "volt-rms" }, "adc_dac": "24-bit 48 kHz" } }
       ],
+      "electrical_characteristics": {
+        "input": {
+          "balance_modes": ["balanced", "unbalanced"],
+          "operating_level_classes": ["line"],
+          "impedance": { "nominal": { "value": 24000, "unit": "ohm" } }
+        },
+        "output": {
+          "balance_modes": ["balanced", "unbalanced"],
+          "operating_level_classes": ["line"]
+        }
+      },
       "notes": "The connector is a shared stereo audio I/O interface; no pinout is modeled."
     }
   ],
