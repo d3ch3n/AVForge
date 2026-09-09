@@ -197,7 +197,25 @@
           }
         }
       ],
-      "electrical_characteristics": { "output": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"] } }
+      "electrical_characteristics": {
+        "output": {
+          "balance_modes": ["balanced", "unbalanced"],
+          "operating_level_classes": ["line"],
+          "impedance": {
+            "upper_bound": { "value": 100, "unit": "ohm", "inclusive": false }
+          },
+          "variants": [
+            {
+              "conditions": { "balance_mode": "balanced" },
+              "maximum_level": { "value": 4, "unit": "volt-rms" }
+            },
+            {
+              "conditions": { "balance_mode": "unbalanced" },
+              "maximum_level": { "value": 2, "unit": "volt-rms" }
+            }
+          ]
+        }
+      }
     },
     {
       "id": "audio-out-aux-2",
@@ -220,7 +238,25 @@
           }
         }
       ],
-      "electrical_characteristics": { "output": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["line"] } }
+      "electrical_characteristics": {
+        "output": {
+          "balance_modes": ["balanced", "unbalanced"],
+          "operating_level_classes": ["line"],
+          "impedance": {
+            "upper_bound": { "value": 100, "unit": "ohm", "inclusive": false }
+          },
+          "variants": [
+            {
+              "conditions": { "balance_mode": "balanced" },
+              "maximum_level": { "value": 4, "unit": "volt-rms" }
+            },
+            {
+              "conditions": { "balance_mode": "unbalanced" },
+              "maximum_level": { "value": 2, "unit": "volt-rms" }
+            }
+          ]
+        }
+      }
     },
     {
       "id": "lan",
