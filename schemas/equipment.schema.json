@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.6",
+  "title": "AVForge Equipment v3.7",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -135,6 +135,21 @@
           "items": { "$ref": "#/$defs/stableId" },
           "uniqueItems": true
         }
+      },
+      "additionalProperties": false
+    },
+    "passiveInterconnection": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["supported", "unsupported"] }
+      },
+      "additionalProperties": false
+    },
+    "physicalConnectionCapabilities": {
+      "type": "object",
+      "properties": {
+        "passive_interconnection": { "$ref": "#/$defs/passiveInterconnection" }
       },
       "additionalProperties": false
     },
@@ -492,6 +507,7 @@
         "connector": { "type": "string", "minLength": 1 },
         "connector_gender": { "enum": ["male", "female", "receptacle", "none", "not_applicable", "unknown"] },
         "physical_connection": { "$ref": "#/$defs/physicalConnection" },
+        "physical_connection_capabilities": { "$ref": "#/$defs/physicalConnectionCapabilities" },
         "signals": {
           "type": "array",
           "items": { "$ref": "#/$defs/signalCapability" },

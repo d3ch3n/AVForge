@@ -7,7 +7,7 @@
 ## Catalog Coverage
 
 `catalog_coverage` registra uma afirmação de completude de catálogo por domínio.
-Na versão 3.6, o único domínio modelado é
+Na versão 3.7, o único domínio modelado é
 `catalog_coverage.communication_protocols.complete`.
 
 Quando `catalog_coverage` ou `communication_protocols` estão ausentes, ou
@@ -57,6 +57,31 @@ Exemplo simples: uma interface `lan-a` pode usar `connector: "RJ45"` sem detalha
 Uma interface continua possuindo `connector` e uma lista independente de `signals`. Essa separação é necessária porque o mesmo conector pode transportar tecnologias incompatíveis. Uma interface RJ45, por exemplo, pode representar LAN, HDBaseT ou um protocolo proprietário.
 
 `signal_type` é uma categoria ampla, como `audio`, `video`, `network`, `control` ou `data`. `signal_family` identifica uma família técnica, como `analog-audio`, `AES3`, `Ethernet` ou `HDBaseT`; `signal_format` descreve um formato quando aplicável; `protocol_family` identifica o protocolo ou ecossistema específico. `connector` não deve receber valores de sinal ou protocolo.
+
+### Physical Connection Model v1
+
+O Schema 3.7 adiciona `interface.physical_connection_capabilities` como a
+localização canônica das capabilities físicas da interface. O primeiro campo
+é `passive_interconnection.status`:
+
+- `supported` significa que a interface pode participar de uma interligação
+  passiva funcional que preserva a função do endpoint, sujeita às demais
+  camadas de compatibilidade.
+- `unsupported` significa que há evidência explícita de que a interface não
+  suporta essa forma de interligação.
+- A ausência de `physical_connection_capabilities` ou de
+  `passive_interconnection` significa `UNKNOWN`; não existe default para
+  `unsupported`.
+
+Essa capability não declara mating direto, igualdade de connectors, pinout,
+contact mapping, channel mapping, polaridade, shield, referência, cabo
+específico ou compatibilidade completa de signal, direction, electrical ou
+protocol. `DIRECT` continua dependendo da identidade e das regras de mating
+do connector. A capability é destinada à futura análise de
+`APPROPRIATE_MEDIUM`; o Analyzer atual ainda não a consome.
+
+Interligações ativas, como conversores, transformers, DSPs e bridges, estão
+fora do Physical Connection Model v1.
 
 Características físicas e elétricas da porta pertencem a `electrical_characteristics` da interface. Características do sinal, formato ou variante pertencem a `signal_characteristics` e aos campos da capability. O schema mantém esses objetos extensíveis, mas não define ainda um vocabulário completo para impedância, nível, largura de banda ou resolução.
 
@@ -283,7 +308,7 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
 
-`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.6 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.7 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
 
 ## Extensibilidade e evolução
 
@@ -293,7 +318,7 @@ As estruturas de comunicação e modularidade são universais: não distinguem D
 
 ## Versionamento e validação
 
-`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.6.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
+`schema_version` é a versão SemVer da estrutura do documento, por exemplo `3.7.0`. `revision` é a revisão do cadastro de um equipamento específico e pode mudar sem alterar a estrutura do schema. JSON Schema valida tipos, presença e formatos locais, mas não garante integridade referencial, unicidade global ou local de IDs, coerência entre protocol families, existência de interfaces atribuídas, existência de physical connectors ou connection points referenciados, compatibilidade entre interfaces, compatibilidade entre `slot.accepts.module_types` e `module.compatible_slot_types`, capacidade total de pools, consistência de unidades ou existência dos IDs no Vocabulary externo. Um semantic validator futuro será necessário para essas regras.
 
 Informações do fabricante ficam nos campos oficiais do equipamento. Conhecimento produzido pela empresa fica exclusivamente em `internal_knowledge`, evitando misturar fontes e níveis de autoridade.
 

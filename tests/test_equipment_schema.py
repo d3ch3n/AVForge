@@ -34,7 +34,7 @@ def electrical_record(electrical_characteristics):
     return with_electrical(load_record("equipment/qsys/core-8-flex.json"), electrical_characteristics)
 
 
-class EquipmentSchemaV36Tests(unittest.TestCase):
+class EquipmentSchemaV37Tests(unittest.TestCase):
     def assert_valid(self, record):
         self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
 
@@ -284,6 +284,94 @@ class EquipmentSchemaV36Tests(unittest.TestCase):
 
     def test_e56_invalid_variant_with_empty_impedance_payload(self):
         self.assert_invalid(electrical_record({"output": {"variants": [{"conditions": {"balance_mode": "balanced"}, "impedance": {}}]}}))
+
+    def test_p01_interface_without_physical_connection_capabilities(self):
+        self.assert_valid(load_record("equipment/qsys/core-8-flex.json"))
+
+    def test_p02_empty_physical_connection_capabilities_is_valid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {}
+        self.assert_valid(record)
+
+    def test_p03_passive_interconnection_supported(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": "supported"}
+        }
+        self.assert_valid(record)
+
+    def test_p04_passive_interconnection_unsupported(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": "unsupported"}
+        }
+        self.assert_valid(record)
+
+    def test_p05_status_boolean_true_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": True}
+        }
+        self.assert_invalid(record)
+
+    def test_p06_status_boolean_false_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": False}
+        }
+        self.assert_invalid(record)
+
+    def test_p07_status_unknown_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": "unknown"}
+        }
+        self.assert_invalid(record)
+
+    def test_p08_status_compatible_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {"status": "compatible"}
+        }
+        self.assert_invalid(record)
+
+    def test_p09_passive_interconnection_boolean_true_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": True
+        }
+        self.assert_invalid(record)
+
+    def test_p10_passive_interconnection_boolean_false_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": False
+        }
+        self.assert_invalid(record)
+
+    def test_p11_empty_passive_interconnection_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {}
+        }
+        self.assert_invalid(record)
+
+    def test_p12_unknown_passive_interconnection_field_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "passive_interconnection": {
+                "status": "supported",
+                "notes": "not supported in Schema 3.7"
+            }
+        }
+        self.assert_invalid(record)
+
+    def test_p13_unknown_physical_connection_capabilities_field_invalid(self):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["interfaces"][0]["physical_connection_capabilities"] = {
+            "direct_mating": {"status": "supported"}
+        }
+        self.assert_invalid(record)
 
 
 if __name__ == "__main__":
