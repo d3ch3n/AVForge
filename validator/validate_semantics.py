@@ -380,6 +380,113 @@ def _validate_vocabularies(
     walk(equipment)
 
 
+def _validate_electrical_variants(
+    equipment: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    """Validate cross-field consistency for Schema 3.6 electrical variants."""
+    equipment_id = equipment.get("id", "<missing-id>")
+
+    for interface_index, interface in enumerate(equipment.get("interfaces", [])):
+        electrical = interface.get("electrical_characteristics")
+        if not isinstance(electrical, dict):
+            continue
+        interface_id = interface.get("id", f"interfaces[{interface_index}]")
+
+        for profile_name in ("input", "output"):
+            profile = electrical.get(profile_name)
+            if not isinstance(profile, dict) or "variants" not in profile:
+                continue
+            variants = profile.get("variants")
+            profile_path = f"interfaces[{interface_index}].electrical_characteristics.{profile_name}"
+            variant_path = f"{profile_path}.variants"
+            if not isinstance(variants, list):
+                continue
+
+            balance_modes = profile.get("balance_modes")
+            if not isinstance(balance_modes, list):
+                _issue(
+                    issues,
+                    "ELECTRICAL_VARIANT_MODE_DOMAIN_MISSING",
+                    ERROR,
+                    equipment_id,
+                    variant_path,
+                    f"Interface {interface_id} {profile_name}: variants require declared profile.balance_modes.",
+                    profile=profile_name,
+                )
+                continue
+
+            variant_modes: list[str] = []
+            undeclared_modes: set[str] = set()
+            variant_properties: set[str] = set()
+            for variant in variants:
+                if not isinstance(variant, dict):
+                    continue
+                conditions = variant.get("conditions")
+                if not isinstance(conditions, dict):
+                    continue
+                mode = conditions.get("balance_mode")
+                if isinstance(mode, str):
+                    variant_modes.append(mode)
+                    if mode not in balance_modes:
+                        undeclared_modes.add(mode)
+                if "maximum_level" in variant:
+                    variant_properties.add("maximum_level")
+                impedance = variant.get("impedance")
+                if isinstance(impedance, dict):
+                    if "nominal" in impedance:
+                        variant_properties.add("impedance.nominal")
+                    if "upper_bound" in impedance:
+                        variant_properties.add("impedance.upper_bound")
+
+            for mode in sorted(undeclared_modes):
+                _issue(
+                    issues,
+                    "ELECTRICAL_VARIANT_MODE_UNDECLARED",
+                    ERROR,
+                    equipment_id,
+                    f"{variant_path}.conditions.balance_mode",
+                    f"Interface {interface_id} {profile_name}: variant balance_mode '{mode}' is not declared in profile.balance_modes.",
+                    profile=profile_name,
+                    balance_mode=mode,
+                )
+
+            for mode in sorted(set(variant_modes)):
+                if variant_modes.count(mode) > 1:
+                    _issue(
+                        issues,
+                        "DUPLICATE_ELECTRICAL_VARIANT_MODE",
+                        ERROR,
+                        equipment_id,
+                        variant_path,
+                        f"Interface {interface_id} {profile_name}: duplicate electrical variant for balance_mode '{mode}'.",
+                        profile=profile_name,
+                        balance_mode=mode,
+                    )
+
+            base_properties: set[str] = set()
+            if "maximum_level" in profile:
+                base_properties.add("maximum_level")
+            impedance = profile.get("impedance")
+            if isinstance(impedance, dict):
+                if "nominal" in impedance:
+                    base_properties.add("impedance.nominal")
+                if "upper_bound" in impedance:
+                    base_properties.add("impedance.upper_bound")
+
+            for property_name in sorted(base_properties & variant_properties):
+                _issue(
+                    issues,
+                    "BASE_AND_CONDITIONAL_ELECTRICAL_PROPERTY",
+                    ERROR,
+                    equipment_id,
+                    profile_path,
+                    f"Interface {interface_id} {profile_name}: property '{property_name}' exists both as base and conditional value.",
+                    profile=profile_name,
+                    property=property_name,
+                )
+
+
 def validate_records(
     records: list[dict[str, Any]],
     vocab_dir: Path | None = None,
@@ -398,6 +505,7 @@ def validate_records(
         ids_by_type = _validate_ids(record, issues)
         _validate_references(record, ids_by_type, equipment_index, issues)
         _validate_vocabularies(record, vocabularies, issues)
+        _validate_electrical_variants(record, issues)
 
     errors = [issue for issue in issues if issue["severity"] == ERROR]
     warnings = [issue for issue in issues if issue["severity"] == WARNING]
