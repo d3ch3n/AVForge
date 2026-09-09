@@ -1,0 +1,187 @@
+{
+  "id": "crestron-dm-nvx-e30",
+  "manufacturer": "Crestron",
+  "model": "DM-NVX-E30",
+  "product_name": "Crestron DM-NVX-E30",
+  "category": "av-over-ip-encoder",
+  "product_family": "DM-NVX",
+  "schema_version": "3.7.0",
+  "status": "draft",
+  "hardware": {
+    "form_factor": "Compact surface-mountable AV-over-IP encoder",
+    "rack_mountable": true
+  },
+  "power": {
+    "sources": [
+      {
+        "id": "poe-plus",
+        "method": "PoE",
+        "poe_consumed": { "standard": "IEEE 802.3at Type 2", "class": "Class 4" },
+        "notes": "The Ethernet port is a PoE+ powered-device port; it must be connected to a PoE+ PSE port of an Ethernet switch."
+      },
+      {
+        "id": "dc-input",
+        "method": "DC",
+        "connector": "dc-barrel-2-1-5-5mm",
+        "voltage": { "value": 24, "unit": "volt" },
+        "notes": "Alternative 24 VDC input via 2.1 x 5.5 mm barrel connector. The official connector specification labels this input 24VDC 1.25A and the PW-2412WU power pack (sold separately) is rated 1.25 A output; no separate E30 load-current requirement is stated, so no current value is modeled here."
+      }
+    ]
+  },
+  "interfaces": [
+    {
+      "id": "hdmi-input",
+      "label": "HDMI INPUT",
+      "direction": "input",
+      "connector": "hdmi-type-a",
+      "connector_gender": "female",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "hdmi-input-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3" } }
+      ]
+    },
+    {
+      "id": "ethernet",
+      "label": "Ethernet",
+      "direction": "bidirectional",
+      "connector": "rj45-8p8c",
+      "connector_gender": "female",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "ethernet-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
+      ]
+    },
+    {
+      "id": "audio-out",
+      "label": "AUDIO",
+      "direction": "output",
+      "connector": "terminal-block-5-pin-3-5mm",
+      "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
+      "signals": [
+        { "id": "audio-out-analog", "name": "Balanced/unbalanced stereo line-level audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio", "signal_characteristics": { "channels": 2, "balance_modes": ["balanced", "unbalanced"] } }
+      ],
+      "electrical_characteristics": {
+        "output": {
+          "balance_modes": ["balanced", "unbalanced"],
+          "operating_level_classes": ["line"],
+          "variants": [
+            {
+              "conditions": { "balance_mode": "balanced" },
+              "impedance": { "nominal": { "value": 200, "unit": "ohm" } },
+              "maximum_level": { "value": 4, "unit": "volt-rms" }
+            },
+            {
+              "conditions": { "balance_mode": "unbalanced" },
+              "impedance": { "nominal": { "value": 100, "unit": "ohm" } },
+              "maximum_level": { "value": 2, "unit": "volt-rms" }
+            }
+          ]
+        }
+      },
+      "notes": "Stereo line-level output functional only when the encoder receives a 2-channel stereo input signal; output volume adjustable -80 to +20 dB."
+    },
+    {
+      "id": "console-usb",
+      "label": "CONSOLE, USB",
+      "direction": "bidirectional",
+      "connector": "usb-micro-b",
+      "connector_gender": "female",
+      "signals": [
+        { "id": "console-usb-setup", "name": "USB computer console for setup", "direction": "bidirectional", "signal_type": "control", "protocol_family": "usb" }
+      ],
+      "notes": "Service port for setup; not modeled as a general USB AV endpoint."
+    },
+    {
+      "id": "ir-1-2",
+      "label": "IR 1-2",
+      "direction": "output",
+      "connector": "terminal-block-4-pin-3-5mm",
+      "connector_gender": "receptacle",
+      "notes": "Two IR/Serial device-control output ports on a shared 4-pin terminal block (infrared output up to 1.1 MHz; 1-way serial TTL/RS-232 0-5V up to 19200 baud). No signal is modeled because no canonical signal family exists for infrared control; omitting it keeps the interface from producing signal compatibility it cannot prove."
+    },
+    {
+      "id": "com-rs232",
+      "label": "COM",
+      "direction": "bidirectional",
+      "connector": "terminal-block-5-pin-3-5mm",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "com-rs232-control", "name": "Bidirectional RS-232 device control", "direction": "bidirectional", "signal_type": "control", "signal_family": "serial-control", "protocol_family": "rs-232", "signal_characteristics": { "baud_max": 115200 } }
+      ]
+    },
+    {
+      "id": "dc-input",
+      "label": "24VDC",
+      "direction": "input",
+      "connector": "dc-barrel-2-1-5-5mm",
+      "connector_gender": "receptacle",
+      "signals": [
+        { "id": "dc-power-input", "name": "24 VDC power input", "direction": "input", "signal_type": "power", "signal_family": "dc-power", "signal_characteristics": { "voltage": { "value": 24, "unit": "volt" } } }
+      ]
+    },
+    {
+      "id": "chassis-ground",
+      "label": "G",
+      "direction": "input",
+      "connector": "screw-6-32",
+      "connector_gender": "none",
+      "signals": [
+        { "id": "protective-ground", "name": "Chassis ground", "direction": "input", "signal_type": "power", "signal_family": "protective-ground" }
+      ]
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "dm-nvx-network-video-tx",
+      "type": "network_video",
+      "protocol_family": "dm-nvx",
+      "media_type": "video",
+      "direction": "output",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet"] },
+      "notes": "The E30 functions as a transmitter only; the single Ethernet port carries the DM NVX AV stream."
+    },
+    {
+      "id": "ethernet-management",
+      "type": "management",
+      "protocol_family": "ethernet",
+      "media_type": "network",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet"] },
+      "notes": "Web browser setup and control plus documented enterprise network protocols over the single Ethernet port."
+    },
+    {
+      "id": "aes67-audio",
+      "type": "network_audio",
+      "protocol_family": "aes67",
+      "media_type": "audio",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["ethernet"] },
+      "notes": "Official features documentation states AES67 transmit and receive capability; channel capacity is not stated for this model and is omitted."
+    },
+    {
+      "id": "cec-control",
+      "type": "control",
+      "protocol_family": "cec",
+      "media_type": "control",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "fixed", "allowed_interface_ids": ["hdmi-input"] },
+      "notes": "CEC over the HDMI input provides source device control under a control system; the single HDMI port makes this a fixed assignment."
+    }
+  ],
+  "capabilities": [
+    { "id": "encoder", "name": "AV-over-IP encoder (transmitter only)" },
+    { "id": "video-capability", "name": "4K60 4:4:4 HDR video support", "value": { "maximum_resolution": "4096x2160 at 60 Hz", "color_sampling": "4:4:4", "hdr": ["HDR10", "HDR10+", "Dolby Vision"] } },
+    { "id": "hdcp", "name": "HDCP compliance", "value": "2.3" },
+    { "id": "hdmi-audio-de-embedding", "name": "HDMI audio de-embedding", "value": "Stereo line-level analog output" },
+    { "id": "hdmi-audio-transport", "name": "7.1 surround sound audio transport" },
+    { "id": "test-pattern", "name": "Test pattern generator" },
+    { "id": "poe-power", "name": "PoE+ powered device", "value": "IEEE 802.3at Type 2 Class 4" }
+  ],
+  "documentation": [
+    { "type": "product_page", "uri": "https://www.crestron.com/Products/Catalog/AV-Over-IP/DM-NVX-AV-Over-IP/Video-Endpoint/DM-NVX-E30", "title": "DM-NVX-E30", "language": "en" },
+    { "type": "datasheet", "uri": "https://docs.crestron.com/en-us/9496/Content/Topics/Specifications/Specifications-E30.htm", "title": "DM-NVX-E30 Specifications", "language": "en" },
+    { "type": "manual", "uri": "https://docs.crestron.com/en-us/9496/Content/Topics/Overview/Features-E30.htm", "title": "DM-NVX-E30 DM NVX AV-over-IP Manual", "language": "en" },
+    { "type": "other", "uri": "https://www.crestron.com/getmedia/8c1b3ab8-7fa6-4a76-a70f-7da7da2eda35/mg_qs_dm-nvx-30", "title": "Quick Start: DM-NVX-E30 and DM-NVX-D30", "language": "en" }
+  ]
+}
