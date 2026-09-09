@@ -1227,5 +1227,367 @@ class DirectionLayerV1Tests(unittest.TestCase):
         self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
 
 
+class SignalLayerV1Tests(unittest.TestCase):
+    def check_signal(self, source_signals, target_signals, function, assumption="APPROPRIATE_MEDIUM"):
+        source = equipment("source", signal=None, interface={"signals": source_signals})
+        target = equipment("target", signal=None, interface={"signals": target_signals})
+        result = analyze(request(function, assumption=assumption), [source, target])
+        return result["layers"]["signal"]["result"], result["result"]
+
+    def audio_signal(self, signal_type="audio", signal_family="analog-audio", direction="bidirectional", signal_format=None):
+        value = {"id": "signal", "name": "signal", "signal_type": signal_type, "direction": direction}
+        if signal_family is not None:
+            value["signal_family"] = signal_family
+        if signal_format is not None:
+            value["signal_format"] = signal_format
+        return value
+
+    def test_s01_matching_type_is_compatible(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_family=None)],
+            [self.audio_signal(signal_family=None)],
+            {"signal_type": "audio"},
+        )
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s02_mismatched_type_is_incompatible(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_type="audio", signal_family=None)],
+            [self.audio_signal(signal_type="video", signal_family=None)],
+            {"signal_type": "audio"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s03_matching_family_is_compatible(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal()],
+            {"signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s04_mismatched_family_is_incompatible(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_family="analog-audio")],
+            [self.audio_signal(signal_family="hdmi")],
+            {"signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s05_type_and_family_both_match(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal()],
+            {"signal_type": "audio", "signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s06_type_match_family_mismatch(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal(signal_type="audio", signal_family="hdmi")],
+            {"signal_type": "audio", "signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s07_family_match_type_mismatch(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal(signal_type="video", signal_family="analog-audio")],
+            {"signal_type": "audio", "signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s08_type_requested_without_usable_data(self):
+        source = equipment("source", signal=None, interface={"signals": []})
+        target = equipment("target", signal=None, interface={"signals": []})
+        result = analyze(request({"signal_type": "audio"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+
+    def test_s09_family_requested_family_absent_is_insufficient(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_family=None)],
+            [self.audio_signal()],
+            {"signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "INSUFFICIENT_DATA")
+
+    def test_s10_core_style_input_output_same_family(self):
+        source_signals = [
+            self.audio_signal(direction="input"),
+            self.audio_signal(direction="output"),
+        ]
+        target_signals = [self.audio_signal(direction="bidirectional")]
+        layer, _ = self.check_signal(source_signals, target_signals, {"signal_family": "analog-audio"})
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s11_capability_exists_without_functional_identity(self):
+        first = self.audio_signal(direction="output")
+        first["id"] = "first"
+        second = self.audio_signal(direction="output")
+        second["id"] = "second"
+        source = equipment("source", signal=None, interface={"signals": [first, second]})
+        target = equipment("target", signal=self.audio_signal(direction="input"))
+        result = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+
+    def test_s12_no_array_order_selection(self):
+        first = self.audio_signal(signal_type="video", signal_family="hdmi", direction="output")
+        first["id"] = "first"
+        second = self.audio_signal(direction="output")
+        second["id"] = "second"
+        source = equipment("source", signal=None, interface={"signals": [first, second]})
+        target = equipment("target", signal=self.audio_signal(direction="input"))
+        forward = analyze(request({"signal_type": "audio", "signal_family": "analog-audio"}), [source, target])
+        source["interfaces"][0]["signals"] = [second, first]
+        reversed_order = analyze(request({"signal_type": "audio", "signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(forward["layers"]["signal"]["result"], "COMPATIBLE")
+        self.assertEqual(forward["result"], reversed_order["result"])
+
+    def test_s13_requested_format_supported(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_format="X")],
+            [self.audio_signal(signal_format="X")],
+            {"signal_type": "audio", "signal_family": "analog-audio", "signal_format": "X"},
+        )
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s14_requested_format_explicitly_unsupported(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal(signal_format="X")],
+            [self.audio_signal(signal_format="Y")],
+            {"signal_type": "audio", "signal_family": "analog-audio", "signal_format": "X"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s15_requested_format_missing_is_insufficient(self):
+        layer, _ = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal()],
+            {"signal_type": "audio", "signal_family": "analog-audio", "signal_format": "X"},
+        )
+        self.assertEqual(layer, "INSUFFICIENT_DATA")
+
+    def test_s22_format_mixed_evidence_stays_unknown(self):
+        known_other = self.audio_signal(signal_type="video", signal_family="hdmi", signal_format="Y")
+        unknown_format = self.audio_signal(signal_type="video", signal_family="hdmi")
+        layer, _ = self.check_signal(
+            [unknown_format, known_other],
+            [self.audio_signal(signal_type="video", signal_family="hdmi", signal_format="X")],
+            {"signal_type": "video", "signal_family": "hdmi", "signal_format": "X"},
+        )
+        self.assertEqual(layer, "INSUFFICIENT_DATA")
+
+    def test_s16_no_requested_format_ignores_missing_format(self):
+        layer, final = self.check_signal(
+            [self.audio_signal()],
+            [self.audio_signal()],
+            {"signal_type": "audio", "signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "COMPATIBLE")
+
+    def test_s16b_conjunctive_constraints_share_one_signal(self):
+        mixed_a = self.audio_signal(signal_type="audio", signal_family="hdmi")
+        mixed_b = self.audio_signal(signal_type="video", signal_family="analog-audio")
+        layer, _ = self.check_signal(
+            [mixed_a, mixed_b],
+            [self.audio_signal()],
+            {"signal_type": "audio", "signal_family": "analog-audio"},
+        )
+        self.assertEqual(layer, "INCOMPATIBLE")
+
+    def test_s17_four_real_analog_cases(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        for source_record, source_interface, target_record, target_interface in [
+            (core, "flex-1", nvx, "audio-io"),
+            (nvx, "audio-io", core, "flex-1"),
+            (hd, "audio-out-aux-1", nvx, "audio-io"),
+            (hd, "audio-out-aux-1", core, "flex-1"),
+        ]:
+            with self.subTest(source=source_interface, target=target_interface):
+                result = analyze(
+                    {
+                        "source": {"equipment_id": source_record["id"], "interface_id": source_interface},
+                        "target": {"equipment_id": target_record["id"], "interface_id": target_interface},
+                        "requested_function": {"signal_family": "analog-audio"},
+                        "analysis_scope": "CATALOG",
+                        "interconnect_assumption": "APPROPRIATE_MEDIUM",
+                    },
+                    [core, nvx, hd],
+                )
+                self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+                self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_s18_hdmi_proves_only_requested_type_family(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": nvx["id"], "interface_id": "hdmi-output"},
+                "target": {"equipment_id": hd["id"], "interface_id": "hdmi-in-1"},
+                "requested_function": {"signal_family": "hdmi"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [nvx, hd],
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+
+    def test_s19_ethernet_signal_without_protocol_proof(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"signal_family": "ethernet"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+        protocol_only = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "aes67"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertFalse(protocol_only["layers"]["signal"]["applicable"])
+
+    def test_s20_usb_data_without_family(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "usb-a-1"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "usb-host"},
+                "requested_function": {"signal_type": "data"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+
+    def test_s21_ethernet_signal_does_not_prove_protocol(self):
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
+        result = analyze(request({"protocol_family": "aes67"}), [source, target])
+        self.assertFalse(result["layers"]["signal"]["applicable"])
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_s22_signal_compatible_direction_incompatible(self):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="video", signal_family="hdmi", direction="output"),
+            interface=passive_supported(),
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="video", signal_family="hdmi", direction="output"),
+            interface=passive_supported(),
+        )
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+
+class SignalOpenWorldIntegrationTests(unittest.TestCase):
+    def run_case(self, source_signals, target_signals, function):
+        source = equipment("source", signal=None, interface={"signals": source_signals})
+        target = equipment("target", signal=None, interface={"signals": target_signals})
+        return analyze(request(function), [source, target])
+
+    def open_audio(self, family="analog-audio", direction="output", signal_format=None):
+        value = {"id": "s", "name": "s", "signal_type": "audio", "direction": direction}
+        if family is not None:
+            value["signal_family"] = family
+        if signal_format is not None:
+            value["signal_format"] = signal_format
+        return value
+
+    def open_video(self, family="hdmi", direction="output", signal_format=None):
+        value = {"id": "s", "name": "s", "signal_type": "video", "direction": direction}
+        if family is not None:
+            value["signal_family"] = family
+        if signal_format is not None:
+            value["signal_format"] = signal_format
+        return value
+
+    def test_a_source_family_missing_stays_insufficient(self):
+        result = self.run_case(
+            [self.open_audio(family=None, direction="output")],
+            [self.open_audio(direction="input")],
+            {"signal_family": "analog-audio"},
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertNotEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_b_target_family_missing_stays_insufficient(self):
+        result = self.run_case(
+            [self.open_audio(direction="output")],
+            [self.open_audio(family=None, direction="input")],
+            {"signal_family": "analog-audio"},
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertNotEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_c_source_format_missing_stays_insufficient(self):
+        function = {"signal_type": "video", "signal_family": "hdmi", "signal_format": "X"}
+        result = self.run_case(
+            [self.open_video(direction="output")],
+            [self.open_video(direction="input", signal_format="X")],
+            function,
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertNotEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_d_target_format_missing_stays_insufficient(self):
+        function = {"signal_type": "video", "signal_family": "hdmi", "signal_format": "X"}
+        result = self.run_case(
+            [self.open_video(direction="output", signal_format="X")],
+            [self.open_video(direction="input")],
+            function,
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertNotEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_e_mixed_unknown_and_mismatch_with_direction(self):
+        unknown_format = self.open_video(direction="output")
+        known_other = self.open_video(direction="output", signal_format="Y")
+        known_other["id"] = "other"
+        function = {"signal_type": "video", "signal_family": "hdmi", "signal_format": "X"}
+        result = self.run_case(
+            [unknown_format, known_other],
+            [self.open_video(direction="input", signal_format="X")],
+            function,
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INSUFFICIENT_DATA")
+        self.assertNotEqual(result["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+    def test_f_explicit_format_contradiction_controls(self):
+        function = {"signal_type": "video", "signal_family": "hdmi", "signal_format": "X"}
+        result = self.run_case(
+            [self.open_video(direction="output", signal_format="Y")],
+            [self.open_video(direction="input", signal_format="X")],
+            function,
+        )
+        self.assertEqual(result["layers"]["signal"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -286,8 +286,19 @@ Phantom compatibility is not automatically decided. Analog electrical data
 are not required for a network protocol analysis unless the requested
 function explicitly requires them.
 
-`signal` evaluates signal type, family, format, channels, and related signal
-characteristics.
+`signal` is implemented over the requested `signal_type`, `signal_family`,
+and `signal_format` by exact equality with no hierarchy, alias, or
+cross-field inference. Requested constraints are conjunctive on the same
+candidate signal. Each constraint is satisfied, explicitly contradicted, or
+unknown per signal; a requested optional field (`signal_family`,
+`signal_format`) against an absent signal field is unknown, never a
+mismatch. A side is supported with one fully satisfying signal,
+contradicted when every declared signal provably fails, and unknown
+otherwise. Both sides supported is `COMPATIBLE`, either side contradicted
+is `INCOMPATIBLE`, otherwise `INSUFFICIENT_DATA`. Without a requested
+format, format data is ignored. The signal layer never produces
+`CONDITIONALLY_COMPATIBLE` and never validates direction, protocol, or
+conversion.
 
 `protocol` evaluates the requested protocol family, its declared support, and
 the capability-to-interface assignment. A connector or generic signal family

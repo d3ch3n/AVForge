@@ -121,6 +121,24 @@ role or from having several selectable modes; that state remains available
 for a real structured external condition, such as a configurable
 communication-capability assignment.
 
+## Signal Layer v1
+
+The signal layer answers whether both endpoints demonstrate capability for
+the requested `signal_type`, `signal_family`, and `signal_format`, compared
+by exact string equality with no hierarchy, alias, or cross-field inference.
+Declared request constraints are conjunctive and must hold on the same
+candidate signal. Each requested constraint evaluates per signal as
+satisfied, explicitly contradicted, or unknown: a requested field against an
+absent optional signal field (`signal_family`, `signal_format`) is unknown,
+never a mismatch. A side is supported when one signal satisfies every
+requested constraint, contradicted when every declared signal provably
+fails at least one, and unknown otherwise. Both sides supported yields
+`COMPATIBLE`; explicit contradiction on either side yields `INCOMPATIBLE`;
+otherwise `INSUFFICIENT_DATA`. Without a requested format, format data is
+ignored. The layer never produces `CONDITIONALLY_COMPATIBLE` and never
+validates direction, protocol, or conversion: role selection stays with the
+direction layer and functional identity with signal selection.
+
 ## CLI
 
 ```text

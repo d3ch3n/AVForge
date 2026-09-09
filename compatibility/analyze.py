@@ -134,6 +134,39 @@ def _matching_signals(interface: dict[str, Any], function: dict[str, Any]) -> li
     return [signal for signal in _signals(interface) if _matches_requirements(signal, function)]
 
 
+def _signal_constraint_state(signal_value: Any, required: Any) -> str | None:
+    if required is None:
+        return None
+    if signal_value is None:
+        return "unknown"
+    if signal_value == required:
+        return "satisfied"
+    return "contradicted"
+
+
+def _side_signal_evidence(interface: dict[str, Any], function: dict[str, Any]) -> str:
+    signals = _signals(interface)
+    if not signals:
+        return "unknown"
+    requested = [field for field in ("signal_type", "signal_family", "signal_format") if function.get(field) is not None]
+    if not requested:
+        return "unknown"
+    supported = False
+    all_contradicted = True
+    for item in signals:
+        states = [_signal_constraint_state(item.get(field), function.get(field)) for field in requested]
+        if all(state == "satisfied" for state in states):
+            supported = True
+            break
+        if not any(state == "contradicted" for state in states):
+            all_contradicted = False
+    if supported:
+        return "supported"
+    if all_contradicted:
+        return "contradicted"
+    return "unknown"
+
+
 def _selected_signal(side: dict[str, Any], function: dict[str, Any], side_name: str) -> dict[str, Any] | None:
     candidates = _matching_signals(side["interface"], function)
     required_direction = "output" if side_name == "source" else "input"
@@ -151,13 +184,11 @@ def _signal_layer(source: dict[str, Any], target: dict[str, Any], function: dict
     applicable = any(function.get(field) is not None for field in ("signal_type", "signal_family", "signal_format"))
     if not applicable:
         return _layer(False)
-    source_matches = _matching_signals(source["interface"], function)
-    target_matches = _matching_signals(target["interface"], function)
-    if source_matches and target_matches:
+    source_evidence = _side_signal_evidence(source["interface"], function)
+    target_evidence = _side_signal_evidence(target["interface"], function)
+    if source_evidence == "supported" and target_evidence == "supported":
         return _layer(True, "COMPATIBLE")
-    source_has_data = bool(_signals(source["interface"]))
-    target_has_data = bool(_signals(target["interface"]))
-    if source_has_data and target_has_data:
+    if source_evidence == "contradicted" or target_evidence == "contradicted":
         return _layer(True, "INCOMPATIBLE", ["Requested signal requirements are contradicted by one or both interfaces."])
     return _layer(True, "INSUFFICIENT_DATA", ["Required signal data is not declared for both interfaces."])
 
