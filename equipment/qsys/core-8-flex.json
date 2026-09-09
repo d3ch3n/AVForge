@@ -232,6 +232,7 @@
       "direction": "bidirectional",
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "lan-a-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "megabit-per-second" } } }
       ],
@@ -243,6 +244,7 @@
       "direction": "bidirectional",
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "lan-b-ethernet", "name": "Gigabit Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet", "signal_characteristics": { "speed": { "value": 1000, "unit": "megabit-per-second" } } }
       ],
@@ -254,6 +256,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-c-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-1", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "host or device" } }
       ],
@@ -265,6 +268,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-b",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-b-av", "name": "USB AV bridging", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "signal_characteristics": { "audio_channels": "8 x 8", "camera_support": true, "role": "dedicated device" } }
       ]
@@ -275,6 +279,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-a-1-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
@@ -285,6 +290,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-a-2-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
@@ -295,6 +301,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-a-3-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]
@@ -305,6 +312,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-a-4-host", "name": "External USB host device", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-3-0", "accepted_variants": ["USB headset", "USB speakerphone"], "signal_characteristics": { "one_device_at_a_time": true } }
       ]

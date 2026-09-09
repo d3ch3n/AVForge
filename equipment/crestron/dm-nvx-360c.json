@@ -14,6 +14,7 @@
       "direction": "input",
       "connector": "hdmi-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "hdmi-input-av", "name": "HDMI digital video/audio input", "direction": "input", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3" } }
       ]
@@ -24,6 +25,7 @@
       "direction": "output",
       "connector": "hdmi-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "hdmi-output-av", "name": "HDMI digital video/audio output", "direction": "output", "signal_type": "video", "signal_family": "hdmi", "protocol_family": "hdmi", "signal_characteristics": { "maximum_resolution": "4096x2160@60Hz", "color_sampling": "4:4:4", "hdcp": "2.3", "scaler": true } }
       ]
@@ -34,6 +36,7 @@
       "direction": "bidirectional",
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "ethernet-1-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
@@ -44,6 +47,7 @@
       "direction": "bidirectional",
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "ethernet-2-network", "name": "100BASE-TX/1000BASE-T Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
@@ -54,6 +58,7 @@
       "direction": "bidirectional",
       "connector": "rj45-8p8c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "ethernet-3-network", "name": "100BASE-TX Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }
       ]
@@ -74,6 +79,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-c",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-device-extension", "name": "USB device signal extension", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-2-0" }
       ]
@@ -84,6 +90,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-host-extension", "name": "USB host signal extension", "direction": "bidirectional", "signal_type": "data", "protocol_family": "usb-2-0" }
       ]
@@ -94,6 +101,7 @@
       "direction": "bidirectional",
       "connector": "usb-type-a",
       "connector_gender": "receptacle",
+      "physical_connection_capabilities": { "passive_interconnection": { "status": "supported" } },
       "signals": [
         { "id": "usb-hid-control", "name": "USB HID signal extension", "direction": "bidirectional", "signal_type": "control", "protocol_family": "usb-2-0" }
       ]
