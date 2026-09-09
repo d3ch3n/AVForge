@@ -56,6 +56,14 @@ def request(function, assumption="APPROPRIATE_MEDIUM", source_id="source", targe
     }
 
 
+def passive_supported():
+    return {"physical_connection_capabilities": {"passive_interconnection": {"status": "supported"}}}
+
+
+def passive_unsupported():
+    return {"physical_connection_capabilities": {"passive_interconnection": {"status": "unsupported"}}}
+
+
 class CompatibilityAnalyzerTests(unittest.TestCase):
     def analyze(self, function, source=None, target=None, **kwargs):
         source = source or equipment("source", signal=signal())
@@ -63,7 +71,9 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         return analyze(request(function, **kwargs), [source, target])
 
     def test_ac01_explicit_compatible_signal(self):
-        result = self.analyze({"signal_family": "hdmi"})
+        source = equipment("source", signal=signal(), interface=passive_supported())
+        target = equipment("target", signal=signal(), interface=passive_supported())
+        result = self.analyze({"signal_family": "hdmi"}, source=source, target=target)
         self.assertEqual(result["result"], "COMPATIBLE")
 
     def test_ac02_explicit_incompatible_signal(self):
@@ -280,7 +290,9 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["layers"]["physical"]["result"], "INCOMPATIBLE")
 
     def test_physical_appropriate_medium_female_pair_is_compatible(self):
-        result = self.analyze({"signal_family": "hdmi"}, assumption="APPROPRIATE_MEDIUM")
+        source = equipment("source", signal=signal(), interface=passive_supported())
+        target = equipment("target", signal=signal(), interface=passive_supported())
+        result = self.analyze({"signal_family": "hdmi"}, source=source, target=target, assumption="APPROPRIATE_MEDIUM")
         self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
 
     def test_physical_different_connectors_do_not_assume_converter(self):
@@ -337,8 +349,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
 
     def test_ac44_coverage_does_not_apply_without_protocol_request(self):
-        source = equipment("source", signal=signal(), catalog_coverage={"communication_protocols": {"complete": True}})
-        target = equipment("target", signal=signal(), catalog_coverage={"communication_protocols": {"complete": True}})
+        source = equipment("source", signal=signal(), catalog_coverage={"communication_protocols": {"complete": True}}, interface=passive_supported())
+        target = equipment("target", signal=signal(), catalog_coverage={"communication_protocols": {"complete": True}}, interface=passive_supported())
         result = self.analyze({"signal_family": "hdmi"}, source=source, target=target)
         self.assertFalse(result["layers"]["protocol"]["applicable"])
         self.assertEqual(result["result"], "COMPATIBLE")
@@ -369,21 +381,21 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_ac48_present_protocol_configurable_allowed(self):
         capability = {"id": "cap", "type": "data", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
-        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability]), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])]
+        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported()), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())]
         self.assertEqual(analyze(request({"protocol_family": "rs-232"}), records)["result"], "CONDITIONALLY_COMPATIBLE")
 
     def test_ac49_complete_coverage_precedes_other_compatible_layers(self):
         coverage = {"communication_protocols": {"complete": True}}
-        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
-        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
         result = self.analyze({"protocol_family": "dante"}, source=source, target=target)
         self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
         self.assertEqual(result["result"], "INCOMPATIBLE")
 
     def test_ac50_incomplete_coverage_keeps_unknown_result(self):
         coverage = {"communication_protocols": {"complete": False}}
-        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
-        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
         result = self.analyze({"protocol_family": "dante"}, source=source, target=target)
         self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
@@ -426,8 +438,8 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_ac56_generic_ethernet_request_ignores_protocol_coverage(self):
         coverage = {"communication_protocols": {"complete": True}}
-        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
-        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage)
+        source = equipment("source", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
+        target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c", catalog_coverage=coverage, interface=passive_supported())
         result = self.analyze({"signal_family": "ethernet"}, source=source, target=target)
         self.assertEqual(result["result"], "COMPATIBLE")
 
@@ -497,7 +509,7 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_ac31_configurable_capability_allowed_on_interface(self):
         capability = {"id": "rs232-cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
-        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability]), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])]
+        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported()), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())]
         result = analyze(request({"protocol_family": "rs-232"}), records)
         self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
 
@@ -516,7 +528,7 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
 
     def test_ac34_conditional_protocol_availability(self):
         capability = {"id": "rs232-cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
-        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability]), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability])]
+        records = [equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported()), equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())]
         self.assertEqual(analyze(request({"protocol_family": "rs-232"}), records)["result"], "CONDITIONALLY_COMPATIBLE")
 
     def test_ac35_global_capability_excludes_requested_endpoint(self):
@@ -531,6 +543,120 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         target = equipment("target", signal=signal(signal_type="network", signal_family="ethernet"), connector="rj45-8p8c")
         result = self.analyze({"protocol_family": "aes67"}, source=source, target=target)
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
+
+
+class PhysicalConnectionModelV1Tests(unittest.TestCase):
+    def physical(self, source, target, assumption="APPROPRIATE_MEDIUM"):
+        result = analyze(
+            {
+                "source": {"equipment_id": "source", "interface_id": "a"},
+                "target": {"equipment_id": "target", "interface_id": "a"},
+                "requested_function": {"signal_family": "hdmi"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": assumption,
+            },
+            [source, target],
+        )
+        return result["layers"]["physical"]["result"]
+
+    def test_p01_supported_supported_same_connector_is_compatible(self):
+        source = equipment("source", signal=signal(), connector="hdmi-type-a", interface=passive_supported())
+        target = equipment("target", signal=signal(), connector="hdmi-type-a", interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "COMPATIBLE")
+
+    def test_p02_supported_supported_different_connectors_is_compatible(self):
+        source = equipment("source", signal=signal(), connector="hdmi-type-a", interface=passive_supported())
+        target = equipment("target", signal=signal(), connector="usb-type-c", interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "COMPATIBLE")
+
+    def test_p03_supported_unknown_is_insufficient(self):
+        source = equipment("source", signal=signal(), interface=passive_supported())
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.physical(source, target), "INSUFFICIENT_DATA")
+
+    def test_p04_unknown_supported_is_insufficient(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal(), interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "INSUFFICIENT_DATA")
+
+    def test_p05_unknown_unknown_is_insufficient(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.physical(source, target), "INSUFFICIENT_DATA")
+
+    def test_p06_unsupported_supported_is_incompatible(self):
+        source = equipment("source", signal=signal(), interface=passive_unsupported())
+        target = equipment("target", signal=signal(), interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "INCOMPATIBLE")
+
+    def test_p07_supported_unsupported_is_incompatible(self):
+        source = equipment("source", signal=signal(), interface=passive_supported())
+        target = equipment("target", signal=signal(), interface=passive_unsupported())
+        self.assertEqual(self.physical(source, target), "INCOMPATIBLE")
+
+    def test_p08_unsupported_unknown_is_incompatible(self):
+        source = equipment("source", signal=signal(), interface=passive_unsupported())
+        target = equipment("target", signal=signal())
+        self.assertEqual(self.physical(source, target), "INCOMPATIBLE")
+
+    def test_p09_unknown_unsupported_is_incompatible(self):
+        source = equipment("source", signal=signal())
+        target = equipment("target", signal=signal(), interface=passive_unsupported())
+        self.assertEqual(self.physical(source, target), "INCOMPATIBLE")
+
+    def test_p10_direct_ignores_passive_capability(self):
+        source = equipment("source", signal=signal(), connector="hdmi-type-a", gender="female", interface=passive_supported())
+        target = equipment("target", signal=signal(), connector="hdmi-type-a", gender="female", interface=passive_supported())
+        self.assertEqual(self.physical(source, target, assumption="DIRECT"), "INCOMPATIBLE")
+        unknown_source = equipment("source", signal=signal(), connector="hdmi-type-a", gender="male")
+        unknown_target = equipment("target", signal=signal(), connector="hdmi-type-a", gender="female")
+        self.assertEqual(self.physical(unknown_source, unknown_target, assumption="DIRECT"), "COMPATIBLE")
+
+    def test_p11_appropriate_medium_does_not_require_connector_equality(self):
+        source = equipment("source", signal=signal(), connector="hdmi-type-a", interface=passive_supported())
+        target = equipment("target", signal=signal(), connector="rj45-8p8c", interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "COMPATIBLE")
+
+    def test_p12_legacy_known_connector_without_capability_is_insufficient(self):
+        source = equipment("source", signal=signal(), connector="hdmi-type-a")
+        target = equipment("target", signal=signal(), connector="hdmi-type-a")
+        self.assertEqual(self.physical(source, target), "INSUFFICIENT_DATA")
+
+    def test_p13_different_terminal_blocks_supported_supported_is_compatible(self):
+        source = equipment("source", signal=signal(), connector="pluggable-terminal-block", interface=passive_supported())
+        target = equipment("target", signal=signal(), connector="terminal-block-5-pin-3-5mm", interface=passive_supported())
+        self.assertEqual(self.physical(source, target), "COMPATIBLE")
+
+    def test_p14_physical_compatible_signal_incompatible_stays_incompatible(self):
+        source = equipment("source", signal=signal(signal_family="hdmi"), interface=passive_supported())
+        target = equipment("target", signal=signal(signal_family="analog-audio"), interface=passive_supported())
+        result = analyze(
+            {
+                "source": {"equipment_id": "source", "interface_id": "a"},
+                "target": {"equipment_id": "target", "interface_id": "a"},
+                "requested_function": {"signal_family": "hdmi"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [source, target],
+        )
+        self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_p15_service_console_without_capability_is_insufficient(self):
+        chassis = load_record("equipment/crestron/dmf-ci-8.json")
+        module = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": chassis["id"], "interface_id": "console-serial"},
+                "target": {"equipment_id": module["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"signal_family": "ethernet"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [chassis, module],
+        )
+        self.assertEqual(result["layers"]["physical"]["result"], "INSUFFICIENT_DATA")
 
 
 if __name__ == "__main__":

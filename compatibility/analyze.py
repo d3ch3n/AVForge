@@ -27,13 +27,6 @@ LAYER_NAMES = (
 )
 SCOPES = {"CATALOG"}
 INTERCONNECT_ASSUMPTIONS = {"DIRECT", "APPROPRIATE_MEDIUM"}
-KNOWN_PASSIVE_CONNECTORS = {
-    "hdmi-type-a",
-    "rj45-8p8c",
-    "usb-type-a",
-    "usb-type-b",
-    "usb-type-c",
-}
 
 
 class AnalysisInputError(ValueError):
@@ -277,17 +270,42 @@ def _direction_layer(source: dict[str, Any], target: dict[str, Any], function: d
     return _layer(True, "COMPATIBLE")
 
 
+def _passive_interconnection_status(interface: dict[str, Any]) -> str | None:
+    capabilities = interface.get("physical_connection_capabilities")
+    if not isinstance(capabilities, dict):
+        return None
+    passive = capabilities.get("passive_interconnection")
+    if not isinstance(passive, dict):
+        return None
+    status = passive.get("status")
+    if status in ("supported", "unsupported"):
+        return status
+    return None
+
+
 def _physical_layer(source: dict[str, Any], target: dict[str, Any], assumption: str) -> dict[str, Any]:
     source_interface = source["interface"]
     target_interface = target["interface"]
+    if assumption == "APPROPRIATE_MEDIUM":
+        source_status = _passive_interconnection_status(source_interface)
+        target_status = _passive_interconnection_status(target_interface)
+        if source_status == "unsupported" and target_status == "unsupported":
+            return _layer(True, "INCOMPATIBLE", ["Both interfaces declare passive interconnection as unsupported."])
+        if source_status == "unsupported":
+            return _layer(True, "INCOMPATIBLE", ["Source interface declares passive interconnection as unsupported."])
+        if target_status == "unsupported":
+            return _layer(True, "INCOMPATIBLE", ["Target interface declares passive interconnection as unsupported."])
+        if source_status == "supported" and target_status == "supported":
+            return _layer(True, "COMPATIBLE", ["Both interfaces declare passive interconnection as supported."])
+        if source_status is None and target_status is None:
+            return _layer(True, "INSUFFICIENT_DATA", ["Passive interconnection capability is not declared for both interfaces."])
+        if source_status is None:
+            return _layer(True, "INSUFFICIENT_DATA", ["Passive interconnection capability is not declared for the source interface."])
+        return _layer(True, "INSUFFICIENT_DATA", ["Passive interconnection capability is not declared for the target interface."])
     source_connector = source_interface.get("connector")
     target_connector = target_interface.get("connector")
     if not isinstance(source_connector, str) or not isinstance(target_connector, str):
         return _layer(True, "INSUFFICIENT_DATA", ["Connector identity is not declared for both interfaces."])
-    if assumption == "APPROPRIATE_MEDIUM":
-        if source_connector == target_connector and source_connector in KNOWN_PASSIVE_CONNECTORS:
-            return _layer(True, "COMPATIBLE")
-        return _layer(True, "INSUFFICIENT_DATA", ["No documented passive interconnect rule exists for these connectors."])
     if source_connector != target_connector:
         return _layer(True, "INCOMPATIBLE", ["Direct mating requires the same connector identity."])
     source_gender = source_interface.get("connector_gender")

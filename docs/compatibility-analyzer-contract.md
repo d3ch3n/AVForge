@@ -1,7 +1,7 @@
 # AVForge Compatibility Analyzer Contract v1
 
 Status: `READY_FOR_IMPLEMENTATION`
-Equipment Schema dependency: `v3.3`
+Equipment Schema dependency: `v3.7`
 Vocabulary dependency: `v1.1`
 
 ## 1. Purpose and Scope
@@ -159,6 +159,20 @@ the physical layer is `INSUFFICIENT_DATA` or `INCOMPATIBLE`, as applicable.
 
 The v1 contract does not create a cable catalog.
 
+Physical Connection Model v1 governs `APPROPRIATE_MEDIUM` exclusively
+through the structured catalog capability
+`interface.physical_connection_capabilities.passive_interconnection.status`:
+
+- `supported` on source and target: physical `COMPATIBLE`;
+- `unsupported` on either side: physical `INCOMPATIBLE`;
+- missing capability on either side (`UNKNOWN`): physical
+  `INSUFFICIENT_DATA`.
+
+There is no connector allowlist. Connector equality is not required for
+`APPROPRIATE_MEDIUM`. A physical `COMPATIBLE` result establishes only
+structured passive-interconnection evidence; it does not establish final
+compatibility.
+
 ### 2.4 Capability Assignment
 
 `allowed_interface_ids` identifies the interfaces to which a capability may be
@@ -238,8 +252,11 @@ technical property.
 
 ### 4.1 Layer Responsibilities
 
-`physical` evaluates connector, physical mating, connection points, and the
-selected interconnect assumption.
+`physical` evaluates the selected interconnect assumption. Under `DIRECT`
+it evaluates connector identity and physical mating. Under
+`APPROPRIATE_MEDIUM` it evaluates only the structured passive-interconnection
+capability described above; connector identity remains available as context
+but does not decide that assumption.
 
 `electrical` evaluates electrical requirements relevant to the requested
 function, including levels, impedance, balance, power, and electrical limits.

@@ -47,6 +47,26 @@ The result follows the normative result object. It contains seven layers with
 separate `applicable` flags, four final result states, top-level reasons,
 conditions, missing data, and `evidence`.
 
+## Physical Connection Model v1
+
+`DIRECT` preserves connector mating logic based on connector identity and
+gender. The structured passive capability does not participate in `DIRECT`.
+
+`APPROPRIATE_MEDIUM` is data-driven and uses exclusively
+`interface.physical_connection_capabilities.passive_interconnection.status`:
+
+- `supported` on both interfaces: physical `COMPATIBLE`;
+- `unsupported` on either interface: physical `INCOMPATIBLE`;
+- missing capability on either interface (`UNKNOWN`): physical
+  `INSUFFICIENT_DATA`.
+
+There is no connector allowlist. Connector equality is not required for
+`APPROPRIATE_MEDIUM`. Absence remains open-world `UNKNOWN`, while
+`unsupported` requires explicit catalog evidence. A physical `COMPATIBLE`
+result means only that structured passive-interconnection evidence exists;
+signal, protocol, direction, electrical, restrictions, and capacity layers
+remain independent.
+
 ## CLI
 
 ```text
