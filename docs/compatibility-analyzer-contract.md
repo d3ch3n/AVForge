@@ -332,10 +332,21 @@ The catalog is read as capability, not runtime configuration, so direction
 alone does not produce `CONDITIONALLY_COMPATIBLE`; that state remains
 available for a real structured external condition.
 
-`restrictions` evaluates explicit allowed and denied targets, roles,
-protocols, licenses, firmware, modules, and other documented restrictions.
-When no restriction is relevant to the requested function, this layer is
-non-applicable.
+`restrictions` is implemented over the single `interface.connection_constraints`
+object evaluated bilaterally: each side constrains the remote side. A
+constraint carrying `protocol_family` applies only when the request asks for
+that protocol. Target selectors compare by exact equality, conjunctively
+across present keys and alternatively across lists. A matching denied
+selector is an explicit contradiction and wins over any allowed match
+(deny-first). `allowed_targets` restricts only with `exhaustive: true`,
+requiring at least one matching selector; a non-exhaustive list never proves
+incompatibility. Missing selector metadata yields `INSUFFICIENT_DATA`, never
+a mismatch. Without constraints the layer is non-applicable.
+`known_compatibilities` stay evidence-only and a bare `proprietary` flag
+imposes nothing. The restrictions layer never produces
+`CONDITIONALLY_COMPATIBLE` and never validates connector, signal, protocol,
+direction, electrical, or capacity concerns. When no restriction is relevant
+to the requested function, this layer is non-applicable.
 
 `capacity` is applicable only when `requested_function` includes
 `capacity_requirement`. In `CATALOG`, it evaluates declared catalog capacity

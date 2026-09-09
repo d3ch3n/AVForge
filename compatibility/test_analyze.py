@@ -1855,5 +1855,284 @@ class ProtocolLayerV1Tests(unittest.TestCase):
         self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
 
 
+    def test_p32_configurable_conditional_availability(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "availability": "conditional", "interface_assignment": {"mode": "configurable", "allowed_interface_ids": ["a"]}}
+        source = equipment("source", signal=signal(direction="output"), communication_capabilities=[capability], interface=passive_supported())
+        target = equipment("target", signal=signal(direction="input"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "CONDITIONALLY_COMPATIBLE")
+
+
+class RestrictionsLayerV1Tests(unittest.TestCase):
+    def check_restrictions(self, source, target, function=None, **kwargs):
+        request_function = {"signal_family": "hdmi"}
+        request_function.update(function or {})
+        return analyze(
+            request(request_function, **kwargs),
+            [source, target],
+        )["layers"]["restrictions"]
+
+    def constrained(self, equipment_id, constraints):
+        return equipment(equipment_id, signal=signal(), interface={"connection_constraints": constraints})
+
+    def test_r01_no_constraints_not_applicable(self):
+        layer = self.check_restrictions(equipment("source"), equipment("target"))
+        self.assertFalse(layer["applicable"])
+
+    def test_r02_allowed_exhaustive_manufacturer_match(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r03_allowed_exhaustive_manufacturer_mismatch(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), self.constrained("target", constraints))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r04_allowed_exhaustive_model_match(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"model": "source"}]}}
+        target = equipment("target", signal=signal(), interface={"connection_constraints": constraints})
+        layer = self.check_restrictions(equipment("source"), target)
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r05_allowed_exhaustive_model_mismatch(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"model": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), self.constrained("target", constraints))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r06_allowed_exhaustive_product_family_match(self):
+        source = {"id": "source", "manufacturer": "source", "model": "source", "product_family": "family", "interfaces": [{"id": "a", "label": "a", "direction": "bidirectional", "connector": "hdmi-type-a", "connector_gender": "female", "signals": [signal()]}]}
+        target = {"id": "target", "manufacturer": "target", "model": "target", "product_family": "family", "interfaces": [{"id": "a", "label": "a", "direction": "bidirectional", "connector": "hdmi-type-a", "connector_gender": "female", "signals": [signal()], "connection_constraints": {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"product_family": "family"}]}}}]}
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["restrictions"]["result"], "COMPATIBLE")
+
+    def test_r07_allowed_exhaustive_equipment_id_match(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"equipment_id": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r08_allowed_exhaustive_interface_id_match(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"remote_interface_id": "a"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r09_denied_manufacturer_match(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r10_denied_manufacturer_nonmatch(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r11_denied_model_match(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"model": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r12_conjunctive_selector_keys(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target", "model": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r13_allowed_selectors_are_or(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "other"}, {"manufacturer": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r14_denied_selectors_are_or(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "other"}, {"manufacturer": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r15_deny_wins_over_allow(self):
+        constraints = {
+            "id": "c",
+            "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target"}]},
+            "denied_targets": {"targets": [{"manufacturer": "target"}]},
+        }
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r16_non_exhaustive_allow_miss_is_compatible(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": False, "targets": [{"manufacturer": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r17_protocol_scope_matching_applies(self):
+        constraints = {"id": "c", "protocol_family": "rs-232", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        layer = self.check_restrictions(
+            self.constrained("source", constraints), equipment("target"), {"protocol_family": "rs-232"}
+        )
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r18_protocol_scope_different_is_ignored(self):
+        constraints = {"id": "c", "protocol_family": "rs-232", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        layer = self.check_restrictions(
+            self.constrained("source", constraints), equipment("target"), {"protocol_family": "aes67"}
+        )
+        self.assertFalse(layer["applicable"])
+
+    def test_r18b_protocol_scoped_without_protocol_request_is_ignored(self):
+        constraints = {"id": "c", "protocol_family": "rs-232", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertFalse(layer["applicable"])
+
+    def test_r19_source_restriction_only(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        source = equipment("source", signal=signal(), interface={"connection_constraints": constraints})
+        layer = self.check_restrictions(source, equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r20_target_restriction_only(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "source"}]}}
+        target = equipment("target", signal=signal(), interface={"connection_constraints": constraints})
+        layer = self.check_restrictions(equipment("source"), target)
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r21_bilateral_restrictions(self):
+        source_constraints = {"id": "s", "denied_targets": {"targets": [{"manufacturer": "other"}]}}
+        target_constraints = {"id": "t", "denied_targets": {"targets": [{"manufacturer": "other"}]}}
+        source = equipment("source", signal=signal(), interface={"connection_constraints": source_constraints})
+        target = equipment("target", signal=signal(), interface={"connection_constraints": target_constraints})
+        layer = self.check_restrictions(source, target)
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r22_remote_role_match(self):
+        target = {
+            "id": "target", "manufacturer": "target", "model": "target",
+            "interfaces": [{"id": "a", "label": "a", "direction": "bidirectional", "connector": "hdmi-type-a", "connector_gender": "female", "role": "output", "signals": [signal()]}],
+        }
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"remote_interface_role": "output"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), target)
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r23_remote_role_mismatch(self):
+        target = {
+            "id": "target", "manufacturer": "target", "model": "target",
+            "interfaces": [{"id": "a", "label": "a", "direction": "bidirectional", "connector": "hdmi-type-a", "connector_gender": "female", "role": "input", "signals": [signal()]}],
+        }
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"remote_interface_role": "output"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), target)
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r24_remote_role_missing_is_insufficient(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"remote_interface_role": "output"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_r25_role_selector_unknown_not_mismatch(self):
+        constraints = {
+            "id": "c",
+            "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "other"}, {"remote_interface_role": "output"}]},
+        }
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_r26_protocol_compatible_restrictions_incompatible(self):
+        capability = {"id": "cap", "type": "control", "protocol_family": "rs-232", "direction": "bidirectional", "interface_assignment": {"mode": "fixed", "allowed_interface_ids": ["a"]}}
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        source = equipment("source", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface={"connection_constraints": constraints, **passive_supported()})
+        target = equipment("target", signal=signal(protocol_family="rs-232"), communication_capabilities=[capability], interface=passive_supported())
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["protocol"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["restrictions"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_r27_signal_compatible_restrictions_incompatible(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "target"}]}}
+        source = equipment("source", signal=signal(), interface={"connection_constraints": constraints, **passive_supported()})
+        target = equipment("target", signal=signal(), interface=passive_supported())
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["signal"]["result"], "COMPATIBLE")
+        self.assertEqual(result["layers"]["restrictions"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+
+    def test_r28_known_compatibility_does_not_override_deny(self):
+        source = equipment(
+            "source",
+            signal=signal(protocol_family="rs-232"),
+            interface={"connection_constraints": {"id": "deny", "denied_targets": {"targets": [{"equipment_id": "target"}]}}},
+            known_compatibilities=[{"id": "known", "relation": "compatible", "target_equipment_id": "target", "local_interface_id": "a", "protocol_family": "rs-232"}],
+        )
+        target = equipment("target", signal=signal(protocol_family="rs-232"))
+        result = analyze(request({"protocol_family": "rs-232"}), [source, target])
+        self.assertEqual(result["layers"]["restrictions"]["result"], "INCOMPATIBLE")
+        self.assertEqual(result["result"], "INCOMPATIBLE")
+        self.assertTrue(result["evidence"])
+
+    def test_r29_known_compatibility_absence_no_penalty(self):
+        layer = self.check_restrictions(equipment("source"), equipment("target"))
+        self.assertFalse(layer["applicable"])
+
+    def test_r30_proprietary_without_constraints_not_applicable(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        core = load_record("equipment/qsys/core-8-flex.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"protocol_family": "dm-nvx"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertFalse(result["layers"]["restrictions"]["applicable"])
+
+    def test_r31_allow_mismatch_plus_unknown_is_insufficient(self):
+        constraints = {
+            "id": "c",
+            "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "other"}, {"remote_interface_role": "output"}]},
+        }
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_r32_deny_mismatch_plus_unknown_is_insufficient(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "other"}, {"remote_interface_role": "output"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INSUFFICIENT_DATA")
+
+    def test_r33_deny_match_plus_unknown_is_incompatible(self):
+        constraints = {"id": "c", "denied_targets": {"targets": [{"manufacturer": "target"}, {"remote_interface_role": "output"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r34_allow_match_plus_deny_mismatch_is_compatible(self):
+        constraints = {
+            "id": "c",
+            "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target"}]},
+            "denied_targets": {"targets": [{"manufacturer": "other"}]},
+        }
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+
+    def test_r35_allow_match_plus_deny_match_is_incompatible(self):
+        constraints = {
+            "id": "c",
+            "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target"}]},
+            "denied_targets": {"targets": [{"manufacturer": "target"}]},
+        }
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r36_conjunctive_selector_keys(self):
+        constraints = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target", "model": "target"}]}}
+        layer = self.check_restrictions(self.constrained("source", constraints), equipment("target"))
+        self.assertEqual(layer["result"], "COMPATIBLE")
+        mismatch = {"id": "c", "allowed_targets": {"exhaustive": True, "targets": [{"manufacturer": "target", "model": "other"}]}}
+        layer = self.check_restrictions(self.constrained("source", mismatch), equipment("target"))
+        self.assertEqual(layer["result"], "INCOMPATIBLE")
+
+    def test_r37_real_catalog_has_no_restrictions(self):
+        for path in ["equipment/qsys/core-8-flex.json", "equipment/crestron/dm-nvx-360c.json", "equipment/crestron/hd-md8x8-4kz-e.json", "equipment/crestron/dmf-ci-8.json"]:
+            record = load_record(path)
+            for interface in record.get("interfaces", []):
+                self.assertNotIn("connection_constraints", interface)
+
+
 if __name__ == "__main__":
     unittest.main()

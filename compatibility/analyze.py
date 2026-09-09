@@ -540,7 +540,7 @@ def _electrical_layer(source: dict[str, Any], target: dict[str, Any], function: 
     return _layer(True, "INSUFFICIENT_DATA", ["Balance mode capability is not declared for both endpoints."])
 
 
-def _selector_matches(selector: dict[str, Any], target: dict[str, Any], interface_id: str) -> bool:
+def _selector_match_state(selector: dict[str, Any], target: dict[str, Any], interface_id: str) -> bool | None:
     equipment = target["equipment"]
     interface = target["interface"]
     checks = {
@@ -551,44 +551,61 @@ def _selector_matches(selector: dict[str, Any], target: dict[str, Any], interfac
         "remote_interface_id": interface_id,
         "remote_interface_role": interface.get("role"),
     }
-    return all(key not in selector or selector[key] == value for key, value in checks.items())
-
-
-def _selector_role_unknown(selector: dict[str, Any], target: dict[str, Any]) -> bool:
-    return "remote_interface_role" in selector and not target["interface"].get("role")
+    matched = False
+    for key, actual in checks.items():
+        if key not in selector:
+            continue
+        matched = True
+        if actual is None:
+            return None
+        if actual != selector[key]:
+            return False
+    return True if matched else None
 
 
 def _restriction_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
     applicable = False
-    reasons: list[str] = []
-    conditional = False
+    unknown = False
+    exhaustive_excluded: str | None = None
     for owner, remote, remote_side in ((source, target, "target"), (target, source, "source")):
         constraints = owner["interface"].get("connection_constraints")
         if not isinstance(constraints, dict):
             continue
-        protocol = constraints.get("protocol_family")
-        if protocol and function.get("protocol_family") and protocol != function["protocol_family"]:
+        constraint_protocol = constraints.get("protocol_family")
+        requested_protocol = function.get("protocol_family")
+        if constraint_protocol and requested_protocol and constraint_protocol != requested_protocol:
+            continue
+        if constraint_protocol and not requested_protocol:
             continue
         applicable = True
-        unknown_selector = False
+        remote_interface_id = remote["interface"].get("id", "")
         for selector in (constraints.get("denied_targets") or {}).get("targets", []):
             if not isinstance(selector, dict):
                 continue
-            if _selector_role_unknown(selector, remote):
-                unknown_selector = True
-            elif _selector_matches(selector, remote, remote["interface"].get("id", "")):
+            state = _selector_match_state(selector, remote, remote_interface_id)
+            if state is True:
                 return _layer(True, "INCOMPATIBLE", [f"Explicit denied restriction applies from {remote_side}."])
+            if state is None:
+                unknown = True
         allowed = (constraints.get("allowed_targets") or {}).get("targets")
         if allowed is not None and (constraints.get("allowed_targets") or {}).get("exhaustive"):
-            if any(isinstance(selector, dict) and _selector_role_unknown(selector, remote) for selector in allowed):
-                unknown_selector = True
-            elif not any(isinstance(selector, dict) and _selector_matches(selector, remote, remote["interface"].get("id", "")) for selector in allowed):
-                return _layer(True, "INCOMPATIBLE", [f"Exhaustive allowed restriction excludes {remote['equipment'].get('id')}."])
-        if unknown_selector:
-            return _layer(True, "INSUFFICIENT_DATA", ["Restriction references an interface role that is not declared."])
+            states = [
+                _selector_match_state(selector, remote, remote_interface_id)
+                for selector in allowed
+                if isinstance(selector, dict)
+            ]
+            if not any(state is True for state in states):
+                if any(state is None for state in states):
+                    unknown = True
+                elif exhaustive_excluded is None:
+                    exhaustive_excluded = remote["equipment"].get("id")
+    if exhaustive_excluded is not None:
+        return _layer(True, "INCOMPATIBLE", [f"Exhaustive allowed restriction excludes {exhaustive_excluded}."])
+    if unknown:
+        return _layer(True, "INSUFFICIENT_DATA", ["Restriction references metadata that is not declared."])
     if not applicable:
         return _layer(False)
-    return _layer(True, "CONDITIONALLY_COMPATIBLE" if conditional else "COMPATIBLE", reasons)
+    return _layer(True, "COMPATIBLE", [])
 
 
 def _capacity_for(side: dict[str, Any], function: dict[str, Any]) -> dict[str, float] | None:

@@ -191,6 +191,27 @@ design, pool consumption, or project capacity. Undeclared required data remains
 `known_compatibilities` are collected as evidence only. They cannot override a
 denied restriction or supply missing technical facts.
 
+## Restrictions Layer v1
+
+The restrictions layer evaluates the single `interface.connection_constraints`
+object on each side, bilaterally: the source side constrains the target and
+the target side constrains the source. A constraint carrying
+`protocol_family` only applies when the request asks for that protocol; a
+protocol-scoped constraint is ignored outside its scope. Each target
+selector compares by exact equality, conjunctively across its present keys
+(`equipment_id`, `manufacturer`, `model`, `product_family`,
+`remote_interface_id`, `remote_interface_role`); selector lists are
+alternatives (OR). A matching denied selector is an explicit contradiction
+and wins over any allowed match (deny-first). `allowed_targets` restricts
+only with `exhaustive: true`, and then at least one selector must match;
+a non-exhaustive list never proves incompatibility. Missing selector
+metadata (such as an undeclared remote interface role) yields
+`INSUFFICIENT_DATA`, never a mismatch. Without constraints the layer is
+not applicable. `known_compatibilities` stay evidence-only and a bare
+`proprietary` flag imposes nothing by itself. The layer never produces
+`CONDITIONALLY_COMPATIBLE` and never validates connector, signal,
+protocol, direction, electrical, or capacity concerns.
+
 The official DM-NVX family distinction for Dante is not represented as a fake
 unavailable capability in the DM-NVX-360C record. This remains a known
 `MODEL_REPRESENTATION_GAP`.
