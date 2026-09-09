@@ -149,13 +149,13 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = self.analyze({"signal_family": "hdmi"})
         self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
 
-    def test_ac13_configurable_mode_is_conditional(self):
+    def test_configurable_role_metadata_does_not_make_direction_conditional(self):
         source = equipment(
             "source",
             signal=signal(direction="bidirectional", configurable_role="input or output"),
         )
         result = self.analyze({"signal_family": "hdmi"}, source=source)
-        self.assertEqual(result["layers"]["direction"]["result"], "CONDITIONALLY_COMPATIBLE")
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
 
     def test_ac14_irrelevant_electrical_is_not_applicable(self):
         result = self.analyze({"protocol_family": "aes67"})
@@ -266,10 +266,11 @@ class CompatibilityAnalyzerTests(unittest.TestCase):
         result = self.analyze({"signal_family": "hdmi"}, source=source)
         self.assertEqual(result["result"], "INCOMPATIBLE")
 
-    def test_ac23_insufficient_precedes_condition(self):
+    def test_ac23_electrical_insufficient_without_direction_condition(self):
         source = equipment("source", signal=signal(signal_type="audio", signal_family="analog-audio", direction="bidirectional", configurable_role="input or output"))
         target = equipment("target", signal=signal(signal_type="audio", signal_family="analog-audio", direction="bidirectional"))
         result = self.analyze({"signal_family": "analog-audio"}, source=source, target=target)
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
         self.assertEqual(result["result"], "INSUFFICIENT_DATA")
 
     def test_ac24_evidence_does_not_override_deny(self):
@@ -1031,6 +1032,199 @@ class ElectricalAnalyzerV1Tests(unittest.TestCase):
         self.assertEqual(unbalanced["impedance"]["nominal"]["value"], 100)
         self.assertEqual(balanced["maximum_level"]["value"], 4)
         self.assertEqual(unbalanced["maximum_level"]["value"], 2)
+
+
+    def test_e26_real_variant_evidence_resolves(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        audio = next(interface for interface in nvx["interfaces"] if interface["id"] == "audio-io")
+        output = audio["electrical_characteristics"]["output"]
+        balanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "balanced")
+        unbalanced = next(variant for variant in output["variants"] if variant["conditions"]["balance_mode"] == "unbalanced")
+        self.assertEqual(balanced["impedance"]["nominal"]["value"], 200)
+        self.assertEqual(unbalanced["impedance"]["nominal"]["value"], 100)
+        self.assertEqual(balanced["maximum_level"]["value"], 4)
+        self.assertEqual(unbalanced["maximum_level"]["value"], 2)
+
+
+class DirectionLayerV1Tests(unittest.TestCase):
+    def direction(self, source, target, function=None, **kwargs):
+        request_function = {"signal_family": "hdmi"}
+        request_function.update(function or {})
+        return analyze(
+            request(request_function, **kwargs),
+            [source, target],
+        )["layers"]["direction"]
+
+    def video_pair(self, source_direction, target_direction, source_extra=None, target_extra=None):
+        source_signal = {"id": "signal", "name": "signal", "signal_type": "video", "signal_family": "hdmi"}
+        if source_direction is not None:
+            source_signal["direction"] = source_direction
+        if source_extra:
+            source_signal.update(source_extra)
+        target_signal = {"id": "signal", "name": "signal", "signal_type": "video", "signal_family": "hdmi"}
+        if target_direction is not None:
+            target_signal["direction"] = target_direction
+        if target_extra:
+            target_signal.update(target_extra)
+        source = equipment("source", signal=None, interface={"signals": [source_signal]})
+        target = equipment("target", signal=None, interface={"signals": [target_signal]})
+        return source, target
+
+    def test_d01_output_to_input_is_compatible(self):
+        source, target = self.video_pair("output", "input")
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+
+    def test_d02_bidirectional_source_to_input_is_compatible(self):
+        source, target = self.video_pair("bidirectional", "input")
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+
+    def test_d03_output_to_bidirectional_target_is_compatible(self):
+        source, target = self.video_pair("output", "bidirectional")
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+
+    def test_d04_bidirectional_to_bidirectional_is_compatible(self):
+        source, target = self.video_pair("bidirectional", "bidirectional")
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+
+    def test_d05_input_only_source_is_incompatible(self):
+        source, target = self.video_pair("input", "input")
+        self.assertEqual(self.direction(source, target)["result"], "INCOMPATIBLE")
+
+    def test_d06_output_only_target_is_incompatible(self):
+        source, target = self.video_pair("output", "output")
+        self.assertEqual(self.direction(source, target)["result"], "INCOMPATIBLE")
+
+    def test_d07_missing_source_direction_is_insufficient(self):
+        source, target = self.video_pair(None, "input")
+        self.assertEqual(self.direction(source, target)["result"], "INSUFFICIENT_DATA")
+
+    def test_d08_missing_target_direction_is_insufficient(self):
+        source, target = self.video_pair("output", None)
+        self.assertEqual(self.direction(source, target)["result"], "INSUFFICIENT_DATA")
+
+    def test_d09_configurable_role_does_not_change_compatible_direction(self):
+        source, target = self.video_pair(
+            "output", "input",
+            source_extra={"signal_characteristics": {"configurable_role": "output"}},
+        )
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+        legacy_source, legacy_target = self.video_pair(
+            "bidirectional", "bidirectional",
+            source_extra={"signal_characteristics": {"configurable_role": "input or output, not both"}},
+        )
+        self.assertEqual(self.direction(legacy_source, legacy_target)["result"], "COMPATIBLE")
+
+    def test_d11_absent_configurable_role_is_compatible(self):
+        source, target = self.video_pair("output", "input")
+        self.assertEqual(self.direction(source, target)["result"], "COMPATIBLE")
+
+    def test_d12_ambiguous_candidates_remain_insufficient(self):
+        first = {"id": "first", "name": "first", "signal_type": "video", "signal_family": "hdmi", "direction": "output"}
+        second = {"id": "second", "name": "second", "signal_type": "video", "signal_family": "hdmi", "direction": "output"}
+        source = equipment("source", signal=None, interface={"signals": [first, second]})
+        target = equipment("target", signal=signal(direction="input"))
+        result = analyze(request({"signal_family": "hdmi"}), [source, target])
+        self.assertEqual(result["layers"]["direction"]["result"], "INSUFFICIENT_DATA")
+
+    def test_d13_direction_incompatible_makes_final_incompatible(self):
+        source = equipment(
+            "source",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="output"),
+            interface={
+                **passive_supported(),
+                "electrical_characteristics": {"output": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}},
+            },
+        )
+        target = equipment(
+            "target",
+            signal=signal(signal_type="audio", signal_family="analog-audio", direction="input"),
+            interface={
+                **passive_supported(),
+                "electrical_characteristics": {"input": {"balance_modes": ["balanced"], "operating_level_classes": ["line"]}},
+            },
+        )
+        compatible = analyze(request({"signal_family": "analog-audio"}), [source, target])
+        self.assertEqual(compatible["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(compatible["result"], "COMPATIBLE")
+        contradicted = analyze(request({"signal_family": "analog-audio", "direction": "input"}), [source, target])
+        self.assertEqual(contradicted["layers"]["physical"]["result"], "COMPATIBLE")
+        self.assertEqual(contradicted["layers"]["electrical"]["result"], "COMPATIBLE")
+        self.assertEqual(contradicted["layers"]["direction"]["result"], "INCOMPATIBLE")
+        self.assertEqual(contradicted["result"], "INCOMPATIBLE")
+
+    def test_d14_four_real_analog_cases_are_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        cases = [
+            (core, "flex-1", nvx, "audio-io"),
+            (nvx, "audio-io", core, "flex-1"),
+            (hd, "audio-out-aux-1", nvx, "audio-io"),
+            (hd, "audio-out-aux-1", core, "flex-1"),
+        ]
+        for source_record, source_interface, target_record, target_interface in cases:
+            with self.subTest(source=source_interface, target=target_interface):
+                result = analyze(
+                    {
+                        "source": {"equipment_id": source_record["id"], "interface_id": source_interface},
+                        "target": {"equipment_id": target_record["id"], "interface_id": target_interface},
+                        "requested_function": {"signal_family": "analog-audio"},
+                        "analysis_scope": "CATALOG",
+                        "interconnect_assumption": "APPROPRIATE_MEDIUM",
+                    },
+                    [core, nvx, hd],
+                )
+                self.assertEqual(result["layers"]["physical"]["result"], "COMPATIBLE")
+                self.assertEqual(result["layers"]["electrical"]["result"], "COMPATIBLE")
+                self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+                self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_d15_hdmi_output_to_input_is_compatible(self):
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        hd = load_record("equipment/crestron/hd-md8x8-4kz-e.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": nvx["id"], "interface_id": "hdmi-output"},
+                "target": {"equipment_id": hd["id"], "interface_id": "hdmi-in-1"},
+                "requested_function": {"signal_family": "hdmi"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [nvx, hd],
+        )
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_d16_ethernet_bidirectional_is_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "lan-a"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "ethernet-1"},
+                "requested_function": {"signal_family": "ethernet"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
+        self.assertEqual(result["result"], "COMPATIBLE")
+
+    def test_d17_usb_bidirectional_is_compatible(self):
+        core = load_record("equipment/qsys/core-8-flex.json")
+        nvx = load_record("equipment/crestron/dm-nvx-360c.json")
+        result = analyze(
+            {
+                "source": {"equipment_id": core["id"], "interface_id": "usb-a-1"},
+                "target": {"equipment_id": nvx["id"], "interface_id": "usb-host"},
+                "requested_function": {"signal_type": "data"},
+                "analysis_scope": "CATALOG",
+                "interconnect_assumption": "APPROPRIATE_MEDIUM",
+            },
+            [core, nvx],
+        )
+        self.assertEqual(result["layers"]["direction"]["result"], "COMPATIBLE")
 
 
 if __name__ == "__main__":

@@ -103,6 +103,24 @@ the same unit. Absence of required canonical data yields
 not automatically decided. Non-analog functions keep the electrical layer
 non-applicable.
 
+## Direction Layer v1
+
+The direction layer answers whether each endpoint can perform its
+functional role: the source must provide output capability and the target
+must provide input capability. The canonical source is the functionally
+selected signal (`selected_signal.direction`): `output` or `bidirectional`
+satisfies the source role, `input` or `bidirectional` satisfies the target
+role. `bidirectional` never produces a condition by itself, and missing or
+ambiguous direction data yields `INSUFFICIENT_DATA`, never a guess.
+
+`signal_characteristics.configurable_role` is legacy metadata without a
+schema definition. It does not drive direction classification, its absence
+means nothing, and the catalog is read as capability rather than runtime
+configuration. No `CONDITIONALLY_COMPATIBLE` is produced from a configurable
+role or from having several selectable modes; that state remains available
+for a real structured external condition, such as a configurable
+communication-capability assignment.
+
 ## CLI
 
 ```text

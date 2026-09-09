@@ -293,8 +293,17 @@ characteristics.
 the capability-to-interface assignment. A connector or generic signal family
 does not imply protocol support.
 
-`direction` evaluates source/target roles, input/output direction,
-bidirectionality, and any required mode selection.
+`direction` is implemented as a capability check over the functionally
+selected signals. The source role requires `output` or `bidirectional`
+capability and the target role requires `input` or `bidirectional`
+capability from `signal.direction`. `bidirectional` satisfies both roles
+without producing a condition. Missing or ambiguous direction data yields
+`INSUFFICIENT_DATA`; an explicitly demonstrated role contradiction yields
+`INCOMPATIBLE`. Legacy `signal_characteristics.configurable_role` metadata
+does not drive direction classification, and its absence is meaningless.
+The catalog is read as capability, not runtime configuration, so direction
+alone does not produce `CONDITIONALLY_COMPATIBLE`; that state remains
+available for a real structured external condition.
 
 `restrictions` evaluates explicit allowed and denied targets, roles,
 protocols, licenses, firmware, modules, and other documented restrictions.
@@ -485,9 +494,10 @@ only when a quantity is requested.
 
 The result is `COMPATIBLE` only when passive-interconnection evidence,
 canonical electrical characteristics, signal format, and complementary
-direction are established. A documented input/output mode selection can
-produce `CONDITIONALLY_COMPATIBLE` in the direction layer. Missing required
-canonical electrical data produces `INSUFFICIENT_DATA`, not a condition.
+direction are established. A configurable communication-capability
+assignment can produce `CONDITIONALLY_COMPATIBLE` where the model
+structurally requires it. Missing required canonical data produces
+`INSUFFICIENT_DATA`, not a condition.
 Balance-mode choice alone does not produce `CONDITIONALLY_COMPATIBLE`.
 
 ## 12. Gap Classification

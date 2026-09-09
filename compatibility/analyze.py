@@ -229,17 +229,43 @@ def _protocol_layer(source: dict[str, Any], target: dict[str, Any], function: di
     return _layer(True, result, source_reasons + target_reasons), source_evidence + target_evidence
 
 
-def _direction_values(side: dict[str, Any], function: dict[str, Any]) -> tuple[set[str], bool]:
+def _role_acceptable(direction: Any, side_name: str, required: str | None) -> bool:
+    if side_name == "source":
+        if required == "input":
+            return direction == "input"
+        if required == "output":
+            return direction == "output"
+        return direction in ("output", "bidirectional")
+    if required == "input":
+        return direction == "input"
+    if required == "output":
+        return direction == "output"
+    return direction in ("input", "bidirectional")
+
+
+def _side_direction_state(side: dict[str, Any], function: dict[str, Any], side_name: str, required: str | None) -> tuple[bool | None, bool]:
     signals = _matching_signals(side["interface"], function)
     protocol = function.get("protocol_family")
     if protocol:
         signals = [signal for signal in signals if signal.get("protocol_family") == protocol]
-    configurable = False
     if signals:
-        values = {signal.get("direction") for signal in signals if signal.get("direction")}
-        configurable = any(signal.get("signal_characteristics", {}).get("configurable_role") for signal in signals)
-        if values:
-            return values, configurable
+        if required in ("input", "output"):
+            values = {signal.get("direction") for signal in signals if signal.get("direction")}
+            if not values:
+                return None, False
+            if any(_role_acceptable(value, side_name, required) for value in values):
+                return True, False
+            return False, False
+        selected = _selected_signal(side, function, side_name)
+        if selected is not None and selected.get("direction"):
+            if _role_acceptable(selected["direction"], side_name, required):
+                return True, False
+            return False, False
+        if any(_role_acceptable(signal.get("direction"), side_name, required) for signal in signals if signal.get("direction")):
+            return None, False
+        if any(signal.get("direction") for signal in signals):
+            return False, False
+        return None, False
     if protocol:
         capabilities, _ = _communication_capabilities(side["equipment"], protocol, side["interface"].get("id", ""))
         values = {capability.get("direction") for capability in capabilities if capability.get("direction")}
@@ -248,31 +274,35 @@ def _direction_values(side: dict[str, Any], function: dict[str, Any]) -> tuple[s
             for capability in capabilities
         )
         if values:
-            return values, configurable
+            if required in ("input", "output"):
+                if any(_role_acceptable(value, side_name, required) for value in values):
+                    return True, configurable
+                return False, False
+            if (side_name == "source" and ("output" in values or "bidirectional" in values)) or (
+                side_name == "target" and ("input" in values or "bidirectional" in values)
+            ):
+                return True, configurable
+            return False, False
     direction = side["interface"].get("direction")
-    return ({direction} if direction else set()), configurable
+    if not direction:
+        return None, False
+    return _role_acceptable(direction, side_name, required), False
 
 
 def _direction_layer(source: dict[str, Any], target: dict[str, Any], function: dict[str, Any]) -> dict[str, Any]:
-    source_values, source_configurable = _direction_values(source, function)
-    target_values, target_configurable = _direction_values(target, function)
-    if not source_values or not target_values:
-        return _layer(True, "INSUFFICIENT_DATA", ["Direction is not declared for both interfaces."])
     required = function.get("direction")
     if required and required not in {"input", "output", "bidirectional"}:
         return _layer(True, "INSUFFICIENT_DATA", [f"Requested direction is not deterministically interpretable: {required}."])
-    source_can_output = "output" in source_values or "bidirectional" in source_values
-    target_can_input = "input" in target_values or "bidirectional" in target_values
-    if required == "input":
-        source_can_output = "input" in source_values
-        target_can_input = "input" in target_values
-    if required == "output":
-        source_can_output = "output" in source_values
-        target_can_input = "output" in target_values
-    if not source_can_output or not target_can_input:
+    if required == "bidirectional":
+        required = None
+    source_state, source_conditional = _side_direction_state(source, function, "source", required)
+    target_state, target_conditional = _side_direction_state(target, function, "target", required)
+    if source_state is False or target_state is False:
         return _layer(True, "INCOMPATIBLE", ["Source and target directions are not complementary."])
-    if source_configurable or target_configurable:
-        return _layer(True, "CONDITIONALLY_COMPATIBLE", ["A documented input/output mode selection is required."])
+    if source_state is None or target_state is None:
+        return _layer(True, "INSUFFICIENT_DATA", ["Direction is not declared for both interfaces."])
+    if source_conditional or target_conditional:
+        return _layer(True, "CONDITIONALLY_COMPATIBLE", ["A documented interface assignment is required."])
     return _layer(True, "COMPATIBLE")
 
 
