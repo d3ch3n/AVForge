@@ -111,11 +111,33 @@
         "input": {
           "balance_modes": ["balanced", "unbalanced"],
           "operating_level_classes": ["line"],
-          "impedance": { "nominal": { "value": 24000, "unit": "ohm" } }
+          "impedance": { "nominal": { "value": 24000, "unit": "ohm" } },
+          "variants": [
+            {
+              "conditions": { "balance_mode": "balanced" },
+              "maximum_level": { "value": 4, "unit": "volt-rms" }
+            },
+            {
+              "conditions": { "balance_mode": "unbalanced" },
+              "maximum_level": { "value": 2, "unit": "volt-rms" }
+            }
+          ]
         },
         "output": {
           "balance_modes": ["balanced", "unbalanced"],
-          "operating_level_classes": ["line"]
+          "operating_level_classes": ["line"],
+          "variants": [
+            {
+              "conditions": { "balance_mode": "balanced" },
+              "impedance": { "nominal": { "value": 200, "unit": "ohm" } },
+              "maximum_level": { "value": 4, "unit": "volt-rms" }
+            },
+            {
+              "conditions": { "balance_mode": "unbalanced" },
+              "impedance": { "nominal": { "value": 100, "unit": "ohm" } },
+              "maximum_level": { "value": 2, "unit": "volt-rms" }
+            }
+          ]
         }
       },
       "notes": "The connector is a shared stereo audio I/O interface; no pinout is modeled."
