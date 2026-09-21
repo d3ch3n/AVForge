@@ -1,0 +1,464 @@
+{
+  "id": "qsys.cx-q-4k8",
+  "manufacturer": "Q-SYS",
+  "model": "CX-Q 4K8",
+  "product_name": "Q-SYS CX-Q 4K8",
+  "category": "amplifier",
+  "subcategory": "network-power-amplifier",
+  "product_family": "CX-Q",
+  "schema_version": "3.8.0",
+  "status": "draft",
+  "hardware": {
+    "form_factor": "2RU network power amplifier",
+    "rack_mountable": true,
+    "rack_units": 2,
+    "dimensions": {
+      "height": { "value": 89, "unit": "millimeter" }
+    },
+    "weight": { "value": 11.3, "unit": "kilogram" }
+  },
+  "power": {
+    "sources": [
+      {
+        "id": "ac-mains",
+        "method": "AC",
+        "connector": "iec-60320-c14",
+        "voltage": { "min": 100, "max": 240, "unit": "volt" },
+        "frequency": { "min": 50, "max": 60, "unit": "hertz" },
+        "notes": "Universal AC input with active PFC. AC current and consumption are not encoded because the reviewed sources do not provide a single canonical value; the amplifier's up-to-4000 W output is not AC consumption."
+      }
+    ]
+  },
+  "physical_connectors": [
+    {
+      "id": "gpio-relay-terminal-block",
+      "label": "16-pin GPIO and relay terminal block",
+      "connector_type": "pluggable-terminal-block",
+      "gender": "receptacle",
+      "connection_points": [
+        { "id": "gpio-pin-1", "label": "Pin 1", "role": "power", "position": 1 },
+        { "id": "gpio-pin-2", "label": "Pin 2", "role": "signal", "position": 2 },
+        { "id": "gpio-pin-3", "label": "Pin 3", "role": "signal", "position": 3 },
+        { "id": "gpio-pin-4", "label": "Pin 4", "role": "ground", "position": 4 },
+        { "id": "gpio-pin-5", "label": "Pin 5", "role": "signal", "position": 5 },
+        { "id": "gpio-pin-6", "label": "Pin 6", "role": "signal", "position": 6 },
+        { "id": "gpio-pin-7", "label": "Pin 7", "role": "ground", "position": 7 },
+        { "id": "gpio-pin-8", "label": "Pin 8", "role": "signal", "position": 8 },
+        { "id": "gpio-pin-9", "label": "Pin 9", "role": "normally_open", "position": 9 },
+        { "id": "gpio-pin-10", "label": "Pin 10", "role": "common", "position": 10 },
+        { "id": "gpio-pin-11", "label": "Pin 11", "role": "normally_closed", "position": 11 },
+        { "id": "gpio-pin-12", "label": "Pin 12", "role": "ground", "position": 12 },
+        { "id": "gpio-pin-13", "label": "Pin 13", "role": "signal", "position": 13 },
+        { "id": "gpio-pin-14", "label": "Pin 14", "role": "signal", "position": 14 },
+        { "id": "gpio-pin-15", "label": "Pin 15", "role": "ground", "position": 15 },
+        { "id": "gpio-pin-16", "label": "Pin 16", "role": "signal", "position": 16 }
+      ],
+      "notes": "Verified 16-pin GPIO/relay connector. Pins 4, 7, 12 and 15 are documented grounds; they are not assigned exclusive ownership to individual GPIO interfaces. Exact connector mating series and pitch are not encoded."
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "input-a",
+      "label": "Input 1",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-a-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 1 is a green 3-pin Euro connector. Official balanced input impedance is >8 kOhm and unbalanced input impedance is >4 kOhm; official sensitivity is 1.23 mV to 17.35 V RMS, approximately -56 to +27 dBu. These lower bounds and sensitivity range remain descriptive because this schema cannot faithfully encode the source form without false precision. Pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-b",
+      "label": "Input 2",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-b-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 2 is a green 3-pin Euro connector. Input impedance and sensitivity facts are documented in the record-level source notes for Input 1; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-c",
+      "label": "Input 3",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-c-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 3 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-d",
+      "label": "Input 4",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-d-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 4 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-e",
+      "label": "Input 5",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-e-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 5 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-f",
+      "label": "Input 6",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-f-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 6 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-g",
+      "label": "Input 7",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-g-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 7 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "input-h",
+      "label": "Input 8",
+      "direction": "input",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "input-h-audio", "name": "Analog audio input", "direction": "input", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "electrical_characteristics": { "input": { "balance_modes": ["balanced", "unbalanced"], "operating_level_classes": ["mic", "line"], "phantom_power": { "provision": { "supported": true, "voltage": { "value": 12, "unit": "volt" } } } } },
+      "notes": "Input 8 is a green 3-pin Euro connector; pitch and exact mating series are unknown."
+    },
+    {
+      "id": "output-a",
+      "label": "Output A",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-a-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output A is housed in the first shared 8-pin green touch-proof Euro-style speaker connector with outputs B-D. Exact per-terminal mapping, pitch, mating series and part number are not sufficiently established."
+    },
+    {
+      "id": "output-b",
+      "label": "Output B",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-b-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output B shares the first 8-pin green touch-proof Euro-style speaker connector with outputs A, C and D; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "output-c",
+      "label": "Output C",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-c-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output C shares the first 8-pin green touch-proof Euro-style speaker connector with outputs A, B and D; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "output-d",
+      "label": "Output D",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-d-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output D shares the first 8-pin green touch-proof Euro-style speaker connector with outputs A-C; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "output-e",
+      "label": "Output E",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-e-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output E is housed in the second shared 8-pin green touch-proof Euro-style speaker connector with outputs F-H. Exact per-terminal mapping, pitch, mating series and part number are not sufficiently established."
+    },
+    {
+      "id": "output-f",
+      "label": "Output F",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-f-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output F shares the second 8-pin green touch-proof Euro-style speaker connector with outputs E, G and H; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "output-g",
+      "label": "Output G",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-g-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output G shares the second 8-pin green touch-proof Euro-style speaker connector with outputs E, F and H; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "output-h",
+      "label": "Output H",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "output-h-audio", "name": "Amplified analog audio output", "direction": "output", "signal_type": "audio", "signal_family": "analog-audio" }],
+      "notes": "Output H shares the second 8-pin green touch-proof Euro-style speaker connector with outputs E-G; exact per-terminal mapping is not encoded."
+    },
+    {
+      "id": "lan-a",
+      "label": "LAN A",
+      "direction": "bidirectional",
+      "connector": "rj45-8p8c",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "lan-a-ethernet", "name": "Q-LAN Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }],
+      "notes": "Primary Q-LAN network interface. Official sources document dual RJ45/Ethernet interfaces with primary/secondary and redundancy behavior. Dante and AES67 are not inferred or modeled for this record."
+    },
+    {
+      "id": "lan-b",
+      "label": "LAN B",
+      "direction": "bidirectional",
+      "connector": "rj45-8p8c",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "lan-b-ethernet", "name": "Q-LAN Ethernet", "direction": "bidirectional", "signal_type": "network", "signal_family": "ethernet" }],
+      "notes": "Secondary Q-LAN network interface for redundancy/secondary network operation. Dante and AES67 are not inferred or modeled for this record."
+    },
+    {
+      "id": "gpio-1",
+      "label": "GPIO 1",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-2"] },
+      "signals": [{ "id": "gpio-1-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 1 maps to pin 2. Official electrical notes specify 3.3 V, 5 mA and a 127 ohm series resistor for GPIO 1-4."
+    },
+    {
+      "id": "gpio-2",
+      "label": "GPIO 2",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-3"] },
+      "signals": [{ "id": "gpio-2-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 2 maps to pin 3. Official electrical notes specify 3.3 V, 5 mA and a 127 ohm series resistor for GPIO 1-4."
+    },
+    {
+      "id": "gpio-3",
+      "label": "GPIO 3",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-5"] },
+      "signals": [{ "id": "gpio-3-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 3 maps to pin 5. Official electrical notes specify 3.3 V, 5 mA and a 127 ohm series resistor for GPIO 1-4."
+    },
+    {
+      "id": "gpio-4",
+      "label": "GPIO 4",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-6"] },
+      "signals": [{ "id": "gpio-4-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 4 maps to pin 6. Official electrical notes specify 3.3 V, 5 mA and a 127 ohm series resistor for GPIO 1-4."
+    },
+    {
+      "id": "gpio-5",
+      "label": "GPIO 5",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-8"] },
+      "signals": [{ "id": "gpio-5-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 5 maps to pin 8. Official electrical notes specify 3.3 V, 18 mA and a 127 ohm series resistor for GPIO 5-8."
+    },
+    {
+      "id": "gpio-6",
+      "label": "GPIO 6",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-13"] },
+      "signals": [{ "id": "gpio-6-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 6 maps to pin 13. Official electrical notes specify 3.3 V, 18 mA and a 127 ohm series resistor for GPIO 5-8."
+    },
+    {
+      "id": "gpio-7",
+      "label": "GPIO 7",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-14"] },
+      "signals": [{ "id": "gpio-7-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 7 maps to pin 14. Official electrical notes specify 3.3 V, 18 mA and a 127 ohm series resistor for GPIO 5-8."
+    },
+    {
+      "id": "gpio-8",
+      "label": "GPIO 8",
+      "direction": "bidirectional",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-16"] },
+      "signals": [{ "id": "gpio-8-signal", "name": "General-purpose control I/O", "direction": "bidirectional", "signal_type": "control", "signal_family": "gpio" }],
+      "notes": "GPIO 8 maps to pin 16. Official electrical notes specify 3.3 V, 18 mA and a 127 ohm series resistor for GPIO 5-8."
+    },
+    {
+      "id": "relay-1",
+      "label": "Relay 1",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-9", "gpio-pin-10", "gpio-pin-11"] },
+      "signals": [{ "id": "relay-1-contact", "name": "Relay contact output", "direction": "output", "signal_type": "control" }],
+      "notes": "NO maps to pin 9, COM to pin 10 and NC to pin 11. Official relay-rating sources conflict; no disputed rating is selected as canonical structured data."
+    },
+    {
+      "id": "gpio-aux-3v3",
+      "label": "GPIO auxiliary 3.3 V supply",
+      "direction": "output",
+      "connector": "pluggable-terminal-block",
+      "connector_gender": "receptacle",
+      "physical_connection": { "connector_id": "gpio-relay-terminal-block", "connection_point_ids": ["gpio-pin-1"] },
+      "signals": [{ "id": "gpio-aux-3v3-signal", "name": "GPIO auxiliary power", "direction": "output", "signal_type": "power", "signal_family": "dc-power", "signal_characteristics": { "voltage": { "value": 3.3, "unit": "volt" }, "current_max": { "value": 100, "unit": "milliampere" } } }],
+      "notes": "Auxiliary 3.3 V supply on pin 1. This is GPIO auxiliary power, not phantom power."
+    },
+    {
+      "id": "ac-power-input",
+      "label": "AC power input",
+      "direction": "input",
+      "connector": "iec-60320-c14",
+      "connector_gender": "receptacle",
+      "signals": [{ "id": "ac-power-signal", "name": "AC mains power", "direction": "input", "signal_type": "power", "signal_family": "ac-power" }]
+    }
+  ],
+  "communication_capabilities": [
+    {
+      "id": "q-lan-network-audio",
+      "type": "network_audio",
+      "protocol_family": "q-lan",
+      "media_type": "audio",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "redundant", "allowed_interface_ids": ["lan-a", "lan-b"] },
+      "notes": "Native Q-LAN network audio over the primary/secondary LAN pair. Dante and AES67 are not added because they are not documented as supported for this record."
+    },
+    {
+      "id": "network-control",
+      "type": "control",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "redundant", "allowed_interface_ids": ["lan-a", "lan-b"] },
+      "notes": "Q-SYS network control uses the redundant LAN pair."
+    },
+    {
+      "id": "network-monitoring",
+      "type": "management",
+      "direction": "bidirectional",
+      "interface_assignment": { "mode": "redundant", "allowed_interface_ids": ["lan-a", "lan-b"] },
+      "notes": "Network status, monitoring and fault reporting use the redundant LAN pair."
+    }
+  ],
+  "capabilities": [
+    { "id": "total-maximum-output", "name": "Total maximum output", "value": "up to 4000 W total maximum output", "notes": "Descriptive manufacturer statement only; Schema 3.8 does not model shared allocation or a capacity budget. This is not AC consumption or a per-channel operating point." },
+    { "id": "flexamp", "name": "FlexAmp", "notes": "Manufacturer feature for flexible/asymmetric channel power distribution; no runtime allocation or resource pool is modeled." },
+    { "id": "fast", "name": "FAST", "notes": "Flexible Amplifier Summing Technology supports documented bridge, parallel and bridge/parallel configurations; FAST is not modeled as a topology." }
+  ],
+  "functional_behavior": {
+    "dependencies": [
+      { "id": "qsys-core-operation", "kind": "operational-system-dependency", "notes": "Official sources state that native Q-SYS peripherals and endpoints, including CX-Q Series, require a connected Q-SYS Core to configure and operate; previously configured standalone/failover operation is documented as an exception." }
+    ]
+  },
+  "amplifier_output_capabilities": [
+    {
+      "id": "independent",
+      "topology": "independent",
+      "member_groups": [["output-a"], ["output-b"], ["output-c"], ["output-d"], ["output-e"], ["output-f"], ["output-g"], ["output-h"]],
+      "operating_points": [
+        { "id": "independent-70v", "load": { "type": "constant_voltage", "voltage": { "value": 70, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 300, "unit": "watt" } }] },
+        { "id": "independent-100v", "load": { "type": "constant_voltage", "voltage": { "value": 100, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 300, "unit": "watt" } }] },
+        { "id": "independent-16ohm", "load": { "type": "low_impedance", "impedance": { "value": 16, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 150, "unit": "watt" } }] },
+        { "id": "independent-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 300, "unit": "watt" } }] },
+        { "id": "independent-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 300, "unit": "watt" } }] },
+        { "id": "independent-2ohm", "load": { "type": "low_impedance", "impedance": { "value": 2, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 800, "unit": "watt" } }, { "type": "continuous", "power": { "value": 300, "unit": "watt" } }] }
+      ],
+      "notes": "Independent/single-channel operation is explicitly Class 2 wiring in the Hardware User Manual FAST Channel Configuration Mode section."
+    },
+    {
+      "id": "bridge",
+      "topology": "bridge",
+      "member_groups": [["output-a", "output-b"], ["output-c", "output-d"], ["output-e", "output-f"], ["output-g", "output-h"]],
+      "operating_points": [
+        { "id": "bridge-140v", "load": { "type": "constant_voltage", "voltage": { "value": 140, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "bridge-200v", "load": { "type": "constant_voltage", "voltage": { "value": 200, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "bridge-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "bridge-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1400, "unit": "watt" } }, { "type": "continuous", "power": { "value": 400, "unit": "watt" } }] }
+      ],
+      "notes": "BTL/bridged operation is Class 3 wiring specifically in the 140 V and 200 V modes. The source states not to use BTL for 70 V or 100 V. 2 ohm BTL is NR and omitted."
+    },
+    {
+      "id": "parallel-2",
+      "topology": "parallel",
+      "member_groups": [["output-a", "output-b"], ["output-c", "output-d"], ["output-e", "output-f"], ["output-g", "output-h"]],
+      "operating_points": [
+        { "id": "parallel-2-70v", "load": { "type": "constant_voltage", "voltage": { "value": 70, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "parallel-2-100v", "load": { "type": "constant_voltage", "voltage": { "value": 100, "unit": "volt" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "parallel-2-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "parallel-2-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1250, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] },
+        { "id": "parallel-2-2ohm", "load": { "type": "low_impedance", "impedance": { "value": 2, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 600, "unit": "watt" } }] }
+      ],
+      "notes": "Parallel operation is explicitly Class 2 wiring in the Hardware User Manual FAST Channel Configuration Mode section."
+    },
+    {
+      "id": "parallel-3",
+      "topology": "parallel",
+      "member_groups": [["output-a", "output-b", "output-c"]],
+      "operating_points": [
+        { "id": "parallel-3-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 900, "unit": "watt" } }] },
+        { "id": "parallel-3-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 900, "unit": "watt" } }] },
+        { "id": "parallel-3-2ohm", "load": { "type": "low_impedance", "impedance": { "value": 2, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 900, "unit": "watt" } }] }
+      ],
+      "notes": "Parallel x3 is explicitly Class 2 wiring. The Hardware User Manual lists ABC and DEF; the specification sheet lists ABC and EFG. Only ABC is common to both detailed official sources, so DEF and EFG are intentionally omitted."
+    },
+    {
+      "id": "bridge-parallel",
+      "topology": "bridge_parallel",
+      "member_groups": [["output-a", "output-b", "output-c", "output-d"], ["output-e", "output-f", "output-g", "output-h"]],
+      "operating_points": [
+        { "id": "bridge-parallel-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 2500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1200, "unit": "watt" } }] },
+        { "id": "bridge-parallel-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 3000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1200, "unit": "watt" } }] }
+      ],
+      "notes": "Source-supported bridge/parallel configuration. The detailed sources describe its 8 ohm and 4 ohm points; 2 ohm is NR and omitted. The source wiring distinction is condition-dependent: BTL 140 V/200 V is Class 3, while applicable class for a specific bridge/parallel operating condition is not generalized here."
+    },
+    {
+      "id": "parallel-4",
+      "topology": "parallel",
+      "member_groups": [["output-a", "output-b", "output-c", "output-d"], ["output-e", "output-f", "output-g", "output-h"]],
+      "operating_points": [
+        { "id": "parallel-4-8ohm", "load": { "type": "low_impedance", "impedance": { "value": 8, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 1000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1000, "unit": "watt" } }] },
+        { "id": "parallel-4-4ohm", "load": { "type": "low_impedance", "impedance": { "value": 4, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 2000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1200, "unit": "watt" } }] },
+        { "id": "parallel-4-2ohm", "load": { "type": "low_impedance", "impedance": { "value": 2, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 2500, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1200, "unit": "watt" } }] },
+        { "id": "parallel-4-1ohm", "load": { "type": "low_impedance", "impedance": { "value": 1, "unit": "ohm" } }, "ratings": [{ "type": "maximum", "power": { "value": 3000, "unit": "watt" } }, { "type": "continuous", "power": { "value": 1200, "unit": "watt" } }] }
+      ],
+      "notes": "Parallel x4 operation is explicitly Class 2 wiring."
+    }
+  ],
+  "documentation": [
+    { "type": "product_page", "uri": "https://www.qsys.com/products-solutions/q-sys/audio-network-amplifiers/cx-q-series/cx-q-4k8/", "title": "Q-SYS CX-Q 4K8 product page", "language": "en" },
+    { "type": "manual", "uri": "https://www.qsys.com/resource-files/productresources/amp/cx-q/q_amp_cxqseries_usermanual.pdf", "title": "CX-Q Series Network Amplifiers Hardware User Manual, TD-001661-01-C", "language": "en" },
+    { "type": "datasheet", "uri": "https://www.qsys.com/resource-files/productresources/amp/cx-q/8_channel/q_rep_specs_cxq_8ch.pdf", "title": "CX-Q Series 8-channel Specification Sheet", "language": "en" },
+    { "type": "other", "uri": "https://www.qsys.com/resource-files/productresources/amp/cx-q/8_channel/cx-q_4k8/q_amp_cxq_4k8_archengspecs.txt", "title": "Architect and Engineering Specifications - CX-Q 4K8", "language": "en" }
+  ],
+  "internal_knowledge": {
+    "known_restrictions": [
+      "A generic pluggable-terminal-block identity does not establish exact mating compatibility.",
+      "The product requires a Q-SYS Core for configuration and operation, with the documented previously configured standalone/failover exception.",
+      "Official dimensions conflict: width 482 mm vs 483 mm and depth 406 mm vs 381 mm; width and depth are omitted from structured hardware dimensions and retained here as source-conflict notes.",
+      "Official relay-rating sources conflict; no disputed relay rating is selected as canonical structured data.",
+      "The detailed official sources conflict on the parallel x3 groups: manual ABC/DEF versus specification sheet ABC/EFG. Only ABC is encoded."
+    ],
+    "notes": "The structured record preserves source-supported facts without inferring connector mating, virtual bridge/parallel interfaces, FAST runtime allocation, shared power pools, or unsupported Dante/AES67 capabilities. The official product-page headline can describe 1000 W per channel generically, but the detailed load-specific 2 ohm CX-Q 4K8 operating point is 800 W maximum and 300 W continuous as documented in the specification sheet and Hardware User Manual."
+  }
+}
