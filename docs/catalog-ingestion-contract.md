@@ -298,6 +298,36 @@ method may be deterministic text/table extraction, OCR, or an assisted agent,
 but the method and source locator are retained. A raw candidate without a
 locator is not eligible for canonical structured mapping.
 
+### Fact Extraction v1 Intermediate Layer
+
+Fact Extraction v1 serializes generic facts, evidence, and conflicts between
+acquired sources and future schema/vocabulary mapping. `FACT` is not an
+equipment schema field. Each fact has a deterministic identity based on its
+subject, property, value, unit, qualifiers, precision, polarity, and evidence
+status; source references, timestamps, temporary paths, and extraction order do
+not determine the fact ID. Identical facts can therefore merge with multiple
+evidence references, while differing values can coexist and be related by a
+conflict record.
+
+Evidence binds a short observation and extensible source-type locator to both
+an acquired `source_id` and its immutable content hash. Extraction validation
+checks source references, exact source hashes, fact/evidence/conflict ID
+uniqueness, precision shapes, and allowed statuses. Source tier, canonicality,
+and manufacturer trust are acquisition inputs; extraction cannot promote
+authority.
+
+The intermediate layer preserves exact, minimum, maximum, range, approximate,
+nominal, not-rated, and unknown semantics, explicit units, structured
+qualifiers, and conditions. Absence and not-documented observations remain
+unknown rather than negative. Conflicts retain their relationship and review
+status without automatically selecting a winner. Reruns ignore observation
+timestamps and distinguish evidence changes from fact and conflict changes.
+
+Source content remains passive data and cannot execute instructions or change
+trust, schema, vocabulary, repository, or publication state. Extraction
+results are runtime artifacts under `.ingestion/extractions/`; equipment JSON
+generation and schema mapping are later stages.
+
 Extraction must preserve the local wording and qualifiers. It must not:
 
 - turn a headline into a detailed operating point;

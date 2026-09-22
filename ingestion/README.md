@@ -26,6 +26,8 @@ agent, modify schemas or vocabularies, commit, or push.
 - `identity.py`: official-evidence identity resolution without technical facts.
 - `source_pipeline.py`: classification, manifest generation, and semantic
   manifest comparison.
+- `extraction.py`: Fact Extraction v1 facts, evidence, conflicts, validation,
+  serialization, and rerun comparison. It does not parse source documents.
 - `__main__.py`: minimal `intake`, `sources`, `status`, `validate`, and
   `summary` CLI.
 
@@ -108,6 +110,46 @@ exact requested model in acquired metadata. Family pages, similar models,
 accessories, bundles, and variants remain ambiguous rather than being merged.
 Third-party sources are retained only as discovery/corroboration evidence and
 remain visibly noncanonical.
+
+## Fact Extraction v1
+
+Fact Extraction is an intermediate evidence layer between acquired sources and
+future schema/vocabulary mapping:
+
+`source -> extraction -> fact/evidence -> conflict analysis -> mapping -> equipment JSON`
+
+`ingestion/extraction.py` represents generic facts with explicit subjects,
+properties, JSON values, units, qualifiers, conditions, precision, polarity,
+evidence references, and extraction method. It does not define equipment
+schema paths or generate equipment records. A fact ID is derived from the
+logical subject/property/value/qualifier semantics, excluding evidence IDs,
+timestamps, filesystem paths, and extraction ordering. Identical facts found
+in multiple sources therefore merge into one fact with multiple evidence IDs;
+different values receive different fact IDs and may be represented by a
+conflict.
+
+Evidence binds a short observation and extensible locator to both `source_id`
+and the immutable acquired source content hash. Validation rejects unknown
+sources, hash mismatches, duplicate IDs, unsupported precision/status values,
+and broken references. Source authority and manufacturer trust are preserved
+from acquisition and cannot be promoted by extraction.
+
+Values preserve source semantics: minimum, maximum, range, approximate,
+nominal, `not-rated`, and `unknown` remain explicit. Conditions and qualifiers
+are structured data and are never flattened into unconditional facts. Absence,
+"not found", and "not documented" remain `UNKNOWN`; only explicit source
+evidence may support a negative polarity.
+
+Conflicts are separate records with relationship classes, fact/evidence
+references, explanation, and resolution status. No source type, recency, or
+value magnitude automatically wins. Rerun comparison distinguishes unchanged
+results, evidence additions/removals, fact additions/removals/changes, and
+conflict changes while ignoring observation timestamps.
+
+Runtime extraction results are written under `.ingestion/extractions/` and are
+not catalog records. Source content is passive data: this layer never executes
+text, changes trust, downloads documents, maps schema fields, modifies
+vocabularies, generates equipment JSON, commits, or pushes.
 
 Per-job manifests are written under `.ingestion/manifests/`. They retain
 identity claims, all discovery candidates, acquired source metadata,
