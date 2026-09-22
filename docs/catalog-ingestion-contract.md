@@ -603,6 +603,13 @@ dimension, result, and precision; it does not replace or mutate the source
 Fact. Semantic bindings are declarations of preservation, not a copy of the
 complete Fact and not a final equipment JSON fragment.
 
+Value bindings may also declare path-scoped `collection_semantics` entries with
+`order` set to `ordered` or `unordered`. The default is ordered. Only declared
+unordered paths are canonically sorted, with duplicate members preserved;
+other arrays retain their source order. This metadata belongs to Mapping
+preservation semantics and does not make Unit Normalization or the Schema
+globally treat arrays as unordered.
+
 Structural validation checks shape and references. Semantic-preservation
 validation checks that explicit Fact dimensions are accounted for. Engineering
 target selection remains the planner/review responsibility: the validator does

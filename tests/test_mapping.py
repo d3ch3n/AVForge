@@ -1,4 +1,5 @@
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,7 +22,7 @@ from ingestion.mapping import (
 from ingestion.unit_normalization import normalize_fact
 
 
-VOCABS = {"connectors": {"hdmi-type-a"}, "units": {"watt", "kilogram"}}
+VOCABS = {"connectors": {"hdmi-type-a"}, "units": {"watt", "kilogram", "ampere", "milliampere", "volt"}}
 
 
 def source():
@@ -110,7 +111,187 @@ def mapping_result(result, mappings, **kwargs):
     return build_mapping_result(extraction_result=result, mappings=mappings, vocabularies=VOCABS, observed_at=observed_at, **kwargs)
 
 
+def collection_fixture(members, sequence):
+    result = extraction({
+        "subject": {"kind": "equipment", "local_id": "fixture.equipment"},
+        "property": "collection_fixture",
+        "value": {
+            "members": members,
+            "quantity": {"unit": "g", "value": 794},
+            "sequence": sequence,
+        },
+        "qualifiers": {},
+    })
+    fact = result["facts"][0]
+    target_value = make_target(segments=[{"kind": "property", "name": "collection_fixture"}])
+    normalized = normalize_fact(
+        fact,
+        dimension="mass",
+        canonical_unit="kilogram",
+        canonical_unit_ids=VOCABS["units"],
+        value_path=("quantity",),
+    )
+    return result, fact, target_value, normalized
+
+
 class MappingRecordTests(unittest.TestCase):
+    def test_nested_unordered_normalization_binding_reproduces_order_failure(self):
+        fact_value = {
+            "downstream_output_capability": {
+                "current": {
+                    "semantic_role": "supported_total",
+                    "unit": "milliampere",
+                    "value": 300,
+                },
+                "resource": "USB",
+                "scope": {
+                    "exhaustive": True,
+                    "kind": "aggregate",
+                    "member_ids_resolved": False,
+                    "named_members": ["all USB A ports", "USB C port"],
+                },
+                "voltage": {"unit": "volt", "value": 5},
+            },
+            "upstream_power_mode": {
+                "class": "4",
+                "delivery": "PoE",
+                "standard": "802.3at",
+                "type": "2",
+            },
+        }
+        result = extraction({
+            "subject": {"kind": "equipment", "local_id": "qsys.nvm-302e"},
+            "property": "power_operating_case",
+            "value": fact_value,
+            "qualifiers": {},
+        })
+        fact_value_record = result["facts"][0]
+        normalized = normalize_fact(
+            fact_value_record,
+            dimension="current",
+            canonical_unit="ampere",
+            canonical_unit_ids=VOCABS["units"],
+            value_path=("downstream_output_capability", "current"),
+        )
+        target_value = make_target(
+            segments=[
+                {"kind": "property", "name": "power"},
+                {"kind": "property", "name": "operating_cases"},
+                {"kind": "entity", "entity_kind": "electrical_operating_case", "key": {"kind": "semantic_id", "value": "usb-poe-at"}},
+            ],
+            schema_ref="#/$defs/electricalOperatingCase",
+        )
+        bindings = make_semantic_bindings(
+            fact_value_record,
+            target=target_value,
+            normalization=normalized,
+            collection_semantics=[{"path": ["downstream_output_capability", "scope", "named_members"], "order": "unordered"}],
+        )
+        built = mapping_result(result, [make_mapping(fact_id=fact_value_record["fact_id"], evidence_ids=fact_value_record["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)])
+        self.assertEqual(built["summary"]["mapping_count"], 1)
+
+    def test_authoritative_nvm_power_facts_validate_with_unordered_members(self):
+        extraction_document = json.loads(Path(".ingestion/extractions/job-dd68d134838298d6188a.f11df7cccc204d0e3b64.json").read_text())
+        for fact_id, case_id in (
+            ("fact-52cd85c2d8cf5a2959d68218", "usb-poe-at"),
+            ("fact-c269a624c1d3d48bb29946b7", "usb-poe-bt"),
+        ):
+            isolated = copy.deepcopy(extraction_document)
+            fact_value = next(fact for fact in isolated["facts"] if fact["fact_id"] == fact_id)
+            isolated["facts"] = [fact_value]
+            isolated["evidence"] = [evidence for evidence in isolated["evidence"] if evidence["evidence_id"] in fact_value["evidence_ids"]]
+            isolated["conflicts"] = []
+            target_value = make_target(
+                segments=[
+                    {"kind": "property", "name": "power"},
+                    {"kind": "property", "name": "operating_cases"},
+                    {"kind": "entity", "entity_kind": "electrical_operating_case", "key": {"kind": "semantic_id", "value": case_id}},
+                ],
+                schema_ref="#/$defs/electricalOperatingCase",
+            )
+            normalized = normalize_fact(
+                fact_value,
+                dimension="current",
+                canonical_unit="ampere",
+                canonical_unit_ids=VOCABS["units"],
+                value_path=("downstream_output_capability", "current"),
+            )
+            bindings = make_semantic_bindings(
+                fact_value,
+                target=target_value,
+                normalization=normalized,
+                collection_semantics=[{"path": ["downstream_output_capability", "scope", "named_members"], "order": "unordered"}],
+            )
+            mapping = make_mapping(fact_id=fact_id, evidence_ids=fact_value["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+            built = build_mapping_result(extraction_result=isolated, mappings=[mapping], vocabularies=VOCABS, observed_at="2026-09-22T00:00:00+00:00")
+            self.assertEqual(built["summary"]["state_counts"]["STRUCTURED"], 1)
+
+    def test_unordered_collection_reordering_is_preserved(self):
+        result, fact, target_value, normalized = collection_fixture(["alpha", "beta"], ["first", "second"])
+        bindings = make_semantic_bindings(
+            fact,
+            target=target_value,
+            normalization=normalized,
+            collection_semantics=[{"path": ["members"], "order": "unordered"}],
+        )
+        built = mapping_result(result, [make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)])
+        self.assertEqual(built["summary"]["mapping_count"], 1)
+
+    def test_ordered_collection_reordering_is_rejected(self):
+        result, fact, target_value, normalized = collection_fixture(["alpha", "beta"], ["first", "second"])
+        bindings = make_semantic_bindings(fact, target=target_value, normalization=normalized)
+        value_binding = next(binding for binding in bindings if binding["dimension"] == "value")
+        value_binding["normalization"]["source_value"]["members"] = ["beta", "alpha"]
+        mapping = make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping])
+
+    def test_unordered_collection_preserves_multiplicity(self):
+        result, fact, target_value, normalized = collection_fixture(["alpha", "alpha", "beta"], ["first", "second"])
+        bindings = make_semantic_bindings(
+            fact,
+            target=target_value,
+            normalization=normalized,
+            collection_semantics=[{"path": ["members"], "order": "unordered"}],
+        )
+        value_binding = next(binding for binding in bindings if binding["dimension"] == "value")
+        value_binding["normalization"]["source_value"]["members"] = ["alpha", "beta"]
+        mapping = make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping])
+
+    def test_collection_semantics_are_path_local(self):
+        result, fact, target_value, normalized = collection_fixture(["alpha", "beta"], ["first", "second"])
+        bindings = make_semantic_bindings(
+            fact,
+            target=target_value,
+            normalization=normalized,
+            collection_semantics=[{"path": ["members"], "order": "unordered"}],
+        )
+        value_binding = next(binding for binding in bindings if binding["dimension"] == "value")
+        value_binding["normalization"]["source_value"]["members"] = ["beta", "alpha"]
+        value_binding["normalization"]["source_value"]["sequence"] = ["second", "first"]
+        mapping = make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping])
+
+        value_binding["normalization"]["source_value"]["sequence"] = ["first", "second"]
+        mapping = make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+        self.assertEqual(mapping_result(result, [mapping])["summary"]["mapping_count"], 1)
+
+    def test_unordered_object_collection_is_deterministic(self):
+        result, fact, target_value, normalized = collection_fixture([{"name": "alpha", "rank": 1}, {"name": "beta", "rank": 2}], ["first", "second"])
+        bindings = make_semantic_bindings(
+            fact,
+            target=target_value,
+            normalization=normalized,
+            collection_semantics=[{"path": ["members"], "order": "unordered"}],
+        )
+        value_binding = next(binding for binding in bindings if binding["dimension"] == "value")
+        value_binding["normalization"]["source_value"]["members"].reverse()
+        mapping = make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state="STRUCTURED", target=target_value, semantic_bindings=bindings)
+        self.assertEqual(mapping_result(result, [mapping])["summary"]["mapping_count"], 1)
+
     def test_target_is_structured_and_subject_sensitive(self):
         self.assertNotEqual(target("output-1"), target("output-2"))
         self.assertEqual(target()["segments"][1]["key"]["kind"], "local_id")

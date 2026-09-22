@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -54,6 +55,52 @@ def _canonical(value: Any, *, unordered_lists: bool = False) -> Any:
     return value
 
 
+def _collection_semantics(value: Iterable[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    declarations = [] if value is None else list(value)
+    normalized = []
+    for declaration in declarations:
+        _require(isinstance(declaration, dict), "collection_semantics must contain objects")
+        _require(set(declaration) == {"path", "order"}, "collection_semantics has unsupported fields")
+        path = declaration.get("path")
+        _require(isinstance(path, list) and bool(path), "collection_semantics.path is required")
+        _require(all(isinstance(part, str) and bool(part.strip()) for part in path), "collection_semantics.path must contain property names")
+        _require(declaration.get("order") in {"ordered", "unordered"}, "collection_semantics.order is invalid")
+        normalized.append({"path": list(path), "order": declaration["order"]})
+    normalized.sort(key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
+    paths = [json.dumps(item["path"], separators=(",", ":")) for item in normalized]
+    _require(len(paths) == len(set(paths)), "collection_semantics paths must be unique")
+    return normalized
+
+
+def _canonicalize_collections(value: Any, semantics: list[dict[str, Any]]) -> Any:
+    result = deepcopy(value)
+    for declaration in semantics:
+        current = result
+        for part in declaration["path"]:
+            _require(isinstance(current, dict) and part in current, "collection_semantics.path does not identify a value")
+            current = current[part]
+        _require(isinstance(current, list), "collection_semantics.path must identify an array")
+        if declaration["order"] == "unordered":
+            current.sort(key=lambda item: json.dumps(_canonical(item), sort_keys=True, separators=(",", ":")))
+    return result
+
+
+def _canonical_bindings(bindings: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    canonical = []
+    for binding in bindings:
+        _require(isinstance(binding, dict), "semantic binding must be an object")
+        item = deepcopy(binding)
+        semantics = _collection_semantics(item.get("collection_semantics"))
+        if semantics and "normalization" in item:
+            normalization = item["normalization"]
+            _require(isinstance(normalization, dict), "normalization must be an object")
+            for key in ("source_value", "canonical_value"):
+                if key in normalization:
+                    normalization[key] = _canonicalize_collections(normalization[key], semantics)
+        canonical.append(_canonical(item))
+    return sorted(canonical, key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
+
+
 def _digest(value: Any, prefix: str) -> str:
     payload = json.dumps(_canonical(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return prefix + hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
@@ -97,11 +144,13 @@ def make_semantic_bindings(
     target: dict[str, Any],
     normalization: dict[str, Any] | None = None,
     indirect_subject_association: bool = False,
+    collection_semantics: Iterable[dict[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     """Declare which material Fact dimensions a STRUCTURED target preserves."""
 
     validate_fact_record(fact)
     target_digest = _digest(target, "target-")
+    normalized_collection_semantics = _collection_semantics(collection_semantics)
     bindings: list[dict[str, Any]] = []
 
     def add(dimension: str, source: Any, **extra: Any) -> None:
@@ -118,14 +167,17 @@ def make_semantic_bindings(
     if indirect_subject_association:
         subject_binding["subject_association"] = "declared"
     add("subject", fact["subject"], **subject_binding)
-    add("value", fact.get("value"), **({"normalization": normalization} if normalization is not None else {}))
+    value_extra = {"normalization": normalization} if normalization is not None else {}
+    if normalized_collection_semantics:
+        value_extra["collection_semantics"] = normalized_collection_semantics
+    add("value", fact.get("value"), **value_extra)
     if "unit" in fact:
         add("unit", fact["unit"])
     add("precision", fact["semantic_precision"])
     add("qualifiers", _fact_qualifiers(fact))
     add("conditions", _fact_conditions(fact))
     add("polarity", {"polarity": fact["polarity"], "evidence_status": fact["evidence_status"]})
-    return _canonical(bindings, unordered_lists=True)
+    return _canonical_bindings(bindings)
 
 
 def _target_proves_subject(target: dict[str, Any], subject: dict[str, Any]) -> bool:
@@ -180,10 +232,24 @@ def _validate_semantic_bindings(
             else:
                 _require(binding.get("subject_association") == "declared", "Mapping target does not prove Fact subject scope")
                 allowed.add("subject_association")
+        collection_semantics = _collection_semantics(binding.get("collection_semantics"))
+        if dimension == "value":
+            if "collection_semantics" in binding:
+                _require(binding["collection_semantics"] == collection_semantics, "collection_semantics is not canonical")
+            _canonicalize_collections(fact.get("value"), collection_semantics)
+            allowed.add("collection_semantics")
+        elif "collection_semantics" in binding:
+            raise ValueError("collection_semantics is only valid for value bindings")
         if dimension == "value" and "normalization" in binding:
             normalization = binding["normalization"]
             _require("units" in vocabularies, "units vocabulary is required for normalization")
-            validate_normalized_value(normalization, fact, canonical_unit_ids=vocabularies["units"], rules=EXACT_CONVERSION_RULES)
+            normalized_fact = deepcopy(fact)
+            normalized_fact["value"] = _canonicalize_collections(fact.get("value"), collection_semantics)
+            normalized_value = deepcopy(normalization)
+            for key in ("source_value", "canonical_value"):
+                if key in normalized_value:
+                    normalized_value[key] = _canonicalize_collections(normalized_value[key], collection_semantics)
+            validate_normalized_value(normalized_value, normalized_fact, canonical_unit_ids=vocabularies["units"], rules=EXACT_CONVERSION_RULES)
             allowed.add("normalization")
         _require(set(binding) <= allowed, "semantic binding has unsupported fields")
 
@@ -351,7 +417,7 @@ def make_mapping(
     if reason is not None:
         record["reason"] = reason
     if semantic_bindings is not None:
-        record["semantic_bindings"] = _canonical(list(semantic_bindings), unordered_lists=True)
+        record["semantic_bindings"] = _canonical_bindings(semantic_bindings)
     identity = _mapping_identity(record)
     record["mapping_id"] = _digest(identity, "mapping-")
     return record
@@ -369,7 +435,7 @@ def _mapping_identity(mapping: dict[str, Any]) -> dict[str, Any]:
         "conflict_ids": sorted(mapping.get("conflict_ids", [])),
     }
     if "semantic_bindings" in mapping:
-        identity["semantic_bindings"] = _canonical(mapping["semantic_bindings"], unordered_lists=True)
+        identity["semantic_bindings"] = _canonical_bindings(mapping["semantic_bindings"])
     return identity
 
 
