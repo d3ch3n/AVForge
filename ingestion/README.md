@@ -140,6 +140,15 @@ are structured data and are never flattened into unconditional facts. Absence,
 "not found", and "not documented" remain `UNKNOWN`; only explicit source
 evidence may support a negative polarity.
 
+`unit_normalization.py` derives exact canonical unit representations for
+Mapping without changing a Fact. The source value and unit remain authoritative
+and traceable through the original `fact_id`; the derived value records the
+explicit conversion rule, canonical vocabulary unit, dimension, precision,
+qualifiers, and conditions. Version 1 contains only the registered exact
+`g`-to-`kilogram` mass conversion and fails closed for unsupported or
+dimension-incompatible conversions. Equipment Generation consumes validated
+normalized mappings and does not invent conversions.
+
 Conflicts are separate records with relationship classes, fact/evidence
 references, explanation, and resolution status. No source type, recency, or
 value magnitude automatically wins. Rerun comparison distinguishes unchanged

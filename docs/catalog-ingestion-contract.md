@@ -385,6 +385,31 @@ polarity `UNKNOWN` or `NOT_APPLICABLE`, must not contain `value` or `unit`.
 `range` requires numeric `minimum` and `maximum` bounds with minimum less than
 or equal to maximum. `minimum` and `maximum` require one numeric value.
 
+### 10.1 Unit Normalization Boundary
+
+Fact Extraction preserves the source measurement, including its original value,
+unit, precision, qualifiers, conditions, and `fact_id`. Unit Normalization is a
+separate deterministic derivation used when Mapping requires a canonical unit:
+
+`SOURCE VALUE + SOURCE UNIT -> EXPLICIT EXACT RULE -> CANONICAL VALUE + CANONICAL UNIT`
+
+The source and canonical representations are semantically equivalent, but the
+source Fact is never mutated and normalization never creates another Fact or
+Evidence record. A normalized value retains the original value/unit, canonical
+value/unit, conversion rule identity, physical dimension, source `fact_id`,
+precision, qualifiers, and conditions. The canonical unit must already exist in
+the authoritative units vocabulary.
+
+`SOURCE VALUE != CANONICAL VALUE` is expected when the source unit is not the
+canonical unit; equivalence is established only by the recorded exact rule.
+
+Normalization v1 permits only explicitly registered mathematically exact rules.
+It rejects unknown units, missing rules, incompatible dimensions, non-canonical
+target units, forged results, and precision changes. Exact decimal arithmetic is
+used for derived values; binary floating-point approximation is not used to
+establish conversion results. Equipment Generation consumes the validated
+derived representation and must not perform ad hoc unit conversion.
+
 ## 11. Provenance and Evidence
 
 An evidence record links a fact to one acquired source:
