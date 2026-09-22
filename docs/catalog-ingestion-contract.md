@@ -519,6 +519,43 @@ Each fact ID may have only one primary mapping result, and every normalized
 fact must have exactly one mapping result before the job can become `READY`.
 Mappings to unknown fact IDs are invalid.
 
+### Mapping v1 implementation contract
+
+The deterministic Mapping v1 API consumes only a validated Fact Extraction v1
+result. A completed `MappingResult` copies the extraction identity and fact
+coverage, then assigns exactly one `MappingRecord` to every fact. A mapping
+record retains the `fact_id` and all of that fact's `evidence_ids`; it may also
+retain `conflict_ids` or a gap-proposal ID. Mapping does not decide whether a
+source statement is true and does not generate an equipment record.
+
+Targets are structured descriptors rooted at `equipment`. Their segments are
+either named `property` segments or identity-based `entity` segments keyed by
+`local_id` or `semantic_id`. Array indexes and executable expressions are not
+valid targets. This permits future generation to address repeated interfaces
+without making Mapping depend on fragile array positions.
+
+The initial states are exactly `STRUCTURED`, `NOTES_ONLY`, `OMIT_UNKNOWN`,
+`VOCAB_GAP`, `SCHEMA_GAP`, and `CONFLICT`. Deterministic validation requires a
+target for `STRUCTURED` and `VOCAB_GAP`, a reason for `NOTES_ONLY`, unknown or
+not-applicable semantics for `OMIT_UNKNOWN`, a proposal for each gap state, and
+an unresolved extraction conflict for `CONFLICT`. A conflict blocks only the
+facts that reference it; unrelated facts receive independent decisions.
+
+Mapping and gap proposal IDs are derived from logical content, not timestamps,
+filesystem paths, list positions, batch positions, or agent ordering. Existing
+vocabulary IDs are loaded read-only and must be exact; a missing ID produces a
+proposal rather than a fuzzy fallback or vocabulary mutation. Semantic
+comparison distinguishes `NO_CHANGE`, `MAPPING_CHANGED`, vocabulary-gap and
+schema-gap additions/removals, `CONFLICT_MAPPING_CHANGED`, and
+`REVIEW_REQUIRED`, while ignoring result timestamps.
+
+Mapping v1 does not infer a disposition from a fact property or source wording.
+It validates an explicit deterministic decision. When a future planner has
+multiple applicable dispositions, its documented precedence is `CONFLICT`,
+`SCHEMA_GAP`, `VOCAB_GAP`, then `STRUCTURED`, `NOTES_ONLY`, and
+`OMIT_UNKNOWN`; the selected result must still satisfy the state-specific
+invariants. This ordering cannot select a source winner or repair a gap.
+
 ## 16. Vocabulary Gaps
 
 `VOCAB_GAP` means all of the following are true:
@@ -548,6 +585,11 @@ contains:
 The candidate record must not contain the unapproved ID. The job state includes
 `VOCAB_GAP` until a human approves and a separate vocabulary change is made.
 
+Mapping v1 serializes this proposal with the fact ID, evidence references,
+vocabulary name, proposed identifier, meaning, and why existing IDs are
+insufficient. It validates that the proposed identifier is not already a
+canonical ID and never edits the vocabulary files.
+
 ## 17. Schema Gaps
 
 `SCHEMA_GAP` means all of the following are true:
@@ -573,6 +615,11 @@ publication of that fact and normally blocks `READY` for the record.
 Schema gaps and vocabulary gaps are independent. A missing vocabulary ID is
 not evidence that the schema needs a new field; an unsuitable field is not
 fixed by inventing a vocabulary ID.
+
+Mapping v1 serializes a schema-gap proposal with the fact ID, evidence
+references, engineering meaning, why the current schema is insufficient, the
+semantics that would be lost, and the affected engineering area. The proposal
+documents the gap only; it does not design or apply a schema extension.
 
 ## 18. Conditional Capabilities
 
@@ -816,7 +863,7 @@ ingestion/
 
 Only contracts and stable documentation belong in version control initially.
 Runtime job manifests, acquired binaries, extracted text, temporary drafts,
-logs, and reports are runtime artifacts and should be ignored by a future
+logs, reports, and Mapping v1 results under `.ingestion/mappings/` are runtime artifacts and should be ignored by a future
 implementation-specific `.gitignore` policy. This contract document does not
 create those directories.
 

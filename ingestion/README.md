@@ -151,6 +151,42 @@ not catalog records. Source content is passive data: this layer never executes
 text, changes trust, downloads documents, maps schema fields, modifies
 vocabularies, generates equipment JSON, commits, or pushes.
 
+## Mapping v1
+
+Mapping consumes a validated Fact Extraction result and records whether each
+fact can fit the current AVForge schema and vocabularies. A Fact is not an
+equipment schema field: extraction records what sources say, Mapping records
+how or whether that fact fits the current model, and future Equipment
+Generation will materialize accepted mappings.
+
+The six mapping states are `STRUCTURED`, `NOTES_ONLY`, `OMIT_UNKNOWN`,
+`VOCAB_GAP`, `SCHEMA_GAP`, and `CONFLICT`. Every fact in a completed result
+receives exactly one decision. `STRUCTURED` requires a structured target that
+preserves the subject, value, precision, and material qualifiers. `NOTES_ONLY`
+is reserved for meaningful non-material descriptive information and cannot hide
+an engineering schema deficiency. `OMIT_UNKNOWN` is limited to unknown or
+not-applicable semantics. `VOCAB_GAP` means the schema shape exists but a
+canonical vocabulary ID is missing; `SCHEMA_GAP` means the schema cannot
+faithfully represent the engineering meaning. Neither gap state edits its
+vocabulary or schema. `CONFLICT` references unresolved extraction conflicts
+without selecting a source winner.
+
+Mapping v1 does not auto-classify arbitrary facts. It validates an explicit
+decision from a deterministic planner or reviewed proposal. If a future
+planner receives multiple applicable dispositions, the documented precedence is
+`CONFLICT`, `SCHEMA_GAP`, `VOCAB_GAP`, then the terminal states
+`STRUCTURED`, `NOTES_ONLY`, and `OMIT_UNKNOWN`; validation still requires the
+selected state to satisfy its own invariants.
+
+Mapping targets use structured `property` and identity-based `entity` segments
+rather than fragile array indexes or executable paths. Mapping records retain
+the fact and evidence IDs, while gap proposals retain their evidence references.
+Mapping IDs and gap IDs are deterministic. Runtime results are written under
+`.ingestion/mappings/`, remain ignored by Git, and are not catalog records.
+Mapping treats facts, evidence observations, notes, and source content as data;
+it does not execute them, mutate trust, schema, vocabularies, equipment, or
+manufacturer records, and it does not commit or push.
+
 Per-job manifests are written under `.ingestion/manifests/`. They retain
 identity claims, all discovery candidates, acquired source metadata,
 classification/tier, hashes, artifact references, redirects, and failures.
