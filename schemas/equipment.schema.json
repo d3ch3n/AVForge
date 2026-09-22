@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.8",
+  "title": "AVForge Equipment v3.9",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -20,6 +20,11 @@
     "interfaces": {
       "type": "array",
       "items": { "$ref": "#/$defs/interface" },
+      "uniqueItems": true
+    },
+    "applications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/application" },
       "uniqueItems": true
     },
     "physical_connectors": {
@@ -98,6 +103,45 @@
       "type": "string",
       "minLength": 1,
       "description": "Canonical unit identity from the AVForge Vocabulary. This schema validates only the structural string; existence in the external Vocabulary is validated separately. Display symbols are not stored here."
+    },
+    "conditionReference": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "value": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "applicationStateAssertion": {
+      "type": "object",
+      "required": ["state", "value"],
+      "properties": {
+        "state": { "enum": ["installed", "available"] },
+        "value": { "type": "boolean" },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/conditionReference" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "application": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "state_assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/applicationStateAssertion" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
     },
     "physicalConnector": {
       "type": "object",

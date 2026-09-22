@@ -206,6 +206,135 @@ def _validate_ids(
     return ids_by_type
 
 
+def _condition_key(condition: dict[str, Any]) -> tuple[str, str]:
+    return condition["kind"], condition["value"]
+
+
+def _validate_applications(
+    equipment: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    """Validate Application Model v1 identity and state semantics."""
+    equipment_id = equipment.get("id", "<missing-id>")
+    applications = equipment.get("applications", [])
+    if not isinstance(applications, list):
+        return
+
+    application_ids: set[str] = set()
+    for application_index, application in enumerate(applications):
+        if not isinstance(application, dict):
+            continue
+        application_path = f"applications[{application_index}]"
+        application_id = application.get("id")
+        if isinstance(application_id, str):
+            if application_id in application_ids:
+                _issue(
+                    issues,
+                    "DUPLICATE_APPLICATION_ID",
+                    ERROR,
+                    equipment_id,
+                    f"{application_path}.id",
+                    "Application IDs must be unique within an equipment record.",
+                    referenced_id=application_id,
+                )
+            application_ids.add(application_id)
+
+    for application_index, application in enumerate(applications):
+        if not isinstance(application, dict):
+            continue
+        application_path = f"applications[{application_index}]"
+        assertions = application.get("state_assertions", [])
+        if not isinstance(assertions, list):
+            continue
+        seen_assertions: dict[tuple[str, tuple[tuple[str, str], ...]], bool] = {}
+        for assertion_index, assertion in enumerate(assertions):
+            if not isinstance(assertion, dict):
+                continue
+            assertion_path = f"{application_path}.state_assertions[{assertion_index}]"
+            state = assertion.get("state")
+            value = assertion.get("value")
+            if state not in {"installed", "available"}:
+                _issue(
+                    issues,
+                    "INVALID_APPLICATION_STATE",
+                    ERROR,
+                    equipment_id,
+                    f"{assertion_path}.state",
+                    "Application Model v1 state must be 'installed' or 'available'.",
+                    referenced_id=state if isinstance(state, str) else None,
+                )
+                continue
+            if not isinstance(value, bool):
+                _issue(
+                    issues,
+                    "INVALID_APPLICATION_STATE_VALUE",
+                    ERROR,
+                    equipment_id,
+                    f"{assertion_path}.value",
+                    "Application state assertion value must be boolean.",
+                )
+                continue
+
+            conditions = assertion.get("conditions")
+            if conditions is None:
+                normalized_conditions: tuple[tuple[str, str], ...] = ()
+            elif not isinstance(conditions, list):
+                continue
+            elif not conditions:
+                _issue(
+                    issues,
+                    "EMPTY_APPLICATION_CONDITIONS",
+                    ERROR,
+                    equipment_id,
+                    f"{assertion_path}.conditions",
+                    "Empty application conditions must be omitted.",
+                )
+                continue
+            else:
+                condition_keys: list[tuple[str, str]] = []
+                for condition_index, condition in enumerate(conditions):
+                    if not isinstance(condition, dict):
+                        continue
+                    kind = condition.get("kind")
+                    condition_value = condition.get("value")
+                    if not isinstance(kind, str) or not kind or not isinstance(condition_value, str) or not condition_value:
+                        continue
+                    condition_key = _condition_key(condition)
+                    if condition_key in condition_keys:
+                        _issue(
+                            issues,
+                            "DUPLICATE_APPLICATION_CONDITION",
+                            ERROR,
+                            equipment_id,
+                            f"{assertion_path}.conditions[{condition_index}]",
+                            "Application conditions must be unique after canonicalization.",
+                        )
+                    condition_keys.append(condition_key)
+                    if kind == "application" and condition_value not in application_ids:
+                        _issue(
+                            issues,
+                            "INVALID_APPLICATION_REFERENCE",
+                            ERROR,
+                            equipment_id,
+                            f"{assertion_path}.conditions[{condition_index}].value",
+                            "Application condition must reference an application ID in the same equipment record.",
+                            referenced_id=condition_value,
+                        )
+                normalized_conditions = tuple(sorted(condition_keys))
+
+            assertion_key = (state, normalized_conditions)
+            if assertion_key in seen_assertions:
+                code = "CONTRADICTORY_APPLICATION_ASSERTION" if seen_assertions[assertion_key] != value else "DUPLICATE_APPLICATION_ASSERTION"
+                message = (
+                    "Application assertions with the same state and conditions cannot disagree."
+                    if code == "CONTRADICTORY_APPLICATION_ASSERTION"
+                    else "Duplicate application state assertions are not allowed."
+                )
+                _issue(issues, code, ERROR, equipment_id, assertion_path, message)
+            else:
+                seen_assertions[assertion_key] = value
+
+
 def _external_reference(
     target_id: Any,
     path: str,
@@ -694,6 +823,7 @@ def validate_records(
     issues: list[dict[str, Any]] = []
     for record in records:
         ids_by_type = _validate_ids(record, issues)
+        _validate_applications(record, issues)
         _validate_references(record, ids_by_type, equipment_index, issues)
         _validate_vocabularies(record, vocabularies, issues)
         _validate_electrical_variants(record, issues)

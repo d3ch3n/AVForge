@@ -548,5 +548,69 @@ class EquipmentSchemaV38Tests(unittest.TestCase):
             self.assert_valid(json.loads(path.read_text()))
 
 
+class ApplicationModelSchemaV39Tests(unittest.TestCase):
+    def assert_valid(self, record):
+        self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
+
+    def assert_invalid(self, record):
+        self.assertTrue(list(VALIDATOR.iter_errors(record)))
+
+    def application_record(self, applications):
+        record = load_record("equipment/qsys/core-8-flex.json")
+        record["applications"] = applications
+        return record
+
+    def test_application_identity_without_state_is_valid(self):
+        self.assert_valid(self.application_record([{"id": "nvm-e1", "name": "NVM-E1"}]))
+
+    def test_application_states_and_opaque_version_are_valid(self):
+        self.assert_valid(self.application_record([{
+            "id": "nvm-e1",
+            "name": "NVM-E1",
+            "version": "R2",
+            "state_assertions": [
+                {"state": "installed", "value": True},
+                {"state": "available", "value": False},
+            ],
+        }]))
+
+    def test_multiple_applications_and_conditional_application_reference_are_valid(self):
+        self.assert_valid(self.application_record([
+            {"id": "nvm-e1", "name": "NVM-E1"},
+            {"id": "nvm-e2", "name": "NVM-E2", "state_assertions": [{
+                "state": "available",
+                "value": True,
+                "conditions": [{"kind": "application", "value": "nvm-e1"}],
+            }]},
+        ]))
+
+    def test_empty_applications_is_valid(self):
+        self.assert_valid(self.application_record([]))
+
+    def test_application_required_fields_are_enforced(self):
+        for application in ({"name": "NVM-E1"}, {"id": "nvm-e1"}, {"id": "", "name": "NVM-E1"}, {"id": "nvm-e1", "name": ""}):
+            self.assert_invalid(self.application_record([application]))
+
+    def test_application_states_are_closed_and_boolean(self):
+        for state in ("licensed", "selected", "active", "unknown"):
+            self.assert_invalid(self.application_record([{"id": "app", "name": "App", "state_assertions": [{"state": state, "value": True}]}]))
+        self.assert_invalid(self.application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "installed", "value": "true"}]}]))
+
+    def test_application_condition_shape_is_strict(self):
+        valid = {"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True}]}
+        for condition in ({"kind": "", "value": "x"}, {"kind": "license", "value": ""}, {"kind": "license"}, {"kind": "license", "value": "x", "extra": True}):
+            application = copy.deepcopy(valid)
+            application["state_assertions"][0]["conditions"] = [condition]
+            self.assert_invalid(self.application_record([application]))
+
+    def test_application_version_is_opaque_but_non_empty(self):
+        self.assert_valid(self.application_record([{"id": "app", "name": "App", "version": "2026.4"}]))
+        self.assert_invalid(self.application_record([{"id": "app", "name": "App", "version": ""}]))
+
+    def test_application_assertion_rejects_unexpected_properties(self):
+        application = {"id": "app", "name": "App", "state_assertions": [{"state": "installed", "value": True, "notes": "x"}]}
+        self.assert_invalid(self.application_record([application]))
+
+
 if __name__ == "__main__":
     unittest.main()

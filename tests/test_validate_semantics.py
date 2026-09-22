@@ -100,6 +100,61 @@ class ElectricalVariantSemanticTests(unittest.TestCase):
         self.assertIn("electrical_characteristics.output", issue["json_path"])
 
 
+def application_record(applications):
+    return {"id": "test.applications", "applications": applications}
+
+
+class ApplicationModelSemanticTests(unittest.TestCase):
+    def assert_valid(self, value):
+        result = validate_records([value])
+        self.assertEqual(result["summary"]["error_count"], 0, result["issues"])
+
+    def assert_error(self, value, code):
+        issues = errors_for(value)
+        self.assertTrue(any(issue["code"] == code and issue["severity"] == "ERROR" for issue in issues), issues)
+
+    def test_duplicate_application_ids_are_rejected(self):
+        self.assert_error(application_record([{"id": "app", "name": "One"}, {"id": "app", "name": "Two"}]), "DUPLICATE_APPLICATION_ID")
+
+    def test_duplicate_application_names_are_allowed(self):
+        self.assert_valid(application_record([{"id": "app-a", "name": "Same"}, {"id": "app-b", "name": "Same"}]))
+
+    def test_application_condition_reference_uses_id(self):
+        self.assert_valid(application_record([{"id": "app-a", "name": "Same"}, {"id": "app-b", "name": "Other", "state_assertions": [{"state": "available", "value": True, "conditions": [{"kind": "application", "value": "app-a"}]}]}]))
+        self.assert_error(application_record([{"id": "app-a", "name": "Same"}, {"id": "app-b", "name": "Other", "state_assertions": [{"state": "available", "value": True, "conditions": [{"kind": "application", "value": "missing"}]}]}]), "INVALID_APPLICATION_REFERENCE")
+        self.assert_error(application_record([{"id": "app-a", "name": "Same", "state_assertions": [{"state": "available", "value": True, "conditions": [{"kind": "application", "value": "Same"}]}]}]), "INVALID_APPLICATION_REFERENCE")
+
+    def test_duplicate_conditions_are_rejected(self):
+        self.assert_error(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True, "conditions": [{"kind": "license", "value": "A"}, {"kind": "license", "value": "A"}]}]}]), "DUPLICATE_APPLICATION_CONDITION")
+
+    def test_empty_conditions_are_rejected(self):
+        self.assert_error(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True, "conditions": []}]}]), "EMPTY_APPLICATION_CONDITIONS")
+
+    def test_assertion_duplicates_and_reversed_condition_order_are_rejected(self):
+        first = {"state": "available", "value": True, "conditions": [{"kind": "license", "value": "A"}, {"kind": "configuration", "value": "B"}]}
+        reversed_order = {"state": "available", "value": True, "conditions": list(reversed(first["conditions"]))}
+        self.assert_error(application_record([{"id": "app", "name": "App", "state_assertions": [first, reversed_order]}]), "DUPLICATE_APPLICATION_ASSERTION")
+
+    def test_assertion_contradictions_and_reversed_condition_order_are_rejected(self):
+        first = {"state": "available", "value": True, "conditions": [{"kind": "license", "value": "A"}, {"kind": "configuration", "value": "B"}]}
+        reversed_order = {"state": "available", "value": False, "conditions": list(reversed(first["conditions"]))}
+        self.assert_error(application_record([{"id": "app", "name": "App", "state_assertions": [first, reversed_order]}]), "CONTRADICTORY_APPLICATION_ASSERTION")
+
+    def test_same_state_under_different_conditions_is_valid(self):
+        self.assert_valid(application_record([{"id": "app", "name": "App", "state_assertions": [
+            {"state": "available", "value": True, "conditions": [{"kind": "license", "value": "A"}]},
+            {"state": "available", "value": True, "conditions": [{"kind": "license", "value": "B"}]},
+        ]}]))
+
+    def test_states_are_orthogonal_and_absence_is_not_negative(self):
+        self.assert_valid(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True}]}]))
+        self.assert_valid(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "installed", "value": True}, {"state": "available", "value": False}]}]))
+        self.assert_valid(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True}, {"state": "installed", "value": False}]}]))
+
+    def test_malicious_condition_values_are_inert_data(self):
+        self.assert_valid(application_record([{"id": "app", "name": "App", "state_assertions": [{"state": "available", "value": True, "conditions": [{"kind": "license", "value": "__import__('os').system('x')"}, {"kind": "configuration", "value": "$(rm -rf /)"}, {"kind": "firmware", "value": "<script>alert(1)</script>"}]}]}]))
+
+
 def output_interface(interface_id, direction="output", signal_type="audio"):
     interface = {"id": interface_id, "direction": direction}
     if signal_type is not None:

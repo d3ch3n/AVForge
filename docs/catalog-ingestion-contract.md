@@ -493,7 +493,7 @@ Rules:
 - Unit conversion is allowed only when the source value and conversion are
   exact and the original semantic qualifier is retained. Conversion is not a
   license to remove `minimum`, `maximum`, or `approximate`.
-- If current Schema 3.8 cannot express the qualifier faithfully, the fact is
+- If current Schema 3.9 cannot express the qualifier faithfully, the fact is
   `NOTES_ONLY`, `OMIT_UNKNOWN`, or a gap issue; it is not rounded into a
   misleading measurement.
 
@@ -651,7 +651,7 @@ canonical ID and never edits the vocabulary files.
 1. The equipment exposes a meaningful engineering fact.
 2. The fact matters to catalog modeling, compatibility, safety, capacity, or
    future load/reporting behavior.
-3. Current Schema 3.8 cannot represent it faithfully.
+3. Current Schema 3.9 cannot represent it faithfully.
 4. Notes-only treatment would materially reduce engineering correctness.
 
 Schema gap examples may include a shared capacity budget, a condition set not
@@ -678,7 +678,7 @@ documents the gap only; it does not design or apply a schema extension.
 ## 18. Conditional Capabilities
 
 The intermediate ledger preserves conditions as first-class data even when
-Schema 3.8 cannot structure them:
+Schema 3.9 cannot structure them:
 
 ```json
 {

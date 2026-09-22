@@ -1,5 +1,48 @@
 # Decisões do Modelo de Dados
 
+## Application Model v1 (Schema 3.9)
+
+`applications` é uma coleção opcional de personalidades de software ou
+aplicações conhecidas para o modelo de equipamento. A ausência da coleção não
+afirma que nenhuma aplicação exista.
+
+Cada aplicação possui `id` estável e local ao equipamento, `name` legível e
+opcionalmente `version`. O `id` é a referência de máquina e não depende da
+posição no array; `name` não é uma chave referencial. `version` é uma string
+opaca, sem validação ou ordenação SemVer.
+
+`state_assertions` é opcional: uma aplicação pode ser conhecida sem que seu
+estado seja conhecido. A versão 1 possui somente os estados `installed` e
+`available`, ambos com valor booleano. A ausência de uma asserção significa
+`UNKNOWN`; `false` exige evidência explícita. `available` significa que a
+aplicação pode ser disponibilizada ou usada no equipamento, e não a
+disponibilidade de uma capability de comunicação.
+
+`licensed`, `selected` e `active` não pertencem ao Application Model v1.
+Licenças continuam sendo condições ou modifiers externos; seleção pertence a
+uma futura camada de configuração/instância; atividade pertence a runtime.
+Aplicações não duplicam capabilities, capacities, módulos físicos ou features
+de firmware.
+
+Uma asserção pode possuir `conditions`, uma lista opcional de referências
+passivas `{ "kind": "...", "value": "..." }`. A lista vazia deve ser
+omitida. A ordem não possui significado, valores não são normalizados por
+case ou executados, e referências duplicadas são inválidas. Para
+`kind: "application"`, `value` deve ser exatamente um `applications[].id` do
+mesmo equipamento. `kind: "license"` permanece uma referência opaca; não há
+objeto de licença nem entrada de vocabulário nesta versão.
+
+A identidade semântica da asserção é `(application_id, state, conditions)`;
+`value` não participa da chave. Asserções duplicadas ou contraditórias para a
+mesma chave são erros. Não há inferência entre `installed` e `available`, e
+nenhuma inferência de ciclo de vida é feita.
+
+O modelo é de catálogo: “pré-instalado neste modelo” é uma afirmação válida;
+“está atualmente executando” não é. A arquitetura de Mapping 1.1,
+Fact Extraction, Unit Normalization e Compatibility Analyzer permanece
+inalterada. Capacidades e capacidades condicionais continuam nas estruturas
+existentes.
+
 ## Escopo
 
 `equipment.schema.json` define um modelo universal de equipamento AV, em vez de um schema dedicado a um fabricante ou categoria. Campos específicos podem ser acomodados em `capabilities`, `extensions` e `custom_fields`, preservando um núcleo comum e IDs estáveis para relações futuras. O schema não contém campos específicos do Q-SYS.
