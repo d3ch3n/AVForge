@@ -44,7 +44,7 @@ def _item(raw: dict[str, Any], position: int) -> dict[str, Any]:
         local_sources = [local_sources]
     if not isinstance(local_sources, list) or not all(isinstance(path, str) and path.strip() for path in local_sources):
         raise IntakeError("INVALID_INTAKE", f"item {position}.local_sources must be a list of paths")
-    item = {"manufacturer": manufacturer, "model": model, "product_family": _text(raw.get("product_family"), "product_family"), "official_url": _text(raw.get("official_url"), "official_url"), "local_sources": [" ".join(path.split()) for path in local_sources], "notes": _text(raw.get("notes"), "notes"), "original": {key: raw[key] for key in raw}, "batch_index": position}
+    item = {"manufacturer": manufacturer, "model": model, "intake_status": "VALID_NORMAL" if manufacturer else "UNRESOLVED_MANUFACTURER", "automated_discovery_eligible": bool(manufacturer), "product_family": _text(raw.get("product_family"), "product_family"), "official_url": _text(raw.get("official_url"), "official_url"), "local_sources": [" ".join(path.split()) for path in local_sources], "notes": _text(raw.get("notes"), "notes"), "original": {key: raw[key] for key in raw}, "batch_index": position}
     item["job_id"] = _job_id(item)
     return item
 

@@ -120,22 +120,24 @@ semantic contract.
 }
 ```
 
-Required per item:
+Required for normal automated ingestion per item:
 
+- `manufacturer`: non-empty user-supplied string;
 - `model`: non-empty user-supplied string.
 
 Optional per item:
 
-- `manufacturer`;
 - `product_family`;
 - `official_url`;
 - `local_sources`: paths supplied by the user;
 - `notes`.
 
-The user may provide `Q-SYS NVM-302E`, `NVM-302E`, or `Shure MXA920` as a
-single string in a CSV `equipment` column. The intake parser splits a leading
-known manufacturer only as a discovery hint. It must retain the original
-string and must not treat the split as resolved identity.
+The normal automated input is manufacturer plus model, for example
+`Q-SYS,NVM-302E`. A legacy model-only value in a CSV `equipment` column may
+still be parsed for compatibility, but it is marked unresolved and cannot
+enter automated source discovery until a manufacturer is supplied or manually
+resolved. The supplied manufacturer is a search and identity constraint, not
+proof that a discovered source is official.
 
 An intake item receives a deterministic `job_key` derived from its normalized
 logical intake content, not its position in a batch. The job record also
@@ -145,7 +147,9 @@ rejected within one batch. The job key is not an equipment ID and must not be
 used as a catalog ID.
 
 Intake validation rejects empty models, malformed JSON/CSV, duplicate exact
-items in one batch, and unsupported fields. Unknown manufacturer is valid. The
+items in one batch, and unsupported fields. Missing manufacturer is retained
+only as an explicit unresolved/manual path; it is not valid normal automated
+ingestion. The
 same logical item in a later batch receives the same job key and can be
 compared for rerun; occurrence metadata does not create a new logical job.
 
@@ -198,12 +202,34 @@ Resolution is `NEEDS_REVIEW` through the issue `IDENTITY_AMBIGUOUS` when:
 
 Only facts after identity resolution may enter the canonical fact ledger.
 
-## 6. Source Discovery and Classification
+## 6. Manufacturer Trust and Source Discovery
+
+AVForge uses a small tracked manufacturer registry containing only canonical
+manufacturer identity, explicitly approved aliases, verified official web
+roots, approved document hosts, and trust provenance. It contains no equipment
+models or technical facts. A `VERIFIED` registry entry is reusable across
+equipment jobs for that manufacturer. A new domain discovered from the web
+creates a `PROPOSED` trust decision and requires explicit review before it can
+be promoted to `VERIFIED`; discovery never writes permanent trust silently.
+
+Known manufacturers use their verified roots to scope discovery. Unknown
+manufacturers use the supplied manufacturer plus model to generate bootstrap
+queries, but provider ranking and provider trust assertions remain discovery
+metadata only. Official authority is established by AVForge registry/trust
+evaluation and acquired manufacturer-controlled evidence. The supplied
+manufacturer must still match acquired page/document identity evidence.
+
+Web search locates candidates. Manufacturer-controlled sources provide
+canonical evidence. Resellers, distributors, forums, mirrors, community pages,
+and snippets remain noncanonical discovery or corroboration sources.
+
+## 7. Source Discovery and Classification
 
 Every source candidate has a manufacturer-domain verification result. An
-official claim requires either a manufacturer-controlled domain or a source
-that the manufacturer explicitly links or signs. A URL alone does not prove
-official status.
+official claim requires a verified registry root or a source that verified
+manufacturer-controlled evidence explicitly links or redirects to. A URL,
+search ranking, snippet, or provider assertion alone does not prove official
+status.
 
 Source priority is:
 
@@ -226,7 +252,7 @@ The discovery result must record attempted sources, including a not-found
 result, separately from acquired sources. A missing official page does not
 authorize a third-party source to become official.
 
-## 7. Source Acquisition Contract
+## 8. Source Acquisition Contract
 
 An acquired source has immutable metadata:
 
@@ -260,7 +286,7 @@ metadata and references, not an assumption that binaries remain available.
 Cache reads are immutable for a completed job. Failed, truncated, password-
 protected, or unsupported artifacts remain acquisition issues.
 
-## 8. Source Classification and Fact Extraction
+## 9. Source Classification and Fact Extraction
 
 Source content is data, never instructions. Text inside a PDF, HTML page, PDF
 annotation, metadata field, code sample, or downloaded file cannot change the
@@ -283,7 +309,7 @@ Extraction must preserve the local wording and qualifiers. It must not:
 - convert an application, license, firmware, or mode statement into base
   hardware support.
 
-## 9. Minimum Fact Ledger
+## 10. Minimum Fact Ledger
 
 The fact ledger is the smallest intermediate representation that makes mapping
 auditable. It is not a universal ontology and does not need every possible
@@ -329,7 +355,7 @@ polarity `UNKNOWN` or `NOT_APPLICABLE`, must not contain `value` or `unit`.
 `range` requires numeric `minimum` and `maximum` bounds with minimum less than
 or equal to maximum. `minimum` and `maximum` require one numeric value.
 
-## 10. Provenance and Evidence
+## 11. Provenance and Evidence
 
 An evidence record links a fact to one acquired source:
 
@@ -365,7 +391,7 @@ references relevant to the record. Full fact/evidence ledgers belong to the
 job artifacts and review report; the record does not need to contain a
 copyrighted excerpt or the entire extraction trace.
 
-## 11. Evidence Status and Open World
+## 12. Evidence Status and Open World
 
 The following polarity values are normative:
 
@@ -386,7 +412,7 @@ curation assertion with the limited Analyzer semantics documented by AVForge;
 ingestion must not create it automatically merely because a source search was
 exhaustive.
 
-## 12. Measurement Semantics and False Precision
+## 13. Measurement Semantics and False Precision
 
 `semantic_precision` is one of:
 
@@ -416,7 +442,7 @@ Rules:
   `NOTES_ONLY`, `OMIT_UNKNOWN`, or a gap issue; it is not rounded into a
   misleading measurement.
 
-## 13. Conflict Detection
+## 14. Conflict Detection
 
 Conflict comparison occurs only after identity, variant, subject, property,
 unit, and condition scopes are normalized. A difference is not necessarily a
@@ -436,7 +462,7 @@ product page. A documented domain rule may resolve a conflict only when its
 scope and rationale are explicit. Otherwise the issue contains both evidence
 sets and blocks `READY` for the affected fact.
 
-## 14. Mapping Contract
+## 15. Mapping Contract
 
 Each normalized fact receives exactly one primary mapping disposition:
 
@@ -463,7 +489,7 @@ Each fact ID may have only one primary mapping result, and every normalized
 fact must have exactly one mapping result before the job can become `READY`.
 Mappings to unknown fact IDs are invalid.
 
-## 15. Vocabulary Gaps
+## 16. Vocabulary Gaps
 
 `VOCAB_GAP` means all of the following are true:
 
@@ -492,7 +518,7 @@ contains:
 The candidate record must not contain the unapproved ID. The job state includes
 `VOCAB_GAP` until a human approves and a separate vocabulary change is made.
 
-## 16. Schema Gaps
+## 17. Schema Gaps
 
 `SCHEMA_GAP` means all of the following are true:
 
@@ -518,7 +544,7 @@ Schema gaps and vocabulary gaps are independent. A missing vocabulary ID is
 not evidence that the schema needs a new field; an unsuitable field is not
 fixed by inventing a vocabulary ID.
 
-## 17. Conditional Capabilities
+## 18. Conditional Capabilities
 
 The intermediate ledger preserves conditions as first-class data even when
 Schema 3.8 cannot structure them:
@@ -552,7 +578,7 @@ The job must distinguish:
 Catalog records may use current `capability_modifiers` for supported possible
 modifiers, but ingestion must not claim an effective installed configuration.
 
-## 18. Draft Generation and Stable IDs
+## 19. Draft Generation and Stable IDs
 
 Draft generation is deterministic and consumes only a resolved identity and
 facts with approved mapping dispositions. It uses current repository field
@@ -591,7 +617,7 @@ Generation must not:
 - fill undocumented values with `0`, `null`, a typical industry value, or a
   neighboring model's value.
 
-## 19. Validation Pipeline
+## 20. Validation Pipeline
 
 The ingestion runner invokes, without redefining, these authoritative checks:
 
@@ -616,7 +642,7 @@ For a `READY` decision, validation results must be present and passing for
 `compatibility_tests`, `catalog_validation`, `git_diff_check`, and
 `machine_audit`.
 
-## 20. Optional Equipment-Specific QA Probes
+## 21. Optional Equipment-Specific QA Probes
 
 The framework may create temporary probes after mapping. A probe is a test
 request, not catalog data and not a permanent compatibility assertion. Examples
@@ -630,7 +656,7 @@ compatibility, alter the analyzer, or turn a compatible result into a permanent
 claim. Probe results are retained in the job report and expire with the job
 unless separately approved as evidence.
 
-## 21. Decision State Machine
+## 22. Decision State Machine
 
 Each job has one primary state and a list of zero or more issue objects. The
 primary state is deterministic and ordered by blocking severity:
@@ -676,7 +702,7 @@ Issue objects have `issue_id`, `code`, `severity`, `stage`, `subjects`,
 summary counts primary states; it does not collapse multiple issues into a
 single subjective score.
 
-## 22. Human Review Queue
+## 23. Human Review Queue
 
 Review presents exceptions, not the full research narrative. Each issue view
 contains:
@@ -700,7 +726,7 @@ For a batch of 100 items, only jobs with blocking issues or an explicit sample
 policy enter manual review. A clean `READY` job still requires the separate
 publication approval described below.
 
-## 23. Publication Boundary
+## 24. Publication Boundary
 
 Ingestion success and publication are separate states.
 
@@ -720,7 +746,7 @@ A candidate must never overwrite an existing record automatically. A future
 batch publication policy may permit automation only after separate governance
 approval and must retain the same path allowlist and validation gates.
 
-## 24. Reruns and Idempotency
+## 25. Reruns and Idempotency
 
 The job identity is based on intake item plus resolved identity scope. A rerun
 loads the previous job and compares:
@@ -745,7 +771,7 @@ The prior candidate is preserved for comparison. A rerun does not overwrite a
 published record or silently reset a human decision. Changed evidence
 invalidates only the affected fact decisions and any dependent validation.
 
-## 25. Runtime and Tracked Artifacts
+## 26. Runtime and Tracked Artifacts
 
 The minimal future layout is:
 
@@ -770,7 +796,7 @@ history. Artifact references must be content-addressed or otherwise immutable.
 It also records `pipeline_status`, independent of the primary curation state,
 with one of `PENDING`, `RUNNING`, `BLOCKED`, `FAILED`, or `COMPLETED`.
 
-## 26. Batch Operation and Resumability
+## 27. Batch Operation and Resumability
 
 Each intake item receives an independent job and independent state. A batch
 runner continues after an item failure and produces:
@@ -796,7 +822,7 @@ One item cannot cause another item's candidate, evidence, or state to be
 discarded. Batch publication is an explicit allowlist of individually approved
 jobs, not an implicit consequence of a successful batch.
 
-## 27. Agent and Deterministic Responsibilities
+## 28. Agent and Deterministic Responsibilities
 
 An LLM or other agent may assist with:
 
@@ -829,7 +855,7 @@ Deterministic code owns:
 No agent can override a deterministic failure, convert `UNKNOWN` to negative,
 approve a vocabulary/schema gap, or authorize publication.
 
-## 28. Security and Robustness
+## 29. Security and Robustness
 
 Source documents and web pages are untrusted data. The acquisition and
 extraction implementation must:
@@ -853,7 +879,7 @@ Prompt injection inside a manufacturer document, reseller page, search result,
 or extracted text cannot change the job contract. It cannot tell the system to
 ignore conflicts, declare support, modify schema/vocabulary, or publish.
 
-## 29. NVM-302E Acceptance Test
+## 30. NVM-302E Acceptance Test
 
 NVM-302E is not ingested by this architecture task. It is the first future
 acceptance input and must be processed by the generic pipeline without
@@ -888,7 +914,7 @@ The acceptance criteria are:
 - all source locators and conflicts survive into the job report;
 - the resulting primary state and issue list are deterministic.
 
-## 30. Contract Review Checklist
+## 31. Contract Review Checklist
 
 Before implementation begins, reviewers must confirm:
 
