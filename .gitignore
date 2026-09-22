@@ -1,0 +1,3 @@
+.ingestion/
+__pycache__/
+*.py[cod]
