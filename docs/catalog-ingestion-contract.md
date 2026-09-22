@@ -493,6 +493,13 @@ Rules:
 - Unit conversion is allowed only when the source value and conversion are
   exact and the original semantic qualifier is retained. Conversion is not a
   license to remove `minimum`, `maximum`, or `approximate`.
+- The deterministic Unit Normalization registry includes
+  `current:milliampere-to-ampere`, which divides by 1000 using exact Decimal
+  arithmetic. Source Facts retain `milliampere`; generated Schema 3.10
+  quantities use canonical `ampere`.
+- Structured relational Facts are normalized only at an explicit mapped
+  `value_path`; normalization does not recursively rewrite unrelated nested
+  values such as voltage or PoE mode fields.
 - If current Schema 3.10 cannot express the qualifier faithfully, the fact is
   `NOTES_ONLY`, `OMIT_UNKNOWN`, or a gap issue; it is not rounded into a
   misleading measurement.
