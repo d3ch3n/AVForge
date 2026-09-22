@@ -12,14 +12,16 @@ from ingestion.mapping import (
     load_vocabularies,
     make_mapping,
     make_schema_gap,
+    make_semantic_bindings,
     make_target,
     make_vocab_gap,
     validate_mapping_result,
     write_mapping,
 )
+from ingestion.unit_normalization import normalize_fact
 
 
-VOCABS = {"connectors": {"hdmi-type-a"}, "units": {"watt"}}
+VOCABS = {"connectors": {"hdmi-type-a"}, "units": {"watt", "kilogram"}}
 
 
 def source():
@@ -98,6 +100,8 @@ def mapping_for(result, index=0, state="STRUCTURED", **kwargs):
     fact = result["facts"][index]
     if state == "STRUCTURED" and "target" not in kwargs:
         kwargs["target"] = target()
+    if state == "STRUCTURED" and "semantic_bindings" not in kwargs:
+        kwargs["semantic_bindings"] = make_semantic_bindings(fact, target=kwargs["target"])
     return make_mapping(fact_id=fact["fact_id"], evidence_ids=fact["evidence_ids"], state=state, **kwargs)
 
 
@@ -294,6 +298,115 @@ class MappingComparisonTests(unittest.TestCase):
         record = mapping_for(result, vocabulary_refs=[{"vocabulary": "connectors", "id": "hdmi-type-a"}])
         built = mapping_result(result, [record])
         self.assertEqual(built["mappings"][0]["vocabulary_refs"][0]["id"], "hdmi-type-a")
+
+
+class SemanticPreservationTests(unittest.TestCase):
+    def conditional_result(self, *, qualifiers=None, value=8, unit="watt"):
+        return extraction(known_fact(
+            property_name="capacity",
+            value=value,
+            unit=unit,
+            qualifiers=qualifiers or {"conditions": [{"kind": "application", "value": "mode-a"}]},
+        ))
+
+    def test_structured_mapping_requires_all_material_dimensions(self):
+        result = self.conditional_result()
+        built = mapping_result(result, [mapping_for(result)])
+        dimensions = {binding["dimension"] for binding in built["mappings"][0]["semantic_bindings"]}
+        self.assertEqual(dimensions, {"subject", "value", "unit", "precision", "qualifiers", "conditions", "polarity"})
+
+    def test_malformed_semantic_binding_is_rejected_as_validation_error(self):
+        result = self.conditional_result()
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=["not-an-object"])])
+
+    def test_missing_or_altered_condition_is_rejected(self):
+        result = self.conditional_result()
+        original = result["facts"][0]
+        valid_target = target()
+        valid = make_semantic_bindings(original, target=valid_target)
+        missing = [binding for binding in valid if binding["dimension"] != "conditions"]
+        record = mapping_for(result, semantic_bindings=missing)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [record])
+
+        altered_fact = copy.deepcopy(original)
+        altered_fact["qualifiers"]["conditions"][0]["value"] = "mode-b"
+        altered = make_semantic_bindings(altered_fact, target=valid_target)
+        record = mapping_for(result, semantic_bindings=altered)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [record])
+
+    def test_missing_or_altered_qualifier_and_precision_are_rejected(self):
+        result = self.conditional_result(qualifiers={"shared": True})
+        original = result["facts"][0]
+        target_value = target()
+        altered_fact = copy.deepcopy(original)
+        altered_fact["qualifiers"] = {}
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=make_semantic_bindings(altered_fact, target=target_value))])
+
+        altered_fact = copy.deepcopy(original)
+        altered_fact["semantic_precision"] = "minimum"
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=make_semantic_bindings(altered_fact, target=target_value))])
+
+    def test_polarity_value_and_unit_are_rejected_when_changed(self):
+        result = self.conditional_result()
+        original = result["facts"][0]
+        target_value = target()
+        for field, changed in (("polarity", "NEGATIVE_EXPLICIT"), ("value", 9), ("unit", "volt")):
+            altered_fact = copy.deepcopy(original)
+            altered_fact[field] = changed
+            with self.assertRaises(ValueError):
+                mapping_result(result, [mapping_for(result, semantic_bindings=make_semantic_bindings(altered_fact, target=target_value))])
+
+    def test_valid_exact_normalization_is_bound_and_forgery_is_rejected(self):
+        result = self.conditional_result(value=794, unit="g", qualifiers={})
+        original = result["facts"][0]
+        target_value = target()
+        normalized = normalize_fact(original, dimension="mass", canonical_unit="kilogram", canonical_unit_ids=VOCABS["units"])
+        bindings = make_semantic_bindings(original, target=target_value, normalization=normalized)
+        built = mapping_result(result, [mapping_for(result, semantic_bindings=bindings)])
+        self.assertTrue(any(binding["dimension"] == "value" and "normalization" in binding for binding in built["mappings"][0]["semantic_bindings"]))
+        forged = copy.deepcopy(normalized)
+        forged["canonical_value"] = "0.795"
+        forged_bindings = make_semantic_bindings(original, target=target_value, normalization=forged)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=forged_bindings)])
+
+        wrong_fact = copy.deepcopy(original)
+        wrong_fact["value"] = 795
+        wrong_fact_bindings = make_semantic_bindings(wrong_fact, target=target_value, normalization=normalized)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=wrong_fact_bindings)])
+
+        altered_precision = copy.deepcopy(normalized)
+        altered_precision["semantic_precision"] = "minimum"
+        altered_precision_bindings = make_semantic_bindings(original, target=target_value, normalization=altered_precision)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, semantic_bindings=altered_precision_bindings)])
+
+    def test_subject_scope_is_deterministic_when_target_proves_it(self):
+        result = self.conditional_result()
+        self.assertEqual(mapping_result(result, [mapping_for(result)])["summary"]["mapping_count"], 1)
+        root_target = make_target(segments=[{"kind": "property", "name": "capabilities"}])
+        bindings = make_semantic_bindings(result["facts"][0], target=root_target)
+        with self.assertRaises(ValueError):
+            mapping_result(result, [mapping_for(result, target=root_target, semantic_bindings=bindings)])
+
+    def test_semantic_binding_order_is_not_semantic(self):
+        result = self.conditional_result()
+        fact = result["facts"][0]
+        target_value = target()
+        bindings = make_semantic_bindings(fact, target=target_value)
+        first = mapping_for(result, semantic_bindings=bindings)
+        second = mapping_for(result, semantic_bindings=list(reversed(bindings)))
+        self.assertEqual(first["mapping_id"], second["mapping_id"])
+
+    def test_semantic_strings_are_passive_data(self):
+        result = self.conditional_result(qualifiers={"conditions": [{"kind": "mode", "value": "__import__('os').system('false')"}]})
+        self.assertEqual(mapping_result(result, [mapping_for(result)])["summary"]["mapping_count"], 1)
 
 
 if __name__ == "__main__":

@@ -13,10 +13,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from .extraction import validate_extraction
+from .extraction import validate_extraction, validate_fact_record
+from .unit_normalization import EXACT_CONVERSION_RULES, validate_normalized_value
 
 
-MAPPING_VERSION = "1.0"
+MAPPING_VERSION = "1.1"
+LEGACY_MAPPING_VERSION = "1.0"
 MAPPING_STATES = {
     "STRUCTURED",
     "NOTES_ONLY",
@@ -71,6 +73,119 @@ def _json_value(value: Any, name: str) -> None:
         json.dumps(value, ensure_ascii=True)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must be JSON serializable") from exc
+
+
+def _fact_conditions(fact: dict[str, Any]) -> Any:
+    if "conditions" in fact:
+        return fact["conditions"]
+    return fact.get("qualifiers", {}).get("conditions", [])
+
+
+def _fact_qualifiers(fact: dict[str, Any]) -> dict[str, Any]:
+    qualifiers = dict(fact.get("qualifiers", {}))
+    qualifiers.pop("conditions", None)
+    return qualifiers
+
+
+def _semantic_digest(value: Any) -> str:
+    return _digest(value, "semantic-")
+
+
+def make_semantic_bindings(
+    fact: dict[str, Any],
+    *,
+    target: dict[str, Any],
+    normalization: dict[str, Any] | None = None,
+    indirect_subject_association: bool = False,
+) -> list[dict[str, Any]]:
+    """Declare which material Fact dimensions a STRUCTURED target preserves."""
+
+    validate_fact_record(fact)
+    target_digest = _digest(target, "target-")
+    bindings: list[dict[str, Any]] = []
+
+    def add(dimension: str, source: Any, **extra: Any) -> None:
+        binding = {
+            "dimension": dimension,
+            "source_digest": _semantic_digest(source),
+            "target": "mapping_target",
+            "target_digest": target_digest,
+        }
+        binding.update(extra)
+        bindings.append(binding)
+
+    subject_binding: dict[str, Any] = {"target_scope": {"kind": fact["subject"]["kind"], "local_id": fact["subject"]["local_id"]}}
+    if indirect_subject_association:
+        subject_binding["subject_association"] = "declared"
+    add("subject", fact["subject"], **subject_binding)
+    add("value", fact.get("value"), **({"normalization": normalization} if normalization is not None else {}))
+    if "unit" in fact:
+        add("unit", fact["unit"])
+    add("precision", fact["semantic_precision"])
+    add("qualifiers", _fact_qualifiers(fact))
+    add("conditions", _fact_conditions(fact))
+    add("polarity", {"polarity": fact["polarity"], "evidence_status": fact["evidence_status"]})
+    return _canonical(bindings, unordered_lists=True)
+
+
+def _target_proves_subject(target: dict[str, Any], subject: dict[str, Any]) -> bool:
+    if subject["kind"] == "equipment":
+        return target.get("root") == "equipment"
+    for segment in target.get("segments", []):
+        if segment.get("kind") != "entity":
+            continue
+        key = segment.get("key", {})
+        if segment.get("entity_kind") == subject["kind"] and key.get("kind") == "local_id" and key.get("value") == subject["local_id"]:
+            return True
+    return False
+
+
+def _validate_semantic_bindings(
+    bindings: list[dict[str, Any]],
+    fact: dict[str, Any],
+    target: dict[str, Any],
+    vocabularies: dict[str, set[str]],
+) -> None:
+    expected_dimensions = {"subject", "value", "precision", "qualifiers", "conditions", "polarity"}
+    if "unit" in fact:
+        expected_dimensions.add("unit")
+    _require(isinstance(bindings, list), "STRUCTURED semantic_bindings must be an array")
+    _require(all(isinstance(binding, dict) for binding in bindings), "semantic binding must be an object")
+    _require({binding.get("dimension") for binding in bindings} == expected_dimensions, "STRUCTURED semantic bindings do not cover the Fact")
+    _require(len(bindings) == len(expected_dimensions), "STRUCTURED semantic bindings must be unique")
+    target_digest = _digest(target, "target-")
+    expected_sources = {
+        "subject": fact["subject"],
+        "value": fact.get("value"),
+        "precision": fact["semantic_precision"],
+        "qualifiers": _fact_qualifiers(fact),
+        "conditions": _fact_conditions(fact),
+        "polarity": {"polarity": fact["polarity"], "evidence_status": fact["evidence_status"]},
+    }
+    if "unit" in fact:
+        expected_sources["unit"] = fact["unit"]
+    for binding in bindings:
+        dimension = binding.get("dimension")
+        _require(dimension in expected_dimensions, "semantic binding dimension is invalid")
+        _require(binding.get("source_digest") == _semantic_digest(expected_sources[dimension]), "semantic binding does not match Fact")
+        _require(binding.get("target") == "mapping_target", "semantic binding target is invalid")
+        _require(binding.get("target_digest") == target_digest, "semantic binding targets a different Mapping target")
+        allowed = {"dimension", "source_digest", "target", "target_digest"}
+        if dimension == "subject":
+            scope = binding.get("target_scope")
+            _require(scope == {"kind": fact["subject"]["kind"], "local_id": fact["subject"]["local_id"]}, "subject semantic binding scope is invalid")
+            allowed.add("target_scope")
+            if _target_proves_subject(target, fact["subject"]):
+                _require("subject_association" not in binding, "direct subject target cannot use indirect association")
+            else:
+                _require(binding.get("subject_association") == "declared", "Mapping target does not prove Fact subject scope")
+                allowed.add("subject_association")
+        if dimension == "value" and "normalization" in binding:
+            normalization = binding["normalization"]
+            _require("units" in vocabularies, "units vocabulary is required for normalization")
+            validate_normalized_value(normalization, fact, canonical_unit_ids=vocabularies["units"], rules=EXACT_CONVERSION_RULES)
+            allowed.add("normalization")
+        _require(set(binding) <= allowed, "semantic binding has unsupported fields")
 
 
 def load_vocabularies(directory: Path) -> dict[str, set[str]]:
@@ -217,6 +332,7 @@ def make_mapping(
     schema_gap_id: str | None = None,
     conflict_ids: Iterable[str] = (),
     reason: str | None = None,
+    semantic_bindings: Iterable[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     record: dict[str, Any] = {
         "mapping_version": MAPPING_VERSION,
@@ -234,13 +350,15 @@ def make_mapping(
         record["schema_gap_id"] = schema_gap_id
     if reason is not None:
         record["reason"] = reason
+    if semantic_bindings is not None:
+        record["semantic_bindings"] = _canonical(list(semantic_bindings), unordered_lists=True)
     identity = _mapping_identity(record)
     record["mapping_id"] = _digest(identity, "mapping-")
     return record
 
 
 def _mapping_identity(mapping: dict[str, Any]) -> dict[str, Any]:
-    return {
+    identity = {
         "mapping_version": mapping.get("mapping_version"),
         "fact_id": mapping.get("fact_id"),
         "state": mapping.get("state"),
@@ -250,6 +368,9 @@ def _mapping_identity(mapping: dict[str, Any]) -> dict[str, Any]:
         "schema_gap_id": mapping.get("schema_gap_id"),
         "conflict_ids": sorted(mapping.get("conflict_ids", [])),
     }
+    if "semantic_bindings" in mapping:
+        identity["semantic_bindings"] = _canonical(mapping["semantic_bindings"], unordered_lists=True)
+    return identity
 
 
 def _fact_is_unknown(fact: dict[str, Any]) -> bool:
@@ -295,11 +416,13 @@ def validate_mapping_record(
     vocab_gap_ids: set[str],
     schema_gap_ids: set[str],
     vocabularies: dict[str, set[str]],
+    *,
+    legacy: bool = False,
 ) -> None:
     _require(isinstance(mapping, dict), "mapping must be an object")
     _non_empty(mapping.get("mapping_id"), "mapping.mapping_id")
     _non_empty(mapping.get("mapping_version"), "mapping.mapping_version")
-    _require(mapping["mapping_version"] == MAPPING_VERSION, "mapping_version is unsupported")
+    _require(mapping["mapping_version"] == (LEGACY_MAPPING_VERSION if legacy else MAPPING_VERSION), "mapping_version is unsupported")
     fact_id = mapping.get("fact_id")
     _require(fact_id in facts, "mapping references an unknown fact")
     fact = facts[fact_id]
@@ -320,7 +443,14 @@ def validate_mapping_record(
         _require(target is not None, "STRUCTURED mapping requires target")
         _require(not conflict_ids and not _fact_is_unknown(fact), "STRUCTURED mapping cannot hide unknowns or conflicts")
         _require(not mapping.get("vocab_gap_id") and not mapping.get("schema_gap_id"), "STRUCTURED mapping cannot reference a gap")
-    elif state == "NOTES_ONLY":
+        if legacy:
+            _require("semantic_bindings" not in mapping, "legacy Mapping records cannot carry semantic bindings")
+        else:
+            _validate_semantic_bindings(mapping.get("semantic_bindings"), fact, target, vocabularies)
+    else:
+        if not legacy:
+            _require("semantic_bindings" not in mapping, "only STRUCTURED mappings may carry semantic bindings")
+    if state == "NOTES_ONLY":
         _non_empty(mapping.get("reason"), "NOTES_ONLY.reason")
         _require(target is None, "NOTES_ONLY mapping cannot have target")
     elif state == "OMIT_UNKNOWN":
@@ -342,10 +472,16 @@ def validate_mapping_record(
     _require(mapping["mapping_id"] == _digest(_mapping_identity(mapping), "mapping-"), "mapping_id is not deterministic")
 
 
-def validate_mapping_result(result: dict[str, Any], vocabularies: dict[str, set[str]] | None = None) -> None:
+def validate_mapping_result(
+    result: dict[str, Any],
+    vocabularies: dict[str, set[str]] | None = None,
+    *,
+    allow_legacy: bool = False,
+) -> None:
     _require(isinstance(result, dict), "mapping result must be an object")
     _non_empty(result.get("mapping_version"), "mapping_version")
-    _require(result["mapping_version"] == MAPPING_VERSION, "mapping_version is unsupported")
+    legacy = result.get("mapping_version") == LEGACY_MAPPING_VERSION
+    _require(result["mapping_version"] == MAPPING_VERSION or (allow_legacy and legacy), "mapping_version is unsupported")
     _non_empty(result.get("job_id"), "job_id")
     _non_empty(result.get("fact_extraction_version"), "fact_extraction_version")
     _non_empty(result.get("fact_extraction_hash"), "fact_extraction_hash")
@@ -375,7 +511,7 @@ def validate_mapping_result(result: dict[str, Any], vocabularies: dict[str, set[
     _require(None not in schema_gap_ids and len(schema_gap_ids) == len(schema_gaps), "schema gap IDs must be unique")
     for gap in vocab_gaps: validate_gap_proposal(gap, "VOCAB_GAP", set(facts), evidence_by_fact, vocabularies)
     for gap in schema_gaps: validate_gap_proposal(gap, "SCHEMA_GAP", set(facts), evidence_by_fact, vocabularies)
-    for mapping in mappings: validate_mapping_record(mapping, facts, conflicts, vocab_gap_ids, schema_gap_ids, vocabularies)
+    for mapping in mappings: validate_mapping_record(mapping, facts, conflicts, vocab_gap_ids, schema_gap_ids, vocabularies, legacy=legacy)
     _require(isinstance(result.get("issues"), list), "mapping issues must be an array")
     for issue in result["issues"]:
         _non_empty(issue.get("issue_id"), "issue.issue_id"); _non_empty(issue.get("code"), "issue.code"); _non_empty(issue.get("message"), "issue.message")
@@ -429,7 +565,7 @@ def _semantic_result(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def compare_mappings(previous: dict[str, Any], current: dict[str, Any], vocabularies: dict[str, set[str]] | None = None) -> str:
-    validate_mapping_result(previous, vocabularies); validate_mapping_result(current, vocabularies)
+    validate_mapping_result(previous, vocabularies, allow_legacy=True); validate_mapping_result(current, vocabularies)
     if previous.get("fact_extraction_hash") != current.get("fact_extraction_hash") or previous.get("model_context") != current.get("model_context"):
         return "REVIEW_REQUIRED"
     old = {item["fact_id"]: item for item in previous["mappings"]}; new = {item["fact_id"]: item for item in current["mappings"]}

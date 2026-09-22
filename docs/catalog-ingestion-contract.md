@@ -581,6 +581,35 @@ multiple applicable dispositions, its documented precedence is `CONFLICT`,
 `OMIT_UNKNOWN`; the selected result must still satisfy the state-specific
 invariants. This ordering cannot select a source winner or repair a gap.
 
+### Semantic Preservation v1
+
+Mapping format `1.1` requires current `STRUCTURED` records to declare
+`semantic_bindings` for the Fact's subject, value, unit when present, precision,
+qualifiers, conditions, and polarity. Each binding fingerprints the relevant
+source dimension and the exact Mapping target. The validator recomputes those
+fingerprints from the referenced Fact, so removing or altering an explicit
+condition, qualifier, value, unit, precision, or polarity is rejected.
+
+An exact Unit Normalization result may be attached to the value binding. It is
+validated against the same `fact_id`, canonical vocabulary, conversion rule,
+dimension, result, and precision; it does not replace or mutate the source
+Fact. Semantic bindings are declarations of preservation, not a copy of the
+complete Fact and not a final equipment JSON fragment.
+
+Structural validation checks shape and references. Semantic-preservation
+validation checks that explicit Fact dimensions are accounted for. Engineering
+target selection remains the planner/review responsibility: the validator does
+not prove every domain-specific interpretation of a target. Subject bindings
+must at least match a target entity's deterministic local identity, while
+remaining signal or engineering meaning remains review-owned. A target whose
+relation to the Fact subject is indirect may declare that association
+explicitly; that declaration is validated as a binding but remains an
+engineering-review claim rather than automatic subject equivalence.
+
+Published Mapping `1.0` results do not contain semantic bindings. They are
+accepted only through an explicit legacy-validation mode and are not silently
+reinterpreted as Mapping `1.1`.
+
 ## 16. Vocabulary Gaps
 
 `VOCAB_GAP` means all of the following are true:

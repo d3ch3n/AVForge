@@ -187,6 +187,23 @@ planner receives multiple applicable dispositions, the documented precedence is
 `STRUCTURED`, `NOTES_ONLY`, and `OMIT_UNKNOWN`; validation still requires the
 selected state to satisfy its own invariants.
 
+Mapping format `1.1` adds `semantic_bindings` to current `STRUCTURED`
+decisions. Bindings declare deterministic fingerprints for the Fact's subject,
+value, unit, precision, qualifiers, conditions, and polarity, together with
+the target fingerprint. A binding may include a validated Unit Normalization
+result for an exact canonical unit. This is semantic-preservation validation,
+not a copy of the complete Fact and not Equipment Generation.
+
+Direct subject entities are checked against the Fact subject identity. Indirect
+subject relationships must be declared by the planner and remain review-owned;
+the validator does not infer arbitrary engineering equivalence.
+
+Agents or planners select engineering targets and propose bindings. The
+deterministic validator verifies that explicit Fact semantics are accounted for
+but does not prove every domain-specific target interpretation. Published
+Mapping `1.0` results are accepted only through explicit `allow_legacy=True`
+validation and are not silently treated as `1.1` records.
+
 Mapping targets use structured `property` and identity-based `entity` segments
 rather than fragile array indexes or executable paths. Mapping records retain
 the fact and evidence IDs, while gap proposals retain their evidence references.
