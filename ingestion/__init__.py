@@ -8,6 +8,7 @@ from .manufacturer_registry import ManufacturerRegistry
 from .extraction import build_extraction_result, compare_extractions, make_conflict, make_evidence, make_fact, validate_extraction, write_extraction
 from .mapping import DECISION_PRECEDENCE, LEGACY_MAPPING_VERSION, MAPPING_VERSION, build_mapping_result, compare_mappings, load_mapping_context, load_vocabularies, make_mapping, make_schema_gap, make_semantic_bindings, make_target, make_vocab_gap, validate_mapping_result, write_mapping
 from .unit_normalization import ConversionRule, EXACT_CONVERSION_RULES, UNIT_NORMALIZATION_VERSION, UnitNormalizationError, normalize_extraction_fact, normalize_fact, serialize_normalized_value, validate_normalized_value
+from .generation_plan import GENERATION_PLAN_VERSION, assess_generation_plan, compare_generation_plans, derive_issue_impacts, make_input_bindings, make_plan, plan_id, read_generation_plan, validate_generation_plan, write_generation_plan
 
 __all__ = [
     "IntakeError",
@@ -45,6 +46,16 @@ __all__ = [
     "normalize_fact",
     "serialize_normalized_value",
     "validate_normalized_value",
+    "GENERATION_PLAN_VERSION",
+    "assess_generation_plan",
+    "compare_generation_plans",
+    "derive_issue_impacts",
+    "make_input_bindings",
+    "make_plan",
+    "plan_id",
+    "read_generation_plan",
+    "validate_generation_plan",
+    "write_generation_plan",
     "parse_csv",
     "parse_json",
     "run_source_pipeline",
