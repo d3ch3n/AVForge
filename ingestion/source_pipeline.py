@@ -8,12 +8,11 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import urlparse
 
 from .acquisition import UrllibFetcher, acquire_candidate
 from .discovery import DiscoveryCandidate, DiscoveryProvider, discover, discover_linked_sources
 from .identity import resolve_identity
-from .manufacturer_registry import ManufacturerRegistry, assess_manufacturer
+from .manufacturer_registry import ManufacturerRegistry, assess_manufacturer, host_matches, normalize_host
 
 TIER_ONE_CLASSES = {"official_product_page", "official_datasheet", "official_manual", "official_protocol", "official_ae", "official_technical_help"}
 TIER_TWO_CLASSES = {"official_support", "official_release_notes", "official_other"}
@@ -185,11 +184,10 @@ def _apply_registry_scope(candidates: list[DiscoveryCandidate], entry: dict[str,
     hosts = tuple(entry["approved_document_hosts"])
     scoped: list[DiscoveryCandidate] = []
     for candidate in candidates:
-        host = (urlparse(candidate.url).hostname or "").lower()
-        root = next((root for root in roots if host == root or host.endswith("." + root)), None)
+        root = next((root for root in roots if host_matches(candidate.url, root)), None)
         if root:
             candidate = replace(candidate, official_domain=root, approved_hosts=hosts, trust_basis="manufacturer_domain")
-        elif host in {host_value.lower() for host_value in hosts}:
+        elif normalize_host(candidate.url) in {normalize_host(host_value) for host_value in hosts}:
             candidate = replace(candidate, official_domain=roots[0] if roots else None, approved_hosts=hosts, trust_basis="approved_host")
         scoped.append(candidate)
     return scoped

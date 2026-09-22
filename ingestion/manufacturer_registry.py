@@ -23,8 +23,38 @@ def _normal(value: str) -> str:
 
 
 def _host(value: str) -> str:
-    parsed = urlparse(value if "://" in value else f"https://{value}")
-    return (parsed.hostname or value).lower().rstrip(".")
+    return normalize_host(value) or ""
+
+
+def normalize_host(value: str | None) -> str | None:
+    """Normalize a configured URL/host without broadening trust."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    candidate = value.strip()
+    parsed = urlparse(candidate if "://" in candidate else f"https://{candidate}")
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
+        return None
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    host = parsed.hostname.lower().rstrip(".")
+    if not host or ".." in host or not re.fullmatch(r"[a-z0-9.-]+", host):
+        return None
+    return f"{host}:{port}" if port is not None else host
+
+
+def host_matches(candidate: str | None, configured: str | None) -> bool:
+    """Match exact hosts or DNS-label subdomains of a configured root."""
+    candidate_host = normalize_host(candidate)
+    configured_host = normalize_host(configured)
+    if not candidate_host or not configured_host:
+        return False
+    if candidate_host == configured_host:
+        return True
+    if ":" in configured_host:
+        return False
+    return candidate_host.endswith("." + configured_host)
 
 
 def manufacturer_id(name: str) -> str:

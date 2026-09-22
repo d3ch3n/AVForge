@@ -1,4 +1,28 @@
 {
   "registry_version": "1.0",
-  "manufacturers": []
+  "manufacturers": [
+    {
+      "aliases": [],
+      "approved_document_hosts": [
+        "help.qsys.com"
+      ],
+      "canonical_name": "Q-SYS",
+      "manufacturer_id": "manufacturer.q-sys",
+      "official_web_roots": [
+        "https://www.qsys.com/"
+      ],
+      "trust": {
+        "provenance": [
+          "user-evidence: Official Q-SYS NVM-302E product page",
+          "user-evidence: Official Q-SYS NVM-302E Specifications Sheet",
+          "user-evidence: Official Q-SYS NVM-302E Hardware User Manual",
+          "user-evidence: Official Q-SYS Help NVM-302E documentation",
+          "user-relationship: qsys.com product page -> NVM-302E -> official specifications -> official user manual",
+          "user-relationship: help.qsys.com -> Q-SYS NVM-302E -> references Q-SYS product page",
+          "user-approval: PROPOSED -> VERIFIED"
+        ],
+        "status": "VERIFIED"
+      }
+    }
+  ]
 }

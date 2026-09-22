@@ -5,7 +5,7 @@ from pathlib import Path
 from ingestion.acquisition import FetchResponse
 from ingestion.discovery import DiscoveryCandidate, JsonDiscoveryProvider, StaticDiscoveryProvider, build_queries
 from ingestion.intake import parse_csv, parse_json
-from ingestion.manufacturer_registry import ManufacturerRegistry, assess_manufacturer
+from ingestion.manufacturer_registry import ManufacturerRegistry, assess_manufacturer, host_matches, normalize_host
 from ingestion.source_pipeline import run_source_pipeline
 
 
@@ -30,6 +30,43 @@ def response(title="Acme Model X", url="https://manufacturer.example/product"):
 
 
 class RegistryTests(unittest.TestCase):
+    def test_normalize_https_root_with_trailing_slash(self):
+        self.assertEqual(normalize_host("https://www.example.com/"), "www.example.com")
+
+    def test_normalize_root_with_path(self):
+        self.assertEqual(normalize_host("https://example.com/products/"), "example.com")
+
+    def test_normalize_host_is_case_insensitive(self):
+        self.assertEqual(normalize_host("https://EXAMPLE.COM/"), "example.com")
+
+    def test_host_matching_exact_and_subdomain(self):
+        self.assertTrue(host_matches("https://www.example.com/product", "https://www.example.com/"))
+        self.assertTrue(host_matches("https://docs.www.example.com/manual", "https://www.example.com/"))
+
+    def test_host_matching_rejects_unrelated_and_suffix_attacks(self):
+        for candidate, configured in (("https://example.com.evil.test/", "https://example.com/"), ("https://evilwww.example.com/", "https://www.example.com/"), ("https://notexample.com/", "https://example.com/")):
+            self.assertFalse(host_matches(candidate, configured))
+
+    def test_www_is_not_bare_domain_equivalent(self):
+        self.assertFalse(host_matches("https://example.com/", "https://www.example.com/"))
+
+    def test_bare_domain_allows_dns_label_subdomains(self):
+        self.assertTrue(host_matches("https://www.example.com/", "https://example.com/"))
+
+    def test_malformed_roots_fail_closed(self):
+        for value in ("", "not a url", "ftp://example.com", "https:///missing", "https://user:pass@example.com"):
+            self.assertIsNone(normalize_host(value))
+            self.assertFalse(host_matches("https://example.com/", value))
+
+    def test_explicit_port_is_not_dropped(self):
+        self.assertEqual(normalize_host("http://example.com:8080"), "example.com:8080")
+        self.assertFalse(host_matches("https://example.com/", "http://example.com:8080"))
+
+    def test_approved_document_host_remains_separate_from_root(self):
+        registry = ManufacturerRegistry([entry(hosts=["docs.example.com"])])
+        value = registry.verified("Acme")
+        self.assertEqual(value["official_web_roots"], ["manufacturer.example"])
+        self.assertEqual(value["approved_document_hosts"], ["docs.example.com"])
     def test_normal_intake_requires_manufacturer_and_model(self):
         value = intake()
         self.assertEqual(value["intake_status"], "VALID_NORMAL")
