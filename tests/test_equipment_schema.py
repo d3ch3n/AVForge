@@ -612,5 +612,137 @@ class ApplicationModelSchemaV39Tests(unittest.TestCase):
         self.assert_invalid(self.application_record([application]))
 
 
+class ElectricalOperatingCaseSchemaV310Tests(unittest.TestCase):
+    def assert_valid(self, record):
+        self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
+
+    def assert_invalid(self, record):
+        self.assertTrue(list(VALIDATOR.iter_errors(record)))
+
+    def fixture(self):
+        return load_record("tests/fixtures/electrical-operating-case-nvm.json")
+
+    def test_nvm_fixture_is_valid(self):
+        self.assert_valid(self.fixture())
+
+    def test_operating_cases_are_optional_for_existing_records(self):
+        self.assert_valid(load_record("equipment/qsys/core-8-flex.json"))
+
+    def test_valid_resolved_and_partial_scopes(self):
+        record = self.fixture()
+        case = record["power"]["operating_cases"][0]
+        case["downstream_capabilities"][0]["scope"] = {
+            "mode": "aggregate",
+            "interface_ids": ["usb-a-1", "usb-c"],
+            "named_members": ["USB A", "USB C"],
+            "member_ids_resolved": False,
+            "exhaustive": True,
+        }
+        record["interfaces"] = [
+            {"id": "usb-a-1", "label": "USB A 1", "direction": "bidirectional", "connector": "USB-A"},
+            {"id": "usb-c", "label": "USB C", "direction": "bidirectional", "connector": "USB-C"},
+        ]
+        self.assert_valid(record)
+        case["downstream_capabilities"][0]["scope"]["member_ids_resolved"] = True
+        self.assert_valid(record)
+
+    def test_valid_quantity_forms_and_scope_modes(self):
+        record = self.fixture()
+        capability = record["power"]["operating_cases"][0]["downstream_capabilities"][0]
+        capability["scope"] = {
+            "mode": "per_member",
+            "interface_ids": ["a", "b"],
+            "member_ids_resolved": True,
+            "exhaustive": True,
+        }
+        capability.pop("voltage")
+        capability["power"] = {"minimum": 1, "maximum": 2, "unit": "watt", "precision": "range"}
+        record["interfaces"] = [
+            {"id": "a", "label": "A", "direction": "output", "connector": "USB-A"},
+            {"id": "b", "label": "B", "direction": "output", "connector": "USB-A"},
+        ]
+        self.assert_valid(record)
+        capability["power"] = {"value": 0, "unit": "watt", "precision": "exact"}
+        self.assert_valid(record)
+
+    def test_operating_case_required_fields(self):
+        record = self.fixture()
+        for field in ("id", "upstream", "downstream_capabilities"):
+            invalid = copy.deepcopy(record)
+            invalid["power"]["operating_cases"][0].pop(field)
+            self.assert_invalid(invalid)
+
+    def test_operating_case_downstream_requires_quantity(self):
+        record = self.fixture()
+        capability = record["power"]["operating_cases"][0]["downstream_capabilities"][0]
+        capability.pop("voltage")
+        capability.pop("current")
+        self.assert_invalid(record)
+
+    def test_downstream_required_fields_are_enforced(self):
+        record = self.fixture()
+        for field in ("id", "resource", "scope"):
+            invalid = copy.deepcopy(record)
+            invalid["power"]["operating_cases"][0]["downstream_capabilities"][0].pop(field)
+            self.assert_invalid(invalid)
+
+    def test_empty_downstream_capabilities_are_invalid(self):
+        record = self.fixture()
+        record["power"]["operating_cases"][0]["downstream_capabilities"] = []
+        self.assert_invalid(record)
+
+    def test_scope_requires_members_and_explicit_flags(self):
+        record = self.fixture()
+        scope = record["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        for field in ("mode", "member_ids_resolved", "exhaustive"):
+            invalid = copy.deepcopy(record)
+            invalid["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"].pop(field)
+            self.assert_invalid(invalid)
+        scope.pop("named_members")
+        self.assert_invalid(record)
+
+    def test_scope_modes_and_resolution_are_strict(self):
+        record = self.fixture()
+        scope = record["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        for mode in ("shared", "independent", "unknown"):
+            invalid = copy.deepcopy(record)
+            invalid["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]["mode"] = mode
+            self.assert_invalid(invalid)
+        scope["member_ids_resolved"] = True
+        self.assert_invalid(record)
+        scope["member_ids_resolved"] = False
+        scope.pop("named_members")
+        self.assert_invalid(record)
+
+    def test_quantity_requires_unit_and_precision(self):
+        record = self.fixture()
+        quantity = record["power"]["operating_cases"][0]["downstream_capabilities"][0]["voltage"]
+        for field in ("unit", "precision"):
+            invalid = copy.deepcopy(record)
+            invalid["power"]["operating_cases"][0]["downstream_capabilities"][0]["voltage"].pop(field)
+            self.assert_invalid(invalid)
+        quantity["precision"] = "range"
+        self.assert_invalid(record)
+
+    def test_unknown_operating_case_properties_are_invalid(self):
+        record = self.fixture()
+        record["power"]["operating_cases"][0]["runtime_active"] = True
+        self.assert_invalid(record)
+
+    def test_unknown_scope_and_quantity_properties_are_invalid(self):
+        record = self.fixture()
+        record["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]["members"] = []
+        self.assert_invalid(record)
+        record = self.fixture()
+        record["power"]["operating_cases"][0]["downstream_capabilities"][0]["voltage"]["formula"] = "5 * 1"
+        self.assert_invalid(record)
+
+    def test_modes_require_poe_shape(self):
+        record = self.fixture()
+        mode = record["power"]["sources"][0]["modes"][0]
+        mode.pop("poe")
+        self.assert_invalid(record)
+
+
 if __name__ == "__main__":
     unittest.main()

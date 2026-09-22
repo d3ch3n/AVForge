@@ -1,4 +1,5 @@
 import json
+import copy
 import unittest
 from pathlib import Path
 
@@ -336,6 +337,244 @@ class AmplifierCapabilitySemanticTests(unittest.TestCase):
             [output_interface("output-a", direction="bidirectional"), output_interface("output-b", direction="bidirectional")],
             [amplifier_entry("amp-bridge", "bridge", [["output-a", "output-b"]])],
         ))
+
+
+def operating_case_record():
+    return json.loads((ROOT / "tests/fixtures/electrical-operating-case-nvm.json").read_text())
+
+
+class ElectricalOperatingCaseSemanticTests(unittest.TestCase):
+    def assert_valid(self, value):
+        result = validate_records([value])
+        self.assertEqual(result["summary"]["error_count"], 0, result["issues"])
+
+    def assert_error(self, value, code):
+        issues = errors_for(value)
+        self.assertTrue(any(issue["code"] == code and issue["severity"] == "ERROR" for issue in issues), issues)
+
+    def test_nvm_fixture_is_valid(self):
+        self.assert_valid(operating_case_record())
+
+    def test_source_and_mode_references_are_validated(self):
+        value = operating_case_record()
+        value["power"]["operating_cases"][0]["upstream"]["source_id"] = "missing"
+        self.assert_error(value, "INVALID_POWER_OPERATING_SOURCE_REFERENCE")
+
+        value = operating_case_record()
+        value["power"]["operating_cases"][0]["upstream"]["mode_id"] = "missing"
+        self.assert_error(value, "INVALID_POWER_OPERATING_MODE_REFERENCE")
+
+        value = operating_case_record()
+        value["power"]["sources"].append({"id": "other-source", "method": "PoE", "modes": [{"id": "other-mode", "poe": {"standard": "802.3at", "type": "2", "class": "4"}}]})
+        value["power"]["operating_cases"][0]["upstream"]["mode_id"] = "other-mode"
+        self.assert_error(value, "INVALID_POWER_OPERATING_MODE_REFERENCE")
+
+    def test_duplicate_source_modes_and_case_ids_are_rejected(self):
+        value = operating_case_record()
+        value["power"]["sources"][0]["modes"].append(copy.deepcopy(value["power"]["sources"][0]["modes"][0]))
+        self.assert_error(value, "DUPLICATE_POWER_SOURCE_MODE_ID")
+
+        value = operating_case_record()
+        value["power"]["operating_cases"][1]["id"] = value["power"]["operating_cases"][0]["id"]
+        self.assert_error(value, "DUPLICATE_ELECTRICAL_OPERATING_CASE_ID")
+
+    def test_interface_members_and_named_members_are_validated(self):
+        value = operating_case_record()
+        scope = value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        scope["interface_ids"] = ["missing"]
+        scope["member_ids_resolved"] = False
+        self.assert_error(value, "INVALID_ELECTRICAL_INTERFACE_REFERENCE")
+
+        value = operating_case_record()
+        scope = value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        scope["named_members"] = ["USB", "USB"]
+        self.assert_error(value, "DUPLICATE_ELECTRICAL_NAMED_MEMBER")
+
+        value = operating_case_record()
+        scope = value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        scope["named_members"] = []
+        self.assert_error(value, "UNRESOLVED_ELECTRICAL_SCOPE_MISSING_NAMES")
+
+        value = operating_case_record()
+        scope = value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        scope["interface_ids"] = ["same", "same"]
+        value["interfaces"] = [{"id": "same"}]
+        self.assert_error(value, "DUPLICATE_ELECTRICAL_INTERFACE_MEMBER")
+
+    def test_partial_resolution_and_explicit_zero_are_valid(self):
+        value = operating_case_record()
+        scope = value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]
+        scope["interface_ids"] = ["usb-a-1"]
+        value["interfaces"] = [{"id": "usb-a-1"}]
+        self.assert_valid(value)
+
+        value["power"]["operating_cases"][0]["downstream_capabilities"][0]["current"]["value"] = 0
+        self.assert_valid(value)
+
+    def test_dimensionally_wrong_units_are_rejected(self):
+        for field, unit in (("voltage", "ampere"), ("current", "volt"), ("power", "milliampere")):
+            value = operating_case_record()
+            capability = value["power"]["operating_cases"][0]["downstream_capabilities"][0]
+            capability.pop("voltage", None)
+            capability.pop("current", None)
+            capability.pop("power", None)
+            capability[field] = {"value": 1, "unit": unit, "precision": "exact"}
+            self.assert_error(value, "ELECTRICAL_QUANTITY_UNIT_INVALID")
+
+    def test_duplicate_downstream_semantics_are_rejected(self):
+        value = operating_case_record()
+        capability = value["power"]["operating_cases"][0]["downstream_capabilities"][0]
+        duplicate = copy.deepcopy(capability)
+        duplicate["id"] = "usb-output-duplicate"
+        value["power"]["operating_cases"][0]["downstream_capabilities"].append(duplicate)
+        self.assert_error(value, "DUPLICATE_DOWNSTREAM_CAPABILITY")
+
+        value = operating_case_record()
+        duplicate_id = copy.deepcopy(value["power"]["operating_cases"][0]["downstream_capabilities"][0])
+        value["power"]["operating_cases"][0]["downstream_capabilities"].append(duplicate_id)
+        self.assert_error(value, "DUPLICATE_DOWNSTREAM_CAPABILITY_ID")
+
+    def test_member_order_does_not_change_semantic_identity(self):
+        for reorder in ("interface_ids", "named_members"):
+            value = operating_case_record()
+            case = value["power"]["operating_cases"][0]
+            capability = case["downstream_capabilities"][0]
+            capability["scope"] = {
+                "mode": "aggregate",
+                "interface_ids": ["usb-a-1", "usb-a-2", "usb-c-1"],
+                "named_members": ["all USB A ports", "USB C port"],
+                "member_ids_resolved": True,
+                "exhaustive": True,
+            }
+            duplicate = copy.deepcopy(capability)
+            duplicate["id"] = f"usb-output-{reorder}-reordered"
+            duplicate["scope"][reorder].reverse()
+            case["downstream_capabilities"].append(duplicate)
+            value["interfaces"] = [{"id": member} for member in ("usb-a-1", "usb-a-2", "usb-c-1")]
+            self.assert_error(value, "DUPLICATE_DOWNSTREAM_CAPABILITY")
+
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        capability = case["downstream_capabilities"][0]
+        capability["scope"]["interface_ids"] = ["usb-a-1", "usb-a-2", "usb-c-1"]
+        capability["scope"]["named_members"] = ["all USB A ports", "USB C port"]
+        capability["scope"]["member_ids_resolved"] = True
+        duplicate = copy.deepcopy(capability)
+        duplicate["id"] = "usb-output-per-member"
+        duplicate["scope"]["mode"] = "per_member"
+        case["downstream_capabilities"].append(duplicate)
+        value["interfaces"] = [{"id": member} for member in ("usb-a-1", "usb-a-2", "usb-c-1")]
+        self.assert_valid(value)
+
+    def test_mixed_scalar_and_range_signatures_are_deterministic(self):
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        capability = case["downstream_capabilities"][0]
+        capability["scope"] = {
+            "mode": "aggregate",
+            "interface_ids": ["usb-a-1", "usb-c-1"],
+            "named_members": ["all USB A ports", "USB C port"],
+            "member_ids_resolved": True,
+            "exhaustive": True,
+        }
+        capability["current"] = {
+            "minimum": 0.1,
+            "maximum": 0.9,
+            "unit": "ampere",
+            "precision": "range",
+            "semantic_role": "supported_total",
+        }
+        duplicate = copy.deepcopy(capability)
+        duplicate["id"] = "usb-output-reordered"
+        duplicate["scope"]["interface_ids"] = ["usb-c-1", "usb-a-1"]
+        duplicate["scope"]["named_members"] = ["USB C port", "all USB A ports"]
+        case["downstream_capabilities"].append(duplicate)
+        value["interfaces"] = [{"id": member} for member in ("usb-a-1", "usb-c-1")]
+        self.assert_error(value, "DUPLICATE_DOWNSTREAM_CAPABILITY")
+
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        capability = case["downstream_capabilities"][0]
+        capability["current"] = {
+            "minimum": 0.1,
+            "maximum": 0.9,
+            "unit": "ampere",
+            "precision": "range",
+        }
+        distinct = copy.deepcopy(capability)
+        distinct["id"] = "usb-output-distinct-shape"
+        distinct["voltage"] = {
+            "minimum": 4.5,
+            "maximum": 5.5,
+            "unit": "volt",
+            "precision": "range",
+        }
+        distinct["current"] = {"value": 0.3, "unit": "ampere", "precision": "exact"}
+        case["downstream_capabilities"].append(distinct)
+        self.assert_valid(value)
+
+    def test_aggregate_and_per_member_limits_can_coexist(self):
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        per_member = copy.deepcopy(case["downstream_capabilities"][0])
+        per_member["id"] = "usb-per-member"
+        per_member["scope"]["mode"] = "per_member"
+        per_member["scope"]["interface_ids"] = ["usb-a-1", "usb-a-2"]
+        per_member["scope"]["named_members"] = ["USB A 1", "USB A 2"]
+        per_member["scope"]["member_ids_resolved"] = False
+        per_member["current"]["value"] = 0.9
+        case["downstream_capabilities"].append(per_member)
+        value["interfaces"] = [{"id": "usb-a-1"}, {"id": "usb-a-2"}]
+        self.assert_valid(value)
+
+    def test_multiple_groups_are_valid(self):
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        first = case["downstream_capabilities"][0]
+        first["scope"] = {"mode": "aggregate", "interface_ids": ["a", "b"], "member_ids_resolved": True, "exhaustive": True}
+        second = copy.deepcopy(first)
+        second["id"] = "group-cd"
+        second["scope"]["interface_ids"] = ["c", "d"]
+        second["current"]["value"] = 2
+        case["downstream_capabilities"].append(second)
+        value["interfaces"] = [{"id": member} for member in ("a", "b", "c", "d")]
+        self.assert_valid(value)
+
+    def test_duplicate_semantic_cases_are_rejected(self):
+        value = operating_case_record()
+        duplicate = copy.deepcopy(value["power"]["operating_cases"][0])
+        duplicate["id"] = "duplicate-case"
+        value["power"]["operating_cases"].append(duplicate)
+        self.assert_error(value, "DUPLICATE_ELECTRICAL_OPERATING_CASE")
+
+    def test_different_operating_contexts_can_have_different_values(self):
+        value = operating_case_record()
+        value["power"]["operating_cases"][1]["downstream_capabilities"][0]["current"]["value"] = 0.8
+        self.assert_valid(value)
+
+    def test_same_scope_and_precision_with_different_values_is_contradictory(self):
+        value = operating_case_record()
+        case = value["power"]["operating_cases"][0]
+        conflicting = copy.deepcopy(case["downstream_capabilities"][0])
+        conflicting["id"] = "usb-conflict"
+        conflicting["current"]["value"] = 0.4
+        case["downstream_capabilities"].append(conflicting)
+        self.assert_error(value, "CONTRADICTORY_ELECTRICAL_CAPABILITY")
+
+    def test_range_order_is_validated(self):
+        value = operating_case_record()
+        capability = value["power"]["operating_cases"][0]["downstream_capabilities"][0]
+        capability.pop("voltage")
+        capability["power"] = {"minimum": 2, "maximum": 1, "unit": "watt", "precision": "range"}
+        self.assert_error(value, "ELECTRICAL_QUANTITY_RANGE_INVALID")
+
+    def test_electrical_strings_are_passive_data(self):
+        value = operating_case_record()
+        mode = value["power"]["sources"][0]["modes"][0]
+        mode["poe"]["standard"] = "__import__('os').system('touch /tmp/avforge')"
+        value["power"]["operating_cases"][0]["downstream_capabilities"][0]["resource"] = "$(rm -rf /)"
+        value["power"]["operating_cases"][0]["downstream_capabilities"][0]["scope"]["named_members"] = ["<script>alert(1)</script>"]
+        self.assert_valid(value)
 
 
 if __name__ == "__main__":

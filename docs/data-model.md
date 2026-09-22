@@ -404,7 +404,56 @@ As interfaces físicas de um módulo pertencem ao cadastro do módulo. Elas não
 
 `poe_consumed` representa energia PoE recebida/consumida pelo equipamento; `power.poe_supplied` representa energia PoE fornecida a outros equipamentos e referencia a interface local que a fornece. Dissipação térmica fica separada do consumo elétrico. Campos estruturados `unit` armazenam a identidade canônica do Vocabulary, como `watt`, `volt`, `ampere`, `hertz`, `btu-per-hour`, `kilogram` e `millimeter`; o símbolo de apresentação, como `W`, `V` ou `Hz`, é derivado de `vocab/units.json` e não é persistido junto ao valor.
 
-`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.7 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+`unit` e símbolo de apresentação são conceitos diferentes. O JSON Schema v3.10 valida que `unit` é uma string estrutural não vazia, mas não verifica a existência do ID no Vocabulary externo. A resolução da identidade canônica pertence à validação de Vocabulary/semântica futura. Não há conversão de unidades, prefixos ou aritmética de unidades neste modelo.
+
+### Casos elétricos de operação
+
+Schema 3.10 adiciona `power.operating_cases[]`. Um
+`electrical_operating_case` registra características elétricas de entrada
+e de saída documentadas juntas para um caso de catálogo. A estrutura é uma
+associação neutra: não afirma causalidade, requisito, bicondicionalidade,
+negociação PoE atual ou estado runtime.
+
+Cada caso possui ID opaco, estável e local ao equipamento, `upstream` com
+`source_id` e `mode_id`, e uma lista não vazia de
+`downstream_capabilities`. `power.sources[].modes[]` identifica modos locais
+de uma fonte física/lógica; para PoE, o modo preserva independentemente
+`standard`, `type` e `class`. O modo é identidade de catálogo, não seleção
+runtime. `poe_consumed` mantém sua semântica existente de consumo da fonte.
+
+Uma capability downstream possui ID local ao caso, um rótulo aberto de
+recurso elétrico (`resource`), `scope` e pelo menos uma grandeza entre
+`voltage`, `current` e `power`. O recurso não é conector, signal,
+protocol family ou regra de compatibilidade. Cada grandeza possui unidade e
+precisão própria; valores podem ser escalares ou intervalos. `semantic_role`
+é uma anotação textual não executável, como `supported_total`.
+
+`scope.mode` é estruturalmente `aggregate` ou `per_member`. `aggregate`
+aplica a grandeza ao grupo inteiro; `per_member` aplica a cada membro
+independentemente e não é somado automaticamente. `interface_ids` referencia
+interfaces locais estáveis quando resolvidas. `named_members` preserva
+descrições da fonte quando a resolução não é possível.
+
+`member_ids_resolved: true` significa que todos os membros definidos pela
+fonte foram resolvidos para IDs; `false` permite resolução parcial, mas exige
+descrições nomeadas não resolvidas. `exhaustive` declara se a frase de
+membros da fonte é completa para aquele escopo, nunca se refere a todas as
+interfaces do equipamento. Escopos vazios são inválidos.
+
+A ausência de um caso, de uma grandeza ou de um membro é desconhecida/não
+modelada, não negativa e não zero. Zero explícito permanece um valor válido.
+Não há `shared_budgets` ou registro reutilizável de grupos na v1; escopos
+iguais podem ser repetidos em casos diferentes. Phantom power, consumo do
+equipamento, pontos de operação de amplificadores e `resource_pools` de
+comunicação permanecem estruturas separadas.
+
+O registro de catálogo usa canonicamente `volt`, `ampere` e `watt`. A Fact
+Extraction preserva a unidade de fonte, como `milliampere`; a conversão
+determinística para a unidade canônica pertence a uma futura regra de
+normalização, não ao Mapping nem ao gerador. O validador semântico verifica
+dimensões compatíveis, referências, IDs, duplicidades e contradições
+determinísticas conservadoras. Não existe linguagem de predicados ou solver
+elétrico nesta versão.
 
 ## Extensibilidade e evolução
 

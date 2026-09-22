@@ -34,3 +34,20 @@ The validated property paths are `maximum_level`, `impedance.nominal`, and
 `impedance.upper_bound`. Input and output profiles use the same rules; no
 manufacturer, model, or interface-specific behavior is encoded. Missing
 electrical data remains `UNKNOWN`.
+
+## Electrical operating cases
+
+Schema 3.10 validates neutral `power.operating_cases` references and
+membership semantics. Each case must resolve `upstream.source_id` and its
+source-local `mode_id`; modes are catalog identities, not runtime state.
+Downstream capabilities require a non-empty scope and at least one of
+voltage, current, or power. Scope references are checked against local
+interface IDs, while unresolved `named_members` remain passive source
+descriptions. `aggregate` and `per_member` scopes are distinct and are not
+arithmetically combined.
+
+The validator checks compatible units (`volt`/`volt-rms` for voltage,
+`ampere`/`milliampere` for current, and `watt` for power), range ordering,
+duplicate IDs, duplicate semantic cases, and only deterministic same-context
+quantity contradictions. It does not infer PoE relationships, negotiate
+runtime modes, derive wattage, execute predicates, or validate compatibility.

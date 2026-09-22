@@ -493,7 +493,7 @@ Rules:
 - Unit conversion is allowed only when the source value and conversion are
   exact and the original semantic qualifier is retained. Conversion is not a
   license to remove `minimum`, `maximum`, or `approximate`.
-- If current Schema 3.9 cannot express the qualifier faithfully, the fact is
+- If current Schema 3.10 cannot express the qualifier faithfully, the fact is
   `NOTES_ONLY`, `OMIT_UNKNOWN`, or a gap issue; it is not rounded into a
   misleading measurement.
 
@@ -651,7 +651,7 @@ canonical ID and never edits the vocabulary files.
 1. The equipment exposes a meaningful engineering fact.
 2. The fact matters to catalog modeling, compatibility, safety, capacity, or
    future load/reporting behavior.
-3. Current Schema 3.9 cannot represent it faithfully.
+3. Current Schema 3.10 cannot represent it faithfully.
 4. Notes-only treatment would materially reduce engineering correctness.
 
 Schema gap examples may include a shared capacity budget, a condition set not
@@ -678,7 +678,7 @@ documents the gap only; it does not design or apply a schema extension.
 ## 18. Conditional Capabilities
 
 The intermediate ledger preserves conditions as first-class data even when
-Schema 3.9 cannot structure them:
+Schema 3.10 cannot structure them:
 
 ```json
 {
@@ -747,6 +747,15 @@ Generation must not:
 - convert a possible license/module/firmware feature into base support;
 - fill undocumented values with `0`, `null`, a typical industry value, or a
   neighboring model's value.
+
+Electrical operating cases follow the same open-world rule. Generation may
+materialize a documented `power.operating_cases[]` association, but must not
+select a runtime mode, infer PoE negotiation, reverse an operating-case
+association into a requirement, derive USB wattage from voltage and current,
+or resolve named members by label similarity. Resolved scope members require
+stable interface IDs and explicit evidence; unresolved `named_members` must
+remain descriptive. Aggregate current is never converted into per-member
+current, and per-member values are never summed automatically.
 
 ## 20. Validation Pipeline
 

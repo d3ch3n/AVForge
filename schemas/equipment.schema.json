@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://avforge.local/schemas/equipment.schema.json",
-  "title": "AVForge Equipment v3.9",
+  "title": "AVForge Equipment v3.10",
   "description": "Universal structured model for audiovisual equipment. Structured unit fields store canonical Vocabulary IDs; display symbols are derived externally from the Vocabulary.",
   "type": "object",
   "required": ["id", "manufacturer", "model", "product_name", "category", "schema_version", "status"],
@@ -528,6 +528,11 @@
           "items": { "$ref": "#/$defs/powerSource" },
           "uniqueItems": true
         },
+        "operating_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/electricalOperatingCase" },
+          "uniqueItems": true
+        },
         "poe_supplied": {
           "type": "array",
           "items": { "$ref": "#/$defs/poeOutput" },
@@ -569,7 +574,143 @@
         "power_consumption_typical": { "$ref": "#/$defs/powerMeasurement" },
         "power_consumption_max": { "$ref": "#/$defs/powerMeasurement" },
         "poe_consumed": { "$ref": "#/$defs/poeConsumption" },
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/powerSourceMode" },
+          "uniqueItems": true
+        },
         "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "powerSourceMode": {
+      "type": "object",
+      "required": ["id", "poe"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "poe": { "$ref": "#/$defs/poeMode" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "poeMode": {
+      "type": "object",
+      "required": ["standard", "type", "class"],
+      "properties": {
+        "standard": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "class": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "electricalQuantity": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["value", "unit", "precision"],
+          "properties": {
+            "value": { "type": "number", "minimum": 0 },
+            "unit": { "$ref": "#/$defs/unitId" },
+            "precision": { "enum": ["exact", "nominal", "minimum", "maximum", "approximate"] },
+            "semantic_role": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["minimum", "maximum", "unit", "precision"],
+          "properties": {
+            "minimum": { "type": "number", "minimum": 0 },
+            "maximum": { "type": "number", "minimum": 0 },
+            "unit": { "$ref": "#/$defs/unitId" },
+            "precision": { "const": "range" },
+            "semantic_role": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "electricalScope": {
+      "type": "object",
+      "required": ["mode", "member_ids_resolved", "exhaustive"],
+      "properties": {
+        "mode": { "enum": ["aggregate", "per_member"] },
+        "interface_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/stableId" },
+          "uniqueItems": true
+        },
+        "named_members": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "member_ids_resolved": { "type": "boolean" },
+        "exhaustive": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "anyOf": [
+            { "required": ["interface_ids"] },
+            { "required": ["named_members"] }
+          ]
+        },
+        {
+          "if": {
+            "properties": { "member_ids_resolved": { "const": true } }
+          },
+          "then": { "required": ["interface_ids"] }
+        },
+        {
+          "if": {
+            "properties": { "member_ids_resolved": { "const": false } }
+          },
+          "then": { "required": ["named_members"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "downstreamElectricalCapability": {
+      "type": "object",
+      "required": ["id", "resource", "scope"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "resource": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/electricalScope" },
+        "voltage": { "$ref": "#/$defs/electricalQuantity" },
+        "current": { "$ref": "#/$defs/electricalQuantity" },
+        "power": { "$ref": "#/$defs/electricalQuantity" }
+      },
+      "anyOf": [
+        { "required": ["voltage"] },
+        { "required": ["current"] },
+        { "required": ["power"] }
+      ],
+      "additionalProperties": false
+    },
+    "electricalOperatingCase": {
+      "type": "object",
+      "required": ["id", "upstream", "downstream_capabilities"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "upstream": {
+          "type": "object",
+          "required": ["source_id", "mode_id"],
+          "properties": {
+            "source_id": { "$ref": "#/$defs/stableId" },
+            "mode_id": { "$ref": "#/$defs/stableId" }
+          },
+          "additionalProperties": false
+        },
+        "downstream_capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/downstreamElectricalCapability" },
+          "uniqueItems": true
+        }
       },
       "additionalProperties": false
     },

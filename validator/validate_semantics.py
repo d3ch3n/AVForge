@@ -114,6 +114,11 @@ def _validate_ids(
             (f"interfaces[{index}].id", item.get("id"))
             for index, item in enumerate(equipment.get("interfaces", []))
         ],
+        "power_sources": [
+            (f"power.sources[{index}].id", item.get("id"))
+            for index, item in enumerate(equipment.get("power", {}).get("sources", []))
+            if isinstance(item, dict)
+        ],
         "physical_connectors": [
             (f"physical_connectors[{index}].id", item.get("id"))
             for index, item in enumerate(equipment.get("physical_connectors", []))
@@ -807,6 +812,356 @@ def _validate_amplifier_capabilities(
                                 )
 
 
+_ELECTRICAL_UNITS = {
+    "voltage": {"volt", "volt-rms"},
+    "current": {"ampere", "milliampere"},
+    "power": {"watt"},
+}
+
+
+def _semantic_value(value: Any) -> str:
+    """Canonicalize unordered membership for semantic duplicate checks."""
+
+    if isinstance(value, dict):
+        return json.dumps(
+            {
+                key: _semantic_value(child)
+                for key, child in sorted(value.items())
+                if key != "id"
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    if isinstance(value, list):
+        items = [_semantic_value(item) for item in value]
+        return json.dumps(sorted(items), separators=(",", ":"))
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def _scope_signature(scope: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        scope.get("mode"),
+        tuple(sorted(scope.get("interface_ids", []), key=repr)) if isinstance(scope.get("interface_ids"), list) else (),
+        tuple(sorted(scope.get("named_members", []), key=repr)) if isinstance(scope.get("named_members"), list) else (),
+    )
+
+
+def _quantity_signature(quantity: Any) -> tuple[Any, ...] | None:
+    if not isinstance(quantity, dict):
+        return None
+    if "value" in quantity:
+        return (
+            "scalar",
+            quantity.get("value"),
+            quantity.get("unit"),
+            quantity.get("precision"),
+            quantity.get("semantic_role"),
+        )
+    return (
+        "range",
+        (quantity.get("minimum"), quantity.get("maximum")),
+        quantity.get("unit"),
+        quantity.get("precision"),
+        quantity.get("semantic_role"),
+    )
+
+
+def _validate_electrical_quantity(
+    quantity: Any,
+    dimension: str,
+    equipment_id: str,
+    path: str,
+    issues: list[dict[str, Any]],
+) -> None:
+    if not isinstance(quantity, dict):
+        return
+    unit = quantity.get("unit")
+    if isinstance(unit, str) and unit not in _ELECTRICAL_UNITS[dimension]:
+        _issue(
+            issues,
+            "ELECTRICAL_QUANTITY_UNIT_INVALID",
+            ERROR,
+            equipment_id,
+            f"{path}.unit",
+            f"Electrical {dimension} quantity uses incompatible unit '{unit}'.",
+            referenced_id=unit,
+            dimension=dimension,
+        )
+    if "value" in quantity and quantity.get("precision") == "range":
+        _issue(
+            issues,
+            "ELECTRICAL_QUANTITY_PRECISION_INVALID",
+            ERROR,
+            equipment_id,
+            f"{path}.precision",
+            "Scalar electrical quantities cannot use range precision.",
+            dimension=dimension,
+        )
+    if "minimum" in quantity and "maximum" in quantity:
+        minimum = quantity.get("minimum")
+        maximum = quantity.get("maximum")
+        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum > maximum:
+            _issue(
+                issues,
+                "ELECTRICAL_QUANTITY_RANGE_INVALID",
+                ERROR,
+                equipment_id,
+                path,
+                "Electrical quantity range minimum cannot exceed maximum.",
+                dimension=dimension,
+            )
+
+
+def _validate_electrical_operating_cases(
+    equipment: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    """Validate Schema 3.10 neutral electrical operating cases."""
+
+    equipment_id = equipment.get("id", "<missing-id>")
+    power = equipment.get("power", {})
+    if not isinstance(power, dict):
+        return
+    sources = power.get("sources", [])
+    cases = power.get("operating_cases", [])
+    if not isinstance(sources, list) or not isinstance(cases, list):
+        return
+
+    source_by_id: dict[str, dict[str, Any]] = {}
+    for source_index, source in enumerate(sources):
+        if not isinstance(source, dict):
+            continue
+        source_id = source.get("id")
+        if isinstance(source_id, str):
+            source_by_id.setdefault(source_id, source)
+        modes = source.get("modes", [])
+        if not isinstance(modes, list):
+            continue
+        mode_ids: set[str] = set()
+        for mode_index, mode in enumerate(modes):
+            if not isinstance(mode, dict):
+                continue
+            mode_id = mode.get("id")
+            mode_path = f"power.sources[{source_index}].modes[{mode_index}]"
+            if not isinstance(mode_id, str):
+                continue
+            if mode_id in mode_ids:
+                _issue(
+                    issues,
+                    "DUPLICATE_POWER_SOURCE_MODE_ID",
+                    ERROR,
+                    equipment_id,
+                    f"{mode_path}.id",
+                    "Power source mode IDs must be unique within their source.",
+                    referenced_id=mode_id,
+                )
+            mode_ids.add(mode_id)
+
+    interfaces = {
+        interface.get("id")
+        for interface in equipment.get("interfaces", [])
+        if isinstance(interface, dict) and isinstance(interface.get("id"), str)
+    }
+    case_ids: set[str] = set()
+    case_signatures: dict[str, str] = {}
+    for case_index, operating_case in enumerate(cases):
+        if not isinstance(operating_case, dict):
+            continue
+        case_path = f"power.operating_cases[{case_index}]"
+        case_id = operating_case.get("id")
+        if isinstance(case_id, str):
+            if case_id in case_ids:
+                _issue(
+                    issues,
+                    "DUPLICATE_ELECTRICAL_OPERATING_CASE_ID",
+                    ERROR,
+                    equipment_id,
+                    f"{case_path}.id",
+                    "Electrical operating-case IDs must be unique within an equipment record.",
+                    referenced_id=case_id,
+                )
+            case_ids.add(case_id)
+
+        upstream = operating_case.get("upstream", {})
+        source_id = upstream.get("source_id") if isinstance(upstream, dict) else None
+        mode_id = upstream.get("mode_id") if isinstance(upstream, dict) else None
+        source = source_by_id.get(source_id) if isinstance(source_id, str) else None
+        if source is None and isinstance(source_id, str):
+            _issue(
+                issues,
+                "INVALID_POWER_OPERATING_SOURCE_REFERENCE",
+                ERROR,
+                equipment_id,
+                f"{case_path}.upstream.source_id",
+                "Operating-case source_id must reference a declared power source.",
+                referenced_id=source_id,
+            )
+        elif isinstance(mode_id, str):
+            mode_ids = {
+                mode.get("id")
+                for mode in source.get("modes", [])
+                if isinstance(mode, dict) and isinstance(mode.get("id"), str)
+            }
+            if mode_id not in mode_ids:
+                _issue(
+                    issues,
+                    "INVALID_POWER_OPERATING_MODE_REFERENCE",
+                    ERROR,
+                    equipment_id,
+                    f"{case_path}.upstream.mode_id",
+                    "Operating-case mode_id must reference a mode belonging to its source_id.",
+                    referenced_id=mode_id,
+                )
+
+        downstream = operating_case.get("downstream_capabilities", [])
+        if not isinstance(downstream, list):
+            continue
+        downstream_ids: set[str] = set()
+        semantic_capabilities: list[str] = []
+        group_quantities: dict[tuple[Any, ...], dict[str, tuple[Any, ...] | None]] = {}
+        for capability_index, capability in enumerate(downstream):
+            if not isinstance(capability, dict):
+                continue
+            capability_path = f"{case_path}.downstream_capabilities[{capability_index}]"
+            capability_id = capability.get("id")
+            if isinstance(capability_id, str):
+                if capability_id in downstream_ids:
+                    _issue(
+                        issues,
+                        "DUPLICATE_DOWNSTREAM_CAPABILITY_ID",
+                        ERROR,
+                        equipment_id,
+                        f"{capability_path}.id",
+                        "Downstream capability IDs must be unique within an operating case.",
+                        referenced_id=capability_id,
+                    )
+                downstream_ids.add(capability_id)
+
+            scope = capability.get("scope")
+            if not isinstance(scope, dict):
+                continue
+            interface_ids = scope.get("interface_ids", [])
+            named_members = scope.get("named_members", [])
+            if not isinstance(interface_ids, list):
+                interface_ids = []
+            if not isinstance(named_members, list):
+                named_members = []
+            if len(interface_ids) != len({_semantic_value(item) for item in interface_ids}):
+                _issue(
+                    issues,
+                    "DUPLICATE_ELECTRICAL_INTERFACE_MEMBER",
+                    ERROR,
+                    equipment_id,
+                    f"{capability_path}.scope.interface_ids",
+                    "Electrical scope interface IDs must be unique.",
+                )
+            if len(named_members) != len({_semantic_value(item) for item in named_members}):
+                _issue(
+                    issues,
+                    "DUPLICATE_ELECTRICAL_NAMED_MEMBER",
+                    ERROR,
+                    equipment_id,
+                    f"{capability_path}.scope.named_members",
+                    "Electrical scope named members must be unique.",
+                )
+            for member_index, member_id in enumerate(interface_ids):
+                if isinstance(member_id, str) and member_id not in interfaces:
+                    _issue(
+                        issues,
+                        "INVALID_ELECTRICAL_INTERFACE_REFERENCE",
+                        ERROR,
+                        equipment_id,
+                        f"{capability_path}.scope.interface_ids[{member_index}]",
+                        "Electrical scope interface ID must reference an equipment interface.",
+                        referenced_id=member_id,
+                    )
+            resolved = scope.get("member_ids_resolved")
+            if resolved is True and not interface_ids:
+                _issue(
+                    issues,
+                    "RESOLVED_ELECTRICAL_SCOPE_MISSING_IDS",
+                    ERROR,
+                    equipment_id,
+                    f"{capability_path}.scope",
+                    "Resolved electrical scope requires interface_ids.",
+                )
+            if resolved is False and not named_members:
+                _issue(
+                    issues,
+                    "UNRESOLVED_ELECTRICAL_SCOPE_MISSING_NAMES",
+                    ERROR,
+                    equipment_id,
+                    f"{capability_path}.scope",
+                    "Unresolved electrical scope requires named_members.",
+                )
+            if not interface_ids and not named_members:
+                _issue(
+                    issues,
+                    "EMPTY_ELECTRICAL_SCOPE",
+                    ERROR,
+                    equipment_id,
+                    f"{capability_path}.scope",
+                    "Electrical scope must identify at least one member.",
+                )
+
+            quantity_signatures: dict[str, tuple[Any, ...] | None] = {}
+            for dimension in ("voltage", "current", "power"):
+                quantity = capability.get(dimension)
+                if quantity is not None:
+                    _validate_electrical_quantity(quantity, dimension, equipment_id, f"{capability_path}.{dimension}", issues)
+                quantity_signatures[dimension] = _quantity_signature(quantity)
+            semantic_payload = dict(capability)
+            semantic_key = _semantic_value(semantic_payload)
+            if semantic_key in semantic_capabilities:
+                _issue(
+                    issues,
+                    "DUPLICATE_DOWNSTREAM_CAPABILITY",
+                    ERROR,
+                    equipment_id,
+                    capability_path,
+                    "Downstream capabilities with identical semantic content are duplicates.",
+                )
+            semantic_capabilities.append(semantic_key)
+
+            group_key = (capability.get("resource"), _scope_signature(scope))
+            previous = group_quantities.setdefault(group_key, {})
+            for dimension, signature in quantity_signatures.items():
+                if signature is None:
+                    continue
+                if dimension in previous and previous[dimension] != signature:
+                    current_precision = signature[3]
+                    prior_precision = previous[dimension][3]
+                    if current_precision == prior_precision:
+                        _issue(
+                            issues,
+                            "CONTRADICTORY_ELECTRICAL_CAPABILITY",
+                            ERROR,
+                            equipment_id,
+                            capability_path,
+                            "Equivalent electrical scope and precision declare incompatible quantities.",
+                            dimension=dimension,
+                        )
+                else:
+                    previous[dimension] = signature
+
+        case_signature = _semantic_value({
+            "upstream": upstream,
+            "downstream_capabilities": sorted(semantic_capabilities),
+        })
+        if case_signature in case_signatures:
+            _issue(
+                issues,
+                "DUPLICATE_ELECTRICAL_OPERATING_CASE",
+                ERROR,
+                equipment_id,
+                case_path,
+                "Electrical operating cases with identical semantic content are duplicates.",
+                referenced_id=case_signatures[case_signature],
+            )
+        elif isinstance(case_id, str):
+            case_signatures[case_signature] = case_id
+
+
 def validate_records(
     records: list[dict[str, Any]],
     vocab_dir: Path | None = None,
@@ -827,6 +1182,7 @@ def validate_records(
         _validate_references(record, ids_by_type, equipment_index, issues)
         _validate_vocabularies(record, vocabularies, issues)
         _validate_electrical_variants(record, issues)
+        _validate_electrical_operating_cases(record, issues)
         _validate_amplifier_capabilities(record, issues)
 
     errors = [issue for issue in issues if issue["severity"] == ERROR]
